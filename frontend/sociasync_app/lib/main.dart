@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       // UBAH BAGIAN INI:
-      home: const DashboardPage(), 
+      home: const SplashScreen(),
     );
   }
 }
