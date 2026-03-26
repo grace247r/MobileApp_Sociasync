@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/widgets/navbar.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,17 +13,24 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        fontFamily: 'Roboto', // Menggunakan font Roboto
+        fontFamily: 'Roboto',
         primaryColor: const Color(0xFF1D5093),
+        useMaterial3: true,
       ),
       home: const DashboardPage(),
     );
   }
 }
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  int _currentNavIndex = 0;
   final Color primaryBlue = const Color(0xFF1D5093);
 
   @override
@@ -69,7 +77,7 @@ class DashboardPage extends StatelessWidget {
               ),
               const SizedBox(height: 30),
 
-              // Weekly Chart Placeholder
+              // Weekly Chart
               Text(
                 'Weekly Chart',
                 style: TextStyle(
@@ -134,31 +142,24 @@ class DashboardPage extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
 
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(15),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: primaryBlue,
-          borderRadius: BorderRadius.circular(40),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: const [
-            Icon(Icons.home, color: Colors.white, size: 30),
-            Icon(Icons.history, color: Colors.white, size: 30),
-            Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
-            Icon(Icons.person_outline, color: Colors.white, size: 30),
-          ],
-        ),
+      bottomNavigationBar: Navbar(
+        selectedIndex: _currentNavIndex,
+        onTap: (index) {
+          setState(() {
+            _currentNavIndex = index;
+          });
+          print("Pindah ke halaman index: $index");
+        },
       ),
     );
   }
+
 
   Widget _buildStatCard(String value, String label) {
     return Container(
@@ -207,8 +208,8 @@ class DashboardPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.grey.shade300,
         borderRadius: BorderRadius.circular(15),
-        // image: DecorationImage(image: AssetImage(imagePath), fit: BoxFit.cover),
       ),
+      child: const Center(child: Icon(Icons.image, color: Colors.white)),
     );
   }
 }
