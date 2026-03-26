@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
 import 'package:sociasync_app/screens/splash_screen.dart';
 
 void main() {
