@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
+import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/notification_page.dart';
+import 'package:sociasync_app/screens/saved_content_page.dart';
 
 class ContentGeneratorPage extends StatefulWidget {
   const ContentGeneratorPage({super.key});
@@ -14,6 +17,32 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   bool isTikTokSelected = true;
   final Map<String, bool> _toggleStates = {};
+
+  int _currentIndex = 2;
+
+  void _onNavbarTap(int index) {
+    if (index == _currentIndex) return;
+
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+      return;
+    }
+
+    if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const NotificationPage()),
+      );
+      return;
+    }
+
+    if (index == 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Halaman profil belum tersedia')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +58,13 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                 DashboardHeader(
                   userName: 'Rina',
                   primaryColor: primaryBlue,
-                  onNotificationTap: () {},
+                  onNotificationTap: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationPage(),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 25),
 
@@ -50,7 +85,22 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                         ),
                       ),
                       // Icon Bookmark disamakan ukurannya dengan icon notifikasi di header
-                      Icon(Icons.bookmark, color: primaryBlue, size: 28),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const SavedContentPage(),
+                            ),
+                          );
+                        },
+                        icon: Icon(
+                          Icons.bookmark,
+                          color: primaryBlue,
+                          size: 28,
+                        ),
+                        splashRadius: 22,
+                        tooltip: 'Saved Content',
+                      ),
                     ],
                   ),
                 ),
@@ -150,9 +200,9 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
             left: 0,
             right: 0,
             child: AppNavbar(
-              selectedIndex: 0,
+              selectedIndex: _currentIndex,
               backgroundColor: primaryBlue,
-              onTap: (index) {},
+              onTap: _onNavbarTap,
             ),
           ),
         ],

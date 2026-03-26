@@ -16,6 +16,30 @@ class _DashboardPageState extends State<DashboardPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   int _currentIndex = 0; // Untuk melacak posisi Navbar
 
+  void _onNavbarTap(int index) {
+    if (index == _currentIndex) return;
+
+    if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const NotificationPage()),
+      );
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const ContentGeneratorPage()),
+      );
+      return;
+    }
+
+    if (index == 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Halaman profil belum tersedia')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Kita gunakan AppBackgroundWrapper sebagai pondasi utama
@@ -158,11 +182,7 @@ class _DashboardPageState extends State<DashboardPage> {
             child: AppNavbar(
               selectedIndex: _currentIndex,
               backgroundColor: primaryBlue,
-              onTap: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
+              onTap: _onNavbarTap,
             ),
           ),
         ],
