@@ -363,23 +363,11 @@ class _InboxPageState extends State<InboxPage> {
               ),
             ),
           ),
-          // Navbar - Fixed at bottom (tidak bisa naik)
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: AppNavbar(
-              selectedIndex: _currentIndex,
-              onTap: _onNavbarTap,
-              backgroundColor: primaryBlue,
-            ),
+          // Navbar - Fixed at bottom
+          AppNavbar(
+            selectedIndex: _currentIndex,
+            onTap: _onNavbarTap,
+            backgroundColor: primaryBlue,
           ),
         ],
       ),
