@@ -4,6 +4,26 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'chat_detail_page.dart';
 
+enum InboxFilter { all, unread, priority, group }
+
+class _InboxChatItemData {
+  const _InboxChatItemData({
+    required this.name,
+    required this.message,
+    required this.time,
+    this.isUnread = false,
+    this.isPriority = false,
+    this.isGroup = false,
+  });
+
+  final String name;
+  final String message;
+  final String time;
+  final bool isUnread;
+  final bool isPriority;
+  final bool isGroup;
+}
+
 class InboxPage extends StatefulWidget {
   const InboxPage({super.key});
 
@@ -14,6 +34,77 @@ class InboxPage extends StatefulWidget {
 class _InboxPageState extends State<InboxPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   int _currentIndex = 2; // Index Chat di Navbar
+  InboxFilter _activeFilter = InboxFilter.all;
+
+  final List<_InboxChatItemData> _chatItems = const [
+    _InboxChatItemData(
+      name: 'Lili',
+      message: 'Lorem Ipsum dolor si amet',
+      time: '12.18 PM',
+      isUnread: true,
+      isPriority: true,
+    ),
+    _InboxChatItemData(
+      name: 'Kevin',
+      message: 'Lorem Ipsum dolor si amet',
+      time: '12.18 PM',
+      isUnread: true,
+    ),
+    _InboxChatItemData(
+      name: 'Mutiara',
+      message: 'Lorem Ipsum dolor si amet',
+      time: '12.18 PM',
+      isGroup: true,
+    ),
+    _InboxChatItemData(
+      name: 'Roni',
+      message: 'Lorem Ipsum dolor si amet',
+      time: '12.18 PM',
+      isUnread: true,
+      isGroup: true,
+    ),
+    _InboxChatItemData(
+      name: 'Tasya',
+      message: 'Lorem Ipsum dolor si amet',
+      time: '12.18 PM',
+      isPriority: true,
+    ),
+    _InboxChatItemData(
+      name: 'Teddy',
+      message: 'Lorem Ipsum dolor si amet',
+      time: '12.18 PM',
+    ),
+    _InboxChatItemData(
+      name: 'Bahlil',
+      message: 'Lorem Ipsum dolor si amet',
+      time: '12.18 PM',
+      isGroup: true,
+    ),
+    _InboxChatItemData(
+      name: 'Faradhila',
+      message: 'Lorem Ipsum dolor si amet',
+      time: '12.18 PM',
+    ),
+    _InboxChatItemData(
+      name: 'Firman',
+      message: 'Lorem Ipsum dolor si amet',
+      time: '12.18 PM',
+      isUnread: true,
+    ),
+  ];
+
+  List<_InboxChatItemData> get _filteredChats {
+    switch (_activeFilter) {
+      case InboxFilter.unread:
+        return _chatItems.where((item) => item.isUnread).toList();
+      case InboxFilter.priority:
+        return _chatItems.where((item) => item.isPriority).toList();
+      case InboxFilter.group:
+        return _chatItems.where((item) => item.isGroup).toList();
+      case InboxFilter.all:
+        return _chatItems;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,13 +151,32 @@ class _InboxPageState extends State<InboxPage> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildFilterChip('All', true),
+                      _buildFilterChip(
+                        'All',
+                        _activeFilter == InboxFilter.all,
+                        () => setState(() => _activeFilter = InboxFilter.all),
+                      ),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Unread (15)', false),
+                      _buildFilterChip(
+                        'Unread (${_chatItems.where((e) => e.isUnread).length})',
+                        _activeFilter == InboxFilter.unread,
+                        () =>
+                            setState(() => _activeFilter = InboxFilter.unread),
+                      ),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Priority', false),
+                      _buildFilterChip(
+                        'Priority',
+                        _activeFilter == InboxFilter.priority,
+                        () => setState(
+                          () => _activeFilter = InboxFilter.priority,
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Group (3)', false),
+                      _buildFilterChip(
+                        'Group (${_chatItems.where((e) => e.isGroup).length})',
+                        _activeFilter == InboxFilter.group,
+                        () => setState(() => _activeFilter = InboxFilter.group),
+                      ),
                     ],
                   ),
                 ),
@@ -76,53 +186,9 @@ class _InboxPageState extends State<InboxPage> {
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.only(bottom: 100),
-                    children: [
-                      _buildChatItem(
-                        'Lili',
-                        'Lorem Ipsum dolor si amet',
-                        '12.18 PM',
-                      ),
-                      _buildChatItem(
-                        'Kevin',
-                        'Lorem Ipsum dolor si amet',
-                        '12.18 PM',
-                      ),
-                      _buildChatItem(
-                        'Mutiara',
-                        'Lorem Ipsum dolor si amet',
-                        '12.18 PM',
-                      ),
-                      _buildChatItem(
-                        'Roni',
-                        'Lorem Ipsum dolor si amet',
-                        '12.18 PM',
-                      ),
-                      _buildChatItem(
-                        'Tasya',
-                        'Lorem Ipsum dolor si amet',
-                        '12.18 PM',
-                      ),
-                      _buildChatItem(
-                        'Teddy',
-                        'Lorem Ipsum dolor si amet',
-                        '12.18 PM',
-                      ),
-                      _buildChatItem(
-                        'Bahlil',
-                        'Lorem Ipsum dolor si amet',
-                        '12.18 PM',
-                      ),
-                      _buildChatItem(
-                        'Faradhila',
-                        'Lorem Ipsum dolor si amet',
-                        '12.18 PM',
-                      ),
-                      _buildChatItem(
-                        'Firman',
-                        'Lorem Ipsum dolor si amet',
-                        '12.18 PM',
-                      ),
-                    ],
+                    children: _filteredChats
+                        .map((chat) => _buildChatItem(chat))
+                        .toList(),
                   ),
                 ),
               ],
@@ -148,33 +214,39 @@ class _InboxPageState extends State<InboxPage> {
   }
 
   // Widget Helper untuk Filter Chip
-  Widget _buildFilterChip(String label, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? primaryBlue : primaryBlue.withOpacity(0.85),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
+  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryBlue : primaryBlue.withOpacity(0.85),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
   }
 
   // Widget Helper untuk Baris Chat
-  Widget _buildChatItem(String name, String message, String time) {
+  Widget _buildChatItem(_InboxChatItemData chat) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => ChatDetailPage(userName: name)),
+            MaterialPageRoute(
+              builder: (_) => ChatDetailPage(userName: chat.name),
+            ),
           );
         },
         child: Row(
@@ -193,7 +265,7 @@ class _InboxPageState extends State<InboxPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    name,
+                    chat.name,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -202,7 +274,7 @@ class _InboxPageState extends State<InboxPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    message,
+                    chat.message,
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ],
@@ -210,7 +282,7 @@ class _InboxPageState extends State<InboxPage> {
             ),
             // Time
             Text(
-              time,
+              chat.time,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
