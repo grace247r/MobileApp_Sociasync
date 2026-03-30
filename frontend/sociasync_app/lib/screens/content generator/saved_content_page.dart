@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
-import 'package:sociasync_app/screens/content_generator_page.dart';
+import 'package:sociasync_app/screens/content generator/content_generator_page.dart';
 
 class SavedContentPage extends StatefulWidget {
   const SavedContentPage({super.key});
@@ -15,7 +15,7 @@ class SavedContentPage extends StatefulWidget {
 
 class _SavedContentPageState extends State<SavedContentPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  int _currentIndex = 1; // Index untuk navbar (History/Saved)
+  final int _currentIndex = 1; // Index untuk navbar (History/Saved)
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;

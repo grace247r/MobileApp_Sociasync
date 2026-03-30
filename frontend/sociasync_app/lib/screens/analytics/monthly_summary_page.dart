@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
-import 'package:sociasync_app/screens/ai_suggestion_page.dart';
+import 'package:sociasync_app/screens/analytics/ai_suggestion_page.dart';
 
 class MonthlySummaryPage extends StatefulWidget {
   const MonthlySummaryPage({super.key});
@@ -141,9 +141,7 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                   'Try AI',
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ChatbotPage(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const ChatbotPage()),
                     );
                   },
                 ),

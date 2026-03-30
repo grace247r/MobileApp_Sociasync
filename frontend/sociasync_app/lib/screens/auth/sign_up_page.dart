@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
-import '../dashboard_page.dart';
+import '../dashboard/dashboard_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -217,7 +217,8 @@ class _SignUpPageState extends State<SignUpPage> {
                           obscure: _obscurePassword,
                           hasError: _passwordError != null,
                           onToggle: () => setState(
-                              () => _obscurePassword = !_obscurePassword),
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
                           onChanged: (_) =>
                               setState(() => _passwordError = null),
                         ),
@@ -234,9 +235,10 @@ class _SignUpPageState extends State<SignUpPage> {
                           hint: 'Password......',
                           obscure: _obscureConfirmPassword,
                           hasError: _confirmPasswordError != null,
-                          onToggle: () => setState(() =>
-                              _obscureConfirmPassword =
-                                  !_obscureConfirmPassword),
+                          onToggle: () => setState(
+                            () => _obscureConfirmPassword =
+                                !_obscureConfirmPassword,
+                          ),
                           onChanged: (_) =>
                               setState(() => _confirmPasswordError = null),
                         ),
@@ -383,8 +385,8 @@ class _SignUpPageState extends State<SignUpPage> {
             color: hasError
                 ? const Color(0xFFFF4D4D)
                 : isSelected
-                    ? Colors.white.withOpacity(0.9)
-                    : Colors.white.withOpacity(0.5),
+                ? Colors.white.withOpacity(0.9)
+                : Colors.white.withOpacity(0.5),
             width: hasError ? 1.5 : 1,
           ),
         ),
@@ -429,11 +431,15 @@ class _SignUpPageState extends State<SignUpPage> {
         style: const TextStyle(fontSize: 13, color: Color(0xFF1A1A2E)),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle:
-              TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 13),
+          hintStyle: TextStyle(
+            color: Colors.grey.withOpacity(0.6),
+            fontSize: 13,
+          ),
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
           isDense: true,
         ),
       ),
@@ -467,8 +473,10 @@ class _SignUpPageState extends State<SignUpPage> {
         style: const TextStyle(fontSize: 13, color: Color(0xFF1A1A2E)),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle:
-              TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 13),
+          hintStyle: TextStyle(
+            color: Colors.grey.withOpacity(0.6),
+            fontSize: 13,
+          ),
           suffixIcon: IconButton(
             icon: Icon(
               obscure
@@ -480,8 +488,10 @@ class _SignUpPageState extends State<SignUpPage> {
             onPressed: onToggle,
           ),
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
           isDense: true,
         ),
       ),

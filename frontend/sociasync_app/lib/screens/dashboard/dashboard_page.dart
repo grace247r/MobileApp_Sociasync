@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
-import 'package:sociasync_app/screens/content_generator_page.dart';
-import 'package:sociasync_app/screens/monthly_summary_page.dart';
+import 'package:sociasync_app/screens/content generator/content_generator_page.dart';
+import 'package:sociasync_app/screens/analytics/monthly_summary_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -15,7 +15,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  int _currentIndex = 0; // Untuk melacak posisi Navbar
+  final int _currentIndex = 0; // Untuk melacak posisi Navbar
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;

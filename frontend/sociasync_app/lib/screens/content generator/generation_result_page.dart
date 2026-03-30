@@ -3,7 +3,7 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/success_dialog.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 
 class GenerationResultPage extends StatefulWidget {
@@ -14,7 +14,7 @@ class GenerationResultPage extends StatefulWidget {
 }
 
 class _GenerationResultPageState extends State<GenerationResultPage> {
-  int _currentIndex = 2;
+  final int _currentIndex = 2;
 
   final Color primaryBlue = const Color(0xFF1D5093);
 

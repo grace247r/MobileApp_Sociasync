@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/screens/content_generator_page.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/content generator/content_generator_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 // Import wrapper background yang kita buat sebelumnya
@@ -15,7 +15,7 @@ class NotificationPage extends StatefulWidget {
 
 class _NotificationPageState extends State<NotificationPage> {
   static const Color primaryBlue = Color(0xFF1D5093);
-  int _currentIndex =
+  final int _currentIndex =
       1; // Sesuaikan index dengan halaman Notification (misal index 1)
 
   void _onNavbarTap(int index) {
