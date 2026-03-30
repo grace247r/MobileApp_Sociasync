@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
+import 'package:sociasync_app/screens/ai_suggestion_page.dart';
 
 class MonthlySummaryPage extends StatefulWidget {
   const MonthlySummaryPage({super.key});
@@ -47,8 +48,8 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    color: primaryBlue.withOpacity(0.20),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     children: [
@@ -103,8 +104,8 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                 Container(
                   padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    color: primaryBlue.withOpacity(0.20),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: GridView.count(
                     shrinkWrap: true,
@@ -135,7 +136,17 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                 const SizedBox(height: 15),
 
                 // Card AI Suggestion
-                _buildInsightCard('AI Suggestion', 'Try AI'),
+                _buildInsightCard(
+                  'AI Suggestion',
+                  'Try AI',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ChatbotPage(),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 12),
 
                 // Card Boost Insight
@@ -177,16 +188,16 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 32,
               fontWeight: FontWeight.w900,
-              color: primaryBlue,
+              color: Color(0xFF1B67C0),
             ),
           ),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
+              fontSize: 15,
+              color: Color(0xFF535353),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -196,12 +207,16 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   }
 
   // Widget Helper untuk Insight Row (AI Suggestion / Boost)
-  Widget _buildInsightCard(String title, String btnLabel) {
+  Widget _buildInsightCard(
+    String title,
+    String btnLabel, {
+    VoidCallback? onPressed,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: primaryBlue.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(15),
+        color: primaryBlue.withOpacity(0.20),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -210,12 +225,12 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
             title,
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: primaryBlue,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF535353),
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: onPressed,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: primaryBlue,
