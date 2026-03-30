@@ -47,8 +47,8 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    color: primaryBlue.withOpacity(0.20),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     children: [
@@ -103,8 +103,8 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                 Container(
                   padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    color: primaryBlue.withOpacity(0.20),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: GridView.count(
                     shrinkWrap: true,
@@ -177,16 +177,16 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 32,
               fontWeight: FontWeight.w900,
-              color: primaryBlue,
+              color: Color(0xFF1B67C0),
             ),
           ),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
+              fontSize: 15,
+              color: Color(0xFF535353),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -200,8 +200,8 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: primaryBlue.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(15),
+        color: primaryBlue.withOpacity(0.20),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -210,8 +210,8 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
             title,
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: primaryBlue,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF535353),
             ),
           ),
           ElevatedButton(
