@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/content generator/saved_content_page.dart';
-import 'package:sociasync_app/screens/content_ideas_page.dart';
+import 'package:sociasync_app/screens/content generator/content_ideas_page.dart';
 
 class ContentGeneratorPage extends StatefulWidget {
   const ContentGeneratorPage({super.key});
@@ -19,7 +19,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
   bool isTikTokSelected = true;
   final Map<String, bool> _toggleStates = {};
 
-  int _currentIndex = 2;
+  final int _currentIndex = 2;
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -288,7 +288,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                               height: 24,
                               margin: const EdgeInsets.only(left: 4, right: 50),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFBA0B1FC),
+                                color: const Color(0xffba0b1fc),
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: const TextField(
@@ -329,7 +329,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

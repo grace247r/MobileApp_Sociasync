@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
-import 'package:sociasync_app/screens/loadinggeneratorpage.dart';
+import 'package:sociasync_app/screens/content generator/loadinggeneratorpage.dart';
 
 class ContentIdeasPage extends StatefulWidget {
   const ContentIdeasPage({super.key});
@@ -14,7 +14,7 @@ class ContentIdeasPage extends StatefulWidget {
 }
 
 class _ContentIdeasPageState extends State<ContentIdeasPage> {
-  int _currentIndex = 2;
+  final int _currentIndex = 2;
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -298,17 +298,17 @@ class ContentIdeaCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () {},
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>((
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>((
                     states,
                   ) {
                     const baseColor = Color(0xFFA6B7FF);
-                    if (states.contains(MaterialState.pressed)) {
+                    if (states.contains(WidgetState.pressed)) {
                       return baseColor.withOpacity(0.76);
                     }
                     return baseColor.withOpacity(0.41);
                   }),
-                  elevation: const MaterialStatePropertyAll(0),
-                  shape: MaterialStatePropertyAll(
+                  elevation: const WidgetStatePropertyAll(0),
+                  shape: WidgetStatePropertyAll(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -402,17 +402,17 @@ class GeneratorCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onPressed,
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>((
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>((
                     states,
                   ) {
                     const baseColor = Color(0xFFA6B7FF);
-                    if (states.contains(MaterialState.pressed)) {
+                    if (states.contains(WidgetState.pressed)) {
                       return baseColor.withOpacity(0.76);
                     }
                     return baseColor.withOpacity(0.41);
                   }),
-                  elevation: const MaterialStatePropertyAll(0),
-                  shape: MaterialStatePropertyAll(
+                  elevation: const WidgetStatePropertyAll(0),
+                  shape: WidgetStatePropertyAll(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),

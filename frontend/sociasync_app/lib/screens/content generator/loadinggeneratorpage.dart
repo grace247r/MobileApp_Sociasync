@@ -3,7 +3,7 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/generator_loading.dart';
-import 'package:sociasync_app/screens/generation_result_page.dart';
+import 'package:sociasync_app/screens/content generator/generation_result_page.dart';
 
 class LoadingGeneratorPage extends StatefulWidget {
   const LoadingGeneratorPage({super.key});
