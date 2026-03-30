@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
 class GeneratorLoadingWidget extends StatefulWidget {
-  const GeneratorLoadingWidget({super.key});
+  const GeneratorLoadingWidget({super.key, this.onCompleted});
+
+  final VoidCallback? onCompleted;
 
   @override
   State<GeneratorLoadingWidget> createState() => _GeneratorLoadingWidgetState();
@@ -18,13 +20,19 @@ class _GeneratorLoadingWidgetState extends State<GeneratorLoadingWidget>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
+      duration: const Duration(seconds: 3),
+    )..forward();
 
     _progressAnimation = Tween<double>(
       begin: 0,
       end: 1,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        widget.onCompleted?.call();
+      }
+    });
   }
 
   @override
@@ -35,7 +43,6 @@ class _GeneratorLoadingWidgetState extends State<GeneratorLoadingWidget>
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryBlue = Color(0xFF1D5093);
     const double barHeight = 16;
     const double barRadius = 16;
 
