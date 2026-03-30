@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'recover_password_page.dart';
 import 'sign_up_page.dart';
-import '../dashboard_page.dart';
+import '../dashboard/dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -35,7 +35,8 @@ class _LoginPageState extends State<LoginPage> {
     // Validasi email/username
     if (email.isEmpty) {
       emailErr = 'Email/username tidak boleh kosong';
-    } else if (email.contains('@') && !RegExp(r'^[\w.-]+@[\w.-]+\.\w+$').hasMatch(email)) {
+    } else if (email.contains('@') &&
+        !RegExp(r'^[\w.-]+@[\w.-]+\.\w+$').hasMatch(email)) {
       emailErr = 'Format email tidak valid';
     }
 
@@ -156,7 +157,8 @@ class _LoginPageState extends State<LoginPage> {
                           hint: 'Password...',
                           obscure: _obscurePassword,
                           hasError: _passwordError != null,
-                          onChanged: (_) => setState(() => _passwordError = null),
+                          onChanged: (_) =>
+                              setState(() => _passwordError = null),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -166,7 +168,8 @@ class _LoginPageState extends State<LoginPage> {
                               size: 18,
                             ),
                             onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
                           ),
                         ),
                         if (_passwordError != null)
@@ -184,8 +187,7 @@ class _LoginPageState extends State<LoginPage> {
                               );
                             },
                             style: TextButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
@@ -332,10 +334,7 @@ class _LoginPageState extends State<LoginPage> {
         controller: controller,
         obscureText: obscure,
         onChanged: onChanged,
-        style: const TextStyle(
-          fontSize: 13,
-          color: Color(0xFF1A1A2E),
-        ),
+        style: const TextStyle(fontSize: 13, color: Color(0xFF1A1A2E)),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(

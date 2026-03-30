@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/screens/content_generator_page.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 // Import wrapper background yang kita buat sebelumnya
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -29,9 +29,9 @@ class _NotificationPageState extends State<NotificationPage> {
     }
 
     if (index == 2) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const ContentGeneratorPage()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
       return;
     }
 

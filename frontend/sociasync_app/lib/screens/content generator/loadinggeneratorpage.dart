@@ -3,7 +3,7 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/generator_loading.dart';
-import 'package:sociasync_app/screens/generation_result_page.dart';
+import 'package:sociasync_app/screens/content generator/generation_result_page.dart';
 
 class LoadingGeneratorPage extends StatefulWidget {
   const LoadingGeneratorPage({super.key});
@@ -14,12 +14,18 @@ class LoadingGeneratorPage extends StatefulWidget {
 
 class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
+  int _currentIndex = 2;
 
   void _goToResultPage() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const GenerationResultPage()),
     );
+  }
+
+  void _onNavbarTap(int index) {
+    if (index == _currentIndex) return;
+    // Loading page typically doesn't navigate on navbar
   }
 
   @override
@@ -75,9 +81,9 @@ class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
             left: 0,
             right: 0,
             child: AppNavbar(
-              selectedIndex: 0, // Tetap di index Home/Generator
+              selectedIndex: _currentIndex,
+              onTap: _onNavbarTap,
               backgroundColor: primaryBlue,
-              onTap: (index) {},
             ),
           ),
         ],

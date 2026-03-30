@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/content generator/saved_content_page.dart';
-import 'package:sociasync_app/screens/content_ideas_page.dart';
+import 'package:sociasync_app/screens/content generator/content_ideas_page.dart';
 
 class ContentGeneratorPage extends StatefulWidget {
   const ContentGeneratorPage({super.key});

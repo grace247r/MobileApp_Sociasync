@@ -3,8 +3,9 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/success_dialog.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 
 class GenerationResultPage extends StatefulWidget {
   const GenerationResultPage({super.key});
@@ -32,6 +33,13 @@ class _GenerationResultPageState extends State<GenerationResultPage> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const NotificationPage()),
       );
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
       return;
     }
 
