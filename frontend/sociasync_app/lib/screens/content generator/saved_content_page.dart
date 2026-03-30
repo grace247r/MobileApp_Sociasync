@@ -27,6 +27,13 @@ class _SavedContentPageState extends State<SavedContentPage> {
       return;
     }
 
+    if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const NotificationPage()),
+      );
+      return;
+    }
+
     if (index == 2) {
       Navigator.of(
         context,

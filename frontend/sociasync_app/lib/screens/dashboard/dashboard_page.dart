@@ -3,9 +3,9 @@ import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/content generator/content_generator_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/analytics/monthly_summary_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -16,7 +16,8 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  final int _currentIndex = 0; // Untuk melacak posisi Navbar
+  int _currentIndex = 0; // Untuk melacak posisi Navbar
+  final List<double> _weeklyChartValues = [42, 35, 38, 56, 53, 54, 58];
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -76,7 +77,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ), // Jarak antara wadah biru ke kartu stats
                   decoration: BoxDecoration(
                     // Warna biru transparan untuk wadah (mirip di gambar)
-                    color: primaryBlue.withOpacity(0.15),
+                    color: primaryBlue.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: GridView.count(
@@ -123,15 +124,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           // Menggunakan opacity rendah agar background gradasi tetap tembus pandang
-                          color: primaryBlue.withOpacity(0.05),
+                          color: primaryBlue.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: primaryBlue.withOpacity(0.1),
+                            color: primaryBlue.withValues(alpha: 0.1),
                           ),
                         ),
-                        child: const Center(
-                          child: Text("Line Chart Placeholder"),
-                        ),
+                        child: _buildWeeklyChart(),
                       ),
                     ],
                   ),
@@ -214,12 +213,14 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8), // Sedikit transparan agar estetik
+        color: Colors.white.withValues(
+          alpha: 0.8,
+        ), // Sedikit transparan agar estetik
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.blue.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -259,7 +260,7 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 5,
             offset: const Offset(0, 3),
           ),
@@ -267,5 +268,175 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: const Center(child: Icon(Icons.image, color: Colors.white)),
     );
+  }
+
+  Widget _buildWeeklyChart() {
+    const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _WeeklyChartPainter(
+                primaryBlue: primaryBlue,
+                values: _weeklyChartValues,
+              ),
+            ),
+          ),
+          Positioned(
+            top: 2,
+            right: 2,
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.black.withValues(alpha: 0.85),
+              size: 32,
+            ),
+          ),
+          Positioned(
+            left: 34,
+            right: 6,
+            bottom: 25,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(
+                days.length,
+                (_) => Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2568B8),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2568B8).withValues(alpha: 0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 22,
+            right: 0,
+            bottom: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: days
+                  .map(
+                    (day) => Text(
+                      day,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF333333),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeeklyChartPainter extends CustomPainter {
+  _WeeklyChartPainter({required this.primaryBlue, required this.values});
+
+  final Color primaryBlue;
+  final List<double> values;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final axisPaint = Paint()
+      ..color = const Color(0xFF2568B8)
+      ..strokeWidth = 2.2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final linePaint = Paint()
+      ..color = const Color(0xFF2568B8)
+      ..strokeWidth = 2.6
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPaint = Paint()
+      ..color = const Color(0xFF2568B8).withValues(alpha: 0.18)
+      ..style = PaintingStyle.fill;
+
+    const leftPad = 12.0;
+    final rightPad = 6.0;
+    const topPad = 14.0;
+    final baselineY = size.height - 36;
+
+    canvas.drawLine(
+      Offset(leftPad, baselineY),
+      Offset(size.width - rightPad, baselineY),
+      axisPaint,
+    );
+    canvas.drawLine(
+      const Offset(leftPad, 8),
+      Offset(leftPad, baselineY),
+      axisPaint,
+    );
+
+    final pointsCount = values.length < 2 ? 2 : values.length;
+    final chartWidth = size.width - leftPad - rightPad;
+    final stepX = chartWidth / (pointsCount - 1);
+    final xVals = List.generate(
+      pointsCount,
+      (index) => leftPad + stepX * index,
+    );
+
+    final chartTop = topPad;
+    final chartBottom = baselineY - 4;
+    final chartHeight = chartBottom - chartTop;
+
+    final minVal = values.reduce((a, b) => a < b ? a : b);
+    final maxVal = values.reduce((a, b) => a > b ? a : b);
+    final range = (maxVal - minVal).abs() < 0.0001 ? 1.0 : (maxVal - minVal);
+
+    // Tambahkan margin atas-bawah agar garis tidak menempel frame.
+    const normalizedMin = 0.12;
+    const normalizedMax = 0.88;
+
+    final points = List.generate(pointsCount, (index) {
+      final value = values.length > index ? values[index] : values.last;
+      final normalized = (value - minVal) / range;
+      final ratio =
+          normalizedMax - (normalized * (normalizedMax - normalizedMin));
+      final y = chartTop + (ratio * chartHeight);
+      return Offset(xVals[index], y);
+    });
+
+    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
+    for (int i = 0; i < points.length - 1; i++) {
+      final p0 = points[i];
+      final p1 = points[i + 1];
+      final c1 = Offset((p0.dx + p1.dx) / 2, p0.dy);
+      final c2 = Offset((p0.dx + p1.dx) / 2, p1.dy);
+      linePath.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, p1.dx, p1.dy);
+    }
+
+    final fillPath = Path.from(linePath)
+      ..lineTo(points.last.dx, baselineY)
+      ..lineTo(points.first.dx, baselineY)
+      ..close();
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(linePath, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _WeeklyChartPainter oldDelegate) {
+    return oldDelegate.primaryBlue != primaryBlue ||
+        oldDelegate.values != values;
   }
 }

@@ -4,6 +4,8 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/analytics/ai_suggestion_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 
 class MonthlySummaryPage extends StatefulWidget {
   const MonthlySummaryPage({super.key});
@@ -14,6 +16,31 @@ class MonthlySummaryPage extends StatefulWidget {
 
 class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
+  int _currentIndex = 1;
+
+  void _onNavbarTap(int index) {
+    if (index == _currentIndex) return;
+
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      return;
+    }
+
+    if (index == 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Halaman profil belum tersedia')),
+      );
+    }
+  }
 
   void _onNavbarTap(int index) {
     if (index == 2) {
@@ -177,9 +204,9 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
             left: 0,
             right: 0,
             child: AppNavbar(
-              selectedIndex: 1, // Index History/Summary
-              backgroundColor: primaryBlue,
+              selectedIndex: _currentIndex,
               onTap: _onNavbarTap,
+              backgroundColor: primaryBlue,
             ),
           ),
         ],
