@@ -19,7 +19,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
   bool isTikTokSelected = true;
   final Map<String, bool> _toggleStates = {};
 
-  int _currentIndex = 2;
+  final int _currentIndex = -1;
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -35,6 +35,13 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const NotificationPage()),
       );
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
       return;
     }
 
@@ -288,7 +295,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                               height: 24,
                               margin: const EdgeInsets.only(left: 4, right: 50),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFBA0B1FC),
+                                color: const Color(0xffba0b1fc),
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: const TextField(
@@ -329,7 +336,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

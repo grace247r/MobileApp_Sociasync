@@ -15,7 +15,7 @@ class NotificationPage extends StatefulWidget {
 
 class _NotificationPageState extends State<NotificationPage> {
   static const Color primaryBlue = Color(0xFF1D5093);
-  int _currentIndex =
+  final int _currentIndex =
       1; // Sesuaikan index dengan halaman Notification (misal index 1)
 
   void _onNavbarTap(int index) {

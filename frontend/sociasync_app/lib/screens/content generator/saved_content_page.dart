@@ -15,7 +15,7 @@ class SavedContentPage extends StatefulWidget {
 
 class _SavedContentPageState extends State<SavedContentPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  int _currentIndex = 1; // Index untuk navbar (History/Saved)
+  final int _currentIndex = 1; // Index untuk navbar (History/Saved)
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;

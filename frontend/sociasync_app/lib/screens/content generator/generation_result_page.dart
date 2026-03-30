@@ -15,7 +15,7 @@ class GenerationResultPage extends StatefulWidget {
 }
 
 class _GenerationResultPageState extends State<GenerationResultPage> {
-  int _currentIndex = 2;
+  final int _currentIndex = -1;
 
   final Color primaryBlue = const Color(0xFF1D5093);
 
