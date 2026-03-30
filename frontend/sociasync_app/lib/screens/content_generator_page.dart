@@ -5,6 +5,7 @@ import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/dashboard_page.dart';
 import 'package:sociasync_app/screens/notification_page.dart';
 import 'package:sociasync_app/screens/saved_content_page.dart';
+import 'package:sociasync_app/screens/content_ideas_page.dart';
 
 class ContentGeneratorPage extends StatefulWidget {
   const ContentGeneratorPage({super.key});
@@ -168,7 +169,13 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                   child: SizedBox(
                     width: 170, // Mengunci lebar tombol agar tidak kepanjangan
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ContentIdeasPage(),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFB4BCE2),
                         padding: const EdgeInsets.symmetric(vertical: 8),
