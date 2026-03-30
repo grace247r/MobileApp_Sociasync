@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
@@ -12,7 +13,24 @@ class ChatbotPage extends StatefulWidget {
 
 class _ChatbotPageState extends State<ChatbotPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  int _currentIndex = 2; // Index Chat di Navbar
+  final int _currentIndex = 2;
+
+  void _onNavbarTap(int index) {
+    if (index == _currentIndex) return;
+
+    if (index == 2) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      return;
+    }
+
+    if (index == 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Halaman profil belum tersedia')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,9 +158,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
             child: AppNavbar(
               selectedIndex: _currentIndex,
               backgroundColor: primaryBlue,
-              onTap: (index) {
-                setState(() => _currentIndex = index);
-              },
+              onTap: _onNavbarTap,
             ),
           ),
         ],

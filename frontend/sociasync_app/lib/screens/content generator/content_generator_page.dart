@@ -6,6 +6,7 @@ import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/content generator/saved_content_page.dart';
 import 'package:sociasync_app/screens/content generator/content_ideas_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 
 class ContentGeneratorPage extends StatefulWidget {
   const ContentGeneratorPage({super.key});
@@ -19,7 +20,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
   bool isTikTokSelected = true;
   final Map<String, bool> _toggleStates = {};
 
-  final int _currentIndex = 2;
+  final int _currentIndex = -1;
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -35,6 +36,13 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const NotificationPage()),
       );
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
       return;
     }
 

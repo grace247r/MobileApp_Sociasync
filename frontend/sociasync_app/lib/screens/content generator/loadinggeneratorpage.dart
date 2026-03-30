@@ -4,6 +4,7 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/generator_loading.dart';
 import 'package:sociasync_app/screens/content generator/generation_result_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 
 class LoadingGeneratorPage extends StatefulWidget {
   const LoadingGeneratorPage({super.key});
@@ -14,6 +15,21 @@ class LoadingGeneratorPage extends StatefulWidget {
 
 class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
+
+  void _onNavbarTap(int index) {
+    if (index == 2) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      return;
+    }
+
+    if (index == 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Halaman profil belum tersedia')),
+      );
+    }
+  }
 
   void _goToResultPage() {
     if (!mounted) return;
@@ -77,7 +93,7 @@ class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
             child: AppNavbar(
               selectedIndex: 0, // Tetap di index Home/Generator
               backgroundColor: primaryBlue,
-              onTap: (index) {},
+              onTap: _onNavbarTap,
             ),
           ),
         ],

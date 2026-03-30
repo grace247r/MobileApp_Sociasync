@@ -3,6 +3,7 @@ import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/content generator/content_generator_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/analytics/monthly_summary_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 
@@ -28,9 +29,9 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     if (index == 2) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const ContentGeneratorPage()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
       return;
     }
 
