@@ -3,6 +3,7 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/generator_loading.dart';
+import 'package:sociasync_app/screens/generation_result_page.dart';
 
 class LoadingGeneratorPage extends StatefulWidget {
   const LoadingGeneratorPage({super.key});
@@ -14,19 +15,11 @@ class LoadingGeneratorPage extends StatefulWidget {
 class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
 
-  @override
-  void initState() {
-    super.initState();
-    // Simulasi loading 3 detik
-    _finishLoading();
-  }
-
-  void _finishLoading() async {
-    await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
-      // Setelah loading selesai, balik ke halaman sebelumnya atau ke ResultPage
-      Navigator.of(context).pop();
-    }
+  void _goToResultPage() {
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const GenerationResultPage()),
+    );
   }
 
   @override
@@ -53,7 +46,9 @@ class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
                 // WIDGET TENGAH: Loading Generator
                 SizedBox(
                   height: 340,
-                  child: Center(child: GeneratorLoadingWidget()),
+                  child: Center(
+                    child: GeneratorLoadingWidget(onCompleted: _goToResultPage),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const Center(
