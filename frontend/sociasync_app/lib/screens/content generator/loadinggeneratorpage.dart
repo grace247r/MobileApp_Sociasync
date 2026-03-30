@@ -15,22 +15,6 @@ class LoadingGeneratorPage extends StatefulWidget {
 class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   int _currentIndex = 2;
-
-  void _onNavbarTap(int index) {
-    if (index == 2) {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
-      return;
-    }
-
-    if (index == 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Halaman profil belum tersedia')),
-      );
-    }
-  }
-
   void _goToResultPage() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(

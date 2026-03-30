@@ -5,7 +5,6 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/analytics/ai_suggestion_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 
 class MonthlySummaryPage extends StatefulWidget {
   const MonthlySummaryPage({super.key});
@@ -28,21 +27,6 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
       return;
     }
 
-    if (index == 2) {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
-      return;
-    }
-
-    if (index == 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Halaman profil belum tersedia')),
-      );
-    }
-  }
-
-  void _onNavbarTap(int index) {
     if (index == 2) {
       Navigator.of(
         context,
