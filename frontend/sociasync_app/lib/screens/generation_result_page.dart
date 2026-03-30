@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
+import 'package:sociasync_app/widgets/success_dialog.dart';
 import 'package:sociasync_app/screens/dashboard_page.dart';
 import 'package:sociasync_app/screens/notification_page.dart';
 
@@ -148,8 +149,24 @@ class _GenerationResultPageState extends State<GenerationResultPage> {
                         "Save",
                         primaryBlue,
                         Colors.white,
-                        () {
-                          // Logic simpan ke Saved Content
+                        () async {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => const SuccessSaveDialog(),
+                          );
+
+                          await Future.delayed(const Duration(seconds: 2));
+
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (_) => const DashboardPage(),
+                              ),
+                              (route) => false,
+                            );
+                          }
                         },
                       ),
                     ),
