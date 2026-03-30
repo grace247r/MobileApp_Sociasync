@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/screens/content_generator_page.dart';
+import 'package:sociasync_app/screens/dashboard_page.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 // Import wrapper background yang kita buat sebelumnya
@@ -15,6 +17,30 @@ class _NotificationPageState extends State<NotificationPage> {
   static const Color primaryBlue = Color(0xFF1D5093);
   int _currentIndex =
       1; // Sesuaikan index dengan halaman Notification (misal index 1)
+
+  void _onNavbarTap(int index) {
+    if (index == _currentIndex) return;
+
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const ContentGeneratorPage()),
+      );
+      return;
+    }
+
+    if (index == 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Halaman profil belum tersedia')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,14 +109,7 @@ class _NotificationPageState extends State<NotificationPage> {
             child: AppNavbar(
               selectedIndex: _currentIndex,
               backgroundColor: primaryBlue,
-              onTap: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-                if (index == 0) {
-                  Navigator.of(context).pop(); // Kembali ke Dashboard
-                }
-              },
+              onTap: _onNavbarTap,
             ),
           ),
         ],
@@ -110,8 +129,12 @@ class _NotificationCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         // Efek Glassmorphism: Putih transparan dengan sedikit blur dari background
-        color: Color.fromRGBO(78, 96, 189, 0.10)
-        .withOpacity(0.10), // Opacity harus di rentang 0.0..1.0
+        color: Color.fromRGBO(
+          78,
+          96,
+          189,
+          0.10,
+        ).withOpacity(0.10), // Opacity harus di rentang 0.0..1.0
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(

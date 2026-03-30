@@ -1,22 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/widgets/navbar.dart';
-
-class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Roboto',
-        primaryColor: const Color(0xFF1D5093),
-        useMaterial3: true,
-      ),
-      home: const DashboardPage(),
-    );
-  }
-}
+import 'package:sociasync_app/screens/notification_page.dart';
+import 'package:sociasync_app/widgets/app_navbar.dart';
+import 'package:sociasync_app/widgets/dashboard_header.dart';
+import 'package:sociasync_app/screens/content_generator_page.dart';
+import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -26,9 +13,32 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  int _currentNavIndex = 0;
   final Color primaryBlue = const Color(0xFF1D5093);
   int _currentIndex = 0; // Untuk melacak posisi Navbar
+
+  void _onNavbarTap(int index) {
+    if (index == _currentIndex) return;
+
+    if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const NotificationPage()),
+      );
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const ContentGeneratorPage()),
+      );
+      return;
+    }
+
+    if (index == 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Halaman profil belum tersedia')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,14 +94,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: 30),
 
-              // Weekly Chart
-              Text(
-                'Weekly Chart',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: primaryBlue,
-                  decoration: TextDecoration.underline,
+                // Weekly Chart Section
+                Text(
+                  'Weekly Chart',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
                 const SizedBox(height: 15),
                 Container(
@@ -156,23 +167,28 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
+
+                // Tambahkan SizedBox besar di bawah agar konten tidak tertutup Navbar melayang
+                const SizedBox(height: 100),
+              ],
+            ),
           ),
 
-      bottomNavigationBar: Navbar(
-        selectedIndex: _currentNavIndex,
-        onTap: (index) {
-          setState(() {
-            _currentNavIndex = index;
-          });
-          print("Pindah ke halaman index: $index");
-        },
+          // LAPISAN 2: Navbar Melayang (Floating)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: AppNavbar(
+              selectedIndex: _currentIndex,
+              backgroundColor: primaryBlue,
+              onTap: _onNavbarTap,
+            ),
+          ),
+        ],
       ),
     );
   }
-
 
   Widget _buildStatCard(String value, String label) {
     return Container(
@@ -221,6 +237,13 @@ class _DashboardPageState extends State<DashboardPage> {
       decoration: BoxDecoration(
         color: Colors.grey.shade300,
         borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: const Center(child: Icon(Icons.image, color: Colors.white)),
     );
