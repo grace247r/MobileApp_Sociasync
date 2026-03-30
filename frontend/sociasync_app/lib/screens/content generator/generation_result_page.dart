@@ -4,7 +4,7 @@ import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/success_dialog.dart';
 import 'package:sociasync_app/screens/dashboard_page.dart';
-import 'package:sociasync_app/screens/notification_page.dart';
+import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 
 class GenerationResultPage extends StatefulWidget {
   const GenerationResultPage({super.key});

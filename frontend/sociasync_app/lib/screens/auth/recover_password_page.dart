@@ -1,57 +1,57 @@
 import 'package:flutter/material.dart';
-import 'recover_password_page.dart';
-import 'sign_up_page.dart';
-import 'dashboard_page.dart';
+import 'package:flutter/services.dart';
+import '../dashboard_page.dart';
+import 'sign_up_page.dart'; // ← tambahkan import ini
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RecoverPasswordPage extends StatefulWidget {
+  const RecoverPasswordPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RecoverPasswordPage> createState() => _RecoverPasswordPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  bool _obscurePassword = true;
+class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _codeController = TextEditingController();
 
   String? _emailError;
-  String? _passwordError;
+  String? _codeError;
 
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
+    _codeController.dispose();
     super.dispose();
   }
 
   bool _validate() {
     final email = _emailController.text.trim();
-    final password = _passwordController.text;
+    final code = _codeController.text.trim();
 
     String? emailErr;
-    String? passErr;
+    String? codeErr;
 
-    // Validasi email/username
+    // Validasi email
     if (email.isEmpty) {
       emailErr = 'Email/username tidak boleh kosong';
-    } else if (email.contains('@') && !RegExp(r'^[\w.-]+@[\w.-]+\.\w+$').hasMatch(email)) {
+    } else if (email.contains('@') &&
+        !RegExp(r'^[\w.-]+@[\w.-]+\.\w+$').hasMatch(email)) {
       emailErr = 'Format email tidak valid';
     }
 
-    // Validasi password
-    if (password.isEmpty) {
-      passErr = 'Password tidak boleh kosong';
-    } else if (password.length < 6) {
-      passErr = 'Password minimal 6 karakter';
+    // Validasi code — harus integer, tidak boleh kosong
+    if (code.isEmpty) {
+      codeErr = 'Kode tidak boleh kosong';
+    } else if (!RegExp(r'^\d+$').hasMatch(code)) {
+      codeErr = 'Kode harus berupa angka, bukan huruf';
     }
 
     setState(() {
       _emailError = emailErr;
-      _passwordError = passErr;
+      _codeError = codeErr;
     });
 
-    return emailErr == null && passErr == null;
+    return emailErr == null && codeErr == null;
   }
 
   @override
@@ -108,9 +108,9 @@ class _LoginPageState extends State<LoginPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Welcome
+                        // Title
                         const Text(
-                          'Welcome',
+                          'Reset Password',
                           style: TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
@@ -133,17 +133,18 @@ class _LoginPageState extends State<LoginPage> {
                         _buildTextField(
                           controller: _emailController,
                           hint: 'Email/Username...',
-                          obscure: false,
                           hasError: _emailError != null,
-                          onChanged: (_) => setState(() => _emailError = null),
+                          onChanged: (_) =>
+                              setState(() => _emailError = null),
                         ),
-                        if (_emailError != null) _buildErrorText(_emailError!),
+                        if (_emailError != null)
+                          _buildErrorText(_emailError!),
 
                         const SizedBox(height: 14),
 
-                        // Password label
+                        // Code label
                         const Text(
-                          'Password',
+                          'Code',
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
@@ -151,38 +152,90 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        _buildTextField(
-                          controller: _passwordController,
-                          hint: 'Password...',
-                          obscure: _obscurePassword,
-                          hasError: _passwordError != null,
-                          onChanged: (_) => setState(() => _passwordError = null),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: Colors.grey.shade500,
-                              size: 18,
+
+                        // Code field with Send Code button inside
+                        Container(
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.55),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: _codeError != null
+                                  ? const Color(0xFFFF4D4D)
+                                  : Colors.white.withOpacity(0.8),
+                              width: _codeError != null ? 1.5 : 1,
                             ),
-                            onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _codeController,
+                                  // Hanya angka yang bisa diketik
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  onChanged: (_) =>
+                                      setState(() => _codeError = null),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF1A1A2E),
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: 'Code......',
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey.withOpacity(0.6),
+                                      fontSize: 13,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding:
+                                        const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                              // Send Code button
+                              GestureDetector(
+                                onTap: () {
+                                  // TODO: send code logic
+                                },
+                                child: Container(
+                                  height: 44,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF1A3EC8),
+                                    borderRadius: BorderRadius.only(
+                                      topRight: Radius.circular(10),
+                                      bottomRight: Radius.circular(10),
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Send Code',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        if (_passwordError != null)
-                          _buildErrorText(_passwordError!),
+                        if (_codeError != null)
+                          _buildErrorText(_codeError!),
 
-                        // Forgot password
+                        // Didn't get a code?
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const RecoverPasswordPage(),
-                                ),
-                              );
-                            },
+                            onPressed: () {},
                             style: TextButton.styleFrom(
                               padding:
                                   const EdgeInsets.symmetric(vertical: 4),
@@ -190,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: const Text(
-                              'Forgot password?',
+                              "Didn't get a code?",
                               style: TextStyle(
                                 fontSize: 11.5,
                                 color: Color(0xFF1A5DC8),
@@ -241,7 +294,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         const SizedBox(height: 16),
 
-                        // Sign up
+                        // Sign up — navigasi ke SignUpPage
                         Center(
                           child: RichText(
                             text: TextSpan(
@@ -254,6 +307,7 @@ class _LoginPageState extends State<LoginPage> {
                                 WidgetSpan(
                                   child: GestureDetector(
                                     onTap: () {
+                                      // ← navigasi ke SignUpPage
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
                                           builder: (_) => const SignUpPage(),
@@ -293,7 +347,8 @@ class _LoginPageState extends State<LoginPage> {
       padding: const EdgeInsets.only(top: 5, left: 4),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Color(0xFFFF4D4D), size: 13),
+          const Icon(Icons.error_outline,
+              color: Color(0xFFFF4D4D), size: 13),
           const SizedBox(width: 4),
           Text(
             message,
@@ -311,10 +366,8 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
-    required bool obscure,
     bool hasError = false,
     ValueChanged<String>? onChanged,
-    Widget? suffixIcon,
   }) {
     return Container(
       height: 44,
@@ -330,7 +383,6 @@ class _LoginPageState extends State<LoginPage> {
       ),
       child: TextField(
         controller: controller,
-        obscureText: obscure,
         onChanged: onChanged,
         style: const TextStyle(
           fontSize: 13,
@@ -342,7 +394,6 @@ class _LoginPageState extends State<LoginPage> {
             color: Colors.grey.withOpacity(0.6),
             fontSize: 13,
           ),
-          suffixIcon: suffixIcon,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
