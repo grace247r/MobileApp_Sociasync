@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
+import 'package:sociasync_app/screens/ai_suggestion_page.dart';
 
 class MonthlySummaryPage extends StatefulWidget {
   const MonthlySummaryPage({super.key});
@@ -135,7 +136,17 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                 const SizedBox(height: 15),
 
                 // Card AI Suggestion
-                _buildInsightCard('AI Suggestion', 'Try AI'),
+                _buildInsightCard(
+                  'AI Suggestion',
+                  'Try AI',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ChatbotPage(),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 12),
 
                 // Card Boost Insight
@@ -196,7 +207,11 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   }
 
   // Widget Helper untuk Insight Row (AI Suggestion / Boost)
-  Widget _buildInsightCard(String title, String btnLabel) {
+  Widget _buildInsightCard(
+    String title,
+    String btnLabel, {
+    VoidCallback? onPressed,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
@@ -215,7 +230,7 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: onPressed,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: primaryBlue,
