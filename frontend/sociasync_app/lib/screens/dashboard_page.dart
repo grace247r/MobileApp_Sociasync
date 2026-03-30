@@ -3,6 +3,7 @@ import 'package:sociasync_app/screens/notification_page.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/content_generator_page.dart';
+import 'package:sociasync_app/screens/monthly_summary_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -95,26 +96,44 @@ class _DashboardPageState extends State<DashboardPage> {
                 const SizedBox(height: 30),
 
                 // Weekly Chart Section
-                Text(
-                  'Weekly Chart',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    decoration: TextDecoration.underline,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const MonthlySummaryPage(),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Weekly Chart',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          // Menggunakan opacity rendah agar background gradasi tetap tembus pandang
+                          color: primaryBlue.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: primaryBlue.withOpacity(0.1),
+                          ),
+                        ),
+                        child: const Center(
+                          child: Text("Line Chart Placeholder"),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 15),
-                Container(
-                  height: 200,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    // Menggunakan opacity rendah agar background gradasi tetap tembus pandang
-                    color: primaryBlue.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: primaryBlue.withOpacity(0.1)),
-                  ),
-                  child: const Center(child: Text("Line Chart Placeholder")),
                 ),
                 const SizedBox(height: 30),
 
