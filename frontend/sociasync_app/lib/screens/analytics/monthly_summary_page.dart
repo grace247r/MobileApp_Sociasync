@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
@@ -13,6 +14,21 @@ class MonthlySummaryPage extends StatefulWidget {
 
 class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
+
+  void _onNavbarTap(int index) {
+    if (index == 2) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      return;
+    }
+
+    if (index == 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Halaman profil belum tersedia')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +179,7 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
             child: AppNavbar(
               selectedIndex: 1, // Index History/Summary
               backgroundColor: primaryBlue,
-              onTap: (index) {},
+              onTap: _onNavbarTap,
             ),
           ),
         ],
