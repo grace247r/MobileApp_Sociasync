@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:sociasync_app/screens/calendar/calendar_month_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_year_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/notification_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
+import 'package:sociasync_app/widgets/app_navbar.dart';
+import 'package:sociasync_app/widgets/dashboard_header.dart';
 
 class CalendarWeekPage extends StatefulWidget {
   const CalendarWeekPage({super.key});
@@ -12,6 +17,7 @@ class CalendarWeekPage extends StatefulWidget {
 
 class _CalendarWeekPageState extends State<CalendarWeekPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
+  final int _currentIndex = 1;
 
   DateTime _focusedDate = DateTime(2026, 3, 3);
 
@@ -39,8 +45,19 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
   String _fullDate(DateTime d) {
     const days = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${days[d.weekday]}, ${d.day} ${months[d.month]} ${d.year}';
   }
@@ -62,11 +79,15 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
       ],
     ).then((value) {
       if (value == 'Month') {
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const CalendarMonthPage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const CalendarMonthPage()),
+        );
       } else if (value == 'Year') {
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const CalendarYearPage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const CalendarYearPage()),
+        );
       }
     });
   }
@@ -84,6 +105,30 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
     );
   }
 
+  void _onNavbarTap(int index) {
+    if (index == _currentIndex) return;
+
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      return;
+    }
+
+    if (index == 3) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
+    }
+  }
+
   void _showAddEventDialog() {
     final titleCtrl = TextEditingController();
     DateTime selectedDate = _focusedDate;
@@ -92,9 +137,13 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Add Event',
-              style: TextStyle(fontWeight: FontWeight.bold, color: primaryBlue)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Add Event',
+            style: TextStyle(fontWeight: FontWeight.bold, color: primaryBlue),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -103,7 +152,8 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                 decoration: InputDecoration(
                   labelText: 'Event title',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(color: primaryBlue, width: 2),
@@ -121,7 +171,9 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                     builder: (c, child) => Theme(
                       data: Theme.of(c).copyWith(
                         colorScheme: ColorScheme.light(
-                            primary: primaryBlue, onPrimary: Colors.white),
+                          primary: primaryBlue,
+                          onPrimary: Colors.white,
+                        ),
                       ),
                       child: child!,
                     ),
@@ -130,18 +182,21 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 12),
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade400),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today,
-                          size: 16, color: primaryBlue),
+                      Icon(Icons.calendar_today, size: 16, color: primaryBlue),
                       const SizedBox(width: 8),
-                      Text(_fullDate(selectedDate),
-                          style: const TextStyle(fontSize: 14)),
+                      Text(
+                        _fullDate(selectedDate),
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     ],
                   ),
                 ),
@@ -151,8 +206,7 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel',
-                  style: TextStyle(color: Colors.grey)),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -161,7 +215,7 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                   setState(() {
                     _events[key] = [
                       ...(_events[key] ?? []),
-                      titleCtrl.text.trim()
+                      titleCtrl.text.trim(),
                     ];
                   });
                 }
@@ -170,10 +224,10 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child: const Text('Add',
-                  style: TextStyle(color: Colors.white)),
+              child: const Text('Add', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -196,28 +250,14 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
             // ── Header ──
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      text: 'Hi, ',
-                      style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500),
-                      children: [
-                        TextSpan(
-                          text: 'Rina',
-                          style: TextStyle(
-                              color: primaryBlue,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.notifications, color: primaryBlue),
-                ],
+              child: DashboardHeader(
+                userName: 'Rina',
+                primaryColor: primaryBlue,
+                onNotificationTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const NotificationPage()),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 16),
@@ -231,29 +271,38 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                   const Text(
                     'Mar 2026',
                     style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87),
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                   Builder(
                     builder: (ctx) => GestureDetector(
                       onTap: () => _showViewDropdown(ctx),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: primaryBlue,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: const [
-                            Text('Week',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold)),
+                            Text(
+                              'Week',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             SizedBox(width: 4),
-                            Icon(Icons.keyboard_arrow_down,
-                                color: Colors.white, size: 18),
+                            Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ],
                         ),
                       ),
@@ -276,7 +325,8 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: weekDays.map((d) {
-                    final isSelected = d.day == _focusedDate.day &&
+                    final isSelected =
+                        d.day == _focusedDate.day &&
                         d.month == _focusedDate.month;
                     return GestureDetector(
                       onTap: () => setState(() => _focusedDate = d),
@@ -347,7 +397,9 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                 onTap: _showAddEventDialog,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 40, vertical: 14),
+                    horizontal: 40,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: primaryBlue,
                     borderRadius: BorderRadius.circular(30),
@@ -355,9 +407,10 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                   child: const Text(
                     '+ Add event',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600),
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -381,40 +434,51 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
           Text(
             _fullDate(day),
             style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: primaryBlue),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: primaryBlue,
+            ),
           ),
           const SizedBox(height: 8),
           if (events.isEmpty)
-            const Text('No Event',
-                style: TextStyle(fontSize: 13, color: Colors.grey))
+            const Text(
+              'No Event',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            )
           else
-            ...events.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: primaryBlue,
-                          shape: BoxShape.circle,
+            ...events.map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: primaryBlue,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        e,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(e,
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.black87),
-                            overflow: TextOverflow.ellipsis),
-                      ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 8),
-          const Text('Event :',
-              style: TextStyle(fontSize: 11, color: Colors.grey)),
+          const Text(
+            'Event :',
+            style: TextStyle(fontSize: 11, color: Colors.grey),
+          ),
           const SizedBox(height: 6),
           Expanded(
             child: Container(
@@ -430,35 +494,10 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
   }
 
   Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(15),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: primaryBlue,
-        borderRadius: BorderRadius.circular(40),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          // Home
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.home, color: Colors.white, size: 30),
-          ),
-          // Calendar (aktif) — icon history seperti di dashboard
-          const Icon(Icons.history, color: Colors.white, size: 30),
-          // Chat
-          const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
-          // Profile
-          GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfilePage()),
-            ),
-            child: const Icon(Icons.person_outline, color: Colors.white, size: 30),
-          ),
-        ],
-      ),
+    return AppNavbar(
+      selectedIndex: _currentIndex,
+      onTap: _onNavbarTap,
+      backgroundColor: primaryBlue,
     );
   }
 }
