@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sociasync_app/screens/calendar/calendar_month_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
+import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class CalendarYearPage extends StatefulWidget {
   const CalendarYearPage({super.key});
@@ -35,11 +36,15 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
       ],
     ).then((value) {
       if (value == 'Week') {
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const CalendarWeekPage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+        );
       } else if (value == 'Month') {
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const CalendarMonthPage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const CalendarMonthPage()),
+        );
       }
     });
   }
@@ -75,15 +80,17 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
                     text: TextSpan(
                       text: 'Hi, ',
                       style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500),
+                        fontSize: 20,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
                       children: [
                         TextSpan(
                           text: 'Rina',
                           style: TextStyle(
-                              color: primaryBlue,
-                              fontWeight: FontWeight.bold),
+                            color: primaryBlue,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -103,29 +110,38 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
                   Text(
                     '$currentYear',
                     style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87),
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                   Builder(
                     builder: (ctx) => GestureDetector(
                       onTap: () => _showViewDropdown(ctx),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: primaryBlue,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: const [
-                            Text('Week',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold)),
+                            Text(
+                              'Week',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             SizedBox(width: 4),
-                            Icon(Icons.keyboard_arrow_down,
-                                color: Colors.white, size: 18),
+                            Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ],
                         ),
                       ),
@@ -161,13 +177,15 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
                             child: Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
                               decoration: BoxDecoration(
                                 color: isCurrentYear
                                     ? primaryBlue
                                     : isExpanded
-                                        ? const Color(0xFFDDE8F5)
-                                        : Colors.transparent,
+                                    ? const Color(0xFFDDE8F5)
+                                    : Colors.transparent,
                                 borderRadius: isExpanded && !isCurrentYear
                                     ? const BorderRadius.only(
                                         topLeft: Radius.circular(0),
@@ -195,35 +213,52 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 10),
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
                               color: isCurrentYear
                                   ? primaryBlue
                                   : const Color(0xFFDDE8F5),
                               child: Wrap(
                                 spacing: 6,
                                 runSpacing: 4,
-                                children: [
-                                  'JAN', 'FEB', 'MAR', 'APR',
-                                  'MAY', 'JUN', 'JUL', 'AUG',
-                                  'SEP', 'OKT', 'NOV', 'DEC'
-                                ].map((m) => Text(
-                                      m,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: isCurrentYear
-                                            ? Colors.white
-                                            : primaryBlue,
-                                      ),
-                                    )).toList(),
+                                children:
+                                    [
+                                          'JAN',
+                                          'FEB',
+                                          'MAR',
+                                          'APR',
+                                          'MAY',
+                                          'JUN',
+                                          'JUL',
+                                          'AUG',
+                                          'SEP',
+                                          'OKT',
+                                          'NOV',
+                                          'DEC',
+                                        ]
+                                        .map(
+                                          (m) => Text(
+                                            m,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                              color: isCurrentYear
+                                                  ? Colors.white
+                                                  : primaryBlue,
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
                               ),
                             ),
 
                           if (year != years.last)
                             Divider(
-                                height: 1,
-                                color: Colors.grey.shade300,
-                                indent: 0),
+                              height: 1,
+                              color: Colors.grey.shade300,
+                              indent: 0,
+                            ),
                         ],
                       );
                     }).toList(),
@@ -254,12 +289,25 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
             onTap: () => Navigator.pop(context),
             child: const Icon(Icons.home, color: Colors.white, size: 30),
           ),
-          const Icon(Icons.calendar_today,
-              color: Colors.white, size: 26),
-          const Icon(Icons.chat_bubble_outline,
-              color: Colors.white, size: 30),
-          const Icon(Icons.person_outline,
-              color: Colors.white, size: 30),
+          GestureDetector(
+            onTap: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+            ),
+            child: const Icon(Icons.history, color: Colors.white, size: 30),
+          ),
+          const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            ),
+            child: const Icon(
+              Icons.person_outline,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
         ],
       ),
     );

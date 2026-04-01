@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class HelpPage extends StatelessWidget {
