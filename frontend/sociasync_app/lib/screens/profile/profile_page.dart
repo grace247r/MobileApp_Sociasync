@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sociasync_app/screens/profile/account_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
-import 'package:sociasync_app/screens/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/profile/help_page.dart';
 import 'package:sociasync_app/screens/profile/notification_page.dart';
 import 'package:sociasync_app/screens/profile/privacy_page.dart';

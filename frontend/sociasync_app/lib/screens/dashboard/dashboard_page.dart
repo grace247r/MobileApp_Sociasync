@@ -6,6 +6,8 @@ import 'package:sociasync_app/screens/content generator/content_generator_page.d
 import 'package:sociasync_app/screens/analytics/monthly_summary_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
+import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -24,7 +26,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     if (index == 1) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const NotificationPage()),
+        MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
       );
       return;
     }
@@ -37,9 +39,10 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     if (index == 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Halaman profil belum tersedia')),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
+      return;
     }
   }
 
