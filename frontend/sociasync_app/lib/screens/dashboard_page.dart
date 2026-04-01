@@ -1,24 +1,6 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Roboto', // Menggunakan font Roboto
-        primaryColor: const Color(0xFF1D5093),
-      ),
-      home: const DashboardPage(),
-    );
-  }
-}
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
+import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -69,7 +51,7 @@ class DashboardPage extends StatelessWidget {
               ),
               const SizedBox(height: 30),
 
-              // Weekly Chart Placeholder
+              // Weekly Chart
               Text(
                 'Weekly Chart',
                 style: TextStyle(
@@ -139,7 +121,6 @@ class DashboardPage extends StatelessWidget {
         ),
       ),
 
-      // Bottom Navigation Bar
       bottomNavigationBar: Container(
         margin: const EdgeInsets.all(15),
         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -149,11 +130,27 @@ class DashboardPage extends StatelessWidget {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: const [
-            Icon(Icons.home, color: Colors.white, size: 30),
-            Icon(Icons.history, color: Colors.white, size: 30),
-            Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
-            Icon(Icons.person_outline, color: Colors.white, size: 30),
+          children: [
+            const Icon(Icons.home, color: Colors.white, size: 30),
+
+            // ✅ History icon (seperti semula), navigate ke CalendarWeekPage
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+              ),
+              child: const Icon(Icons.history, color: Colors.white, size: 30),
+            ),
+
+            const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
+
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              ),
+              child: const Icon(Icons.person_outline, color: Colors.white, size: 30),
+            ),
           ],
         ),
       ),
@@ -207,7 +204,6 @@ class DashboardPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.grey.shade300,
         borderRadius: BorderRadius.circular(15),
-        // image: DecorationImage(image: AssetImage(imagePath), fit: BoxFit.cover),
       ),
     );
   }
