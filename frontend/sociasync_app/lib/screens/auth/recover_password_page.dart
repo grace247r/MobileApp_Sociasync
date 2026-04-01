@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dashboard_page.dart';
+import '../dashboard/dashboard_page.dart';
 import 'sign_up_page.dart'; // ← tambahkan import ini
 
 class RecoverPasswordPage extends StatefulWidget {
@@ -134,11 +134,9 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
                           controller: _emailController,
                           hint: 'Email/Username...',
                           hasError: _emailError != null,
-                          onChanged: (_) =>
-                              setState(() => _emailError = null),
+                          onChanged: (_) => setState(() => _emailError = null),
                         ),
-                        if (_emailError != null)
-                          _buildErrorText(_emailError!),
+                        if (_emailError != null) _buildErrorText(_emailError!),
 
                         const SizedBox(height: 14),
 
@@ -189,8 +187,7 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
                                       fontSize: 13,
                                     ),
                                     border: InputBorder.none,
-                                    contentPadding:
-                                        const EdgeInsets.symmetric(
+                                    contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 14,
                                       vertical: 12,
                                     ),
@@ -206,7 +203,8 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
                                 child: Container(
                                   height: 44,
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 14),
+                                    horizontal: 14,
+                                  ),
                                   decoration: const BoxDecoration(
                                     color: Color(0xFF1A3EC8),
                                     borderRadius: BorderRadius.only(
@@ -228,8 +226,7 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
                             ],
                           ),
                         ),
-                        if (_codeError != null)
-                          _buildErrorText(_codeError!),
+                        if (_codeError != null) _buildErrorText(_codeError!),
 
                         // Didn't get a code?
                         Align(
@@ -237,8 +234,7 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
                           child: TextButton(
                             onPressed: () {},
                             style: TextButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
@@ -347,8 +343,7 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
       padding: const EdgeInsets.only(top: 5, left: 4),
       child: Row(
         children: [
-          const Icon(Icons.error_outline,
-              color: Color(0xFFFF4D4D), size: 13),
+          const Icon(Icons.error_outline, color: Color(0xFFFF4D4D), size: 13),
           const SizedBox(width: 4),
           Text(
             message,
@@ -384,10 +379,7 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: const TextStyle(
-          fontSize: 13,
-          color: Color(0xFF1A1A2E),
-        ),
+        style: const TextStyle(fontSize: 13, color: Color(0xFF1A1A2E)),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
