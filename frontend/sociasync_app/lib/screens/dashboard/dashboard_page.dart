@@ -18,7 +18,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  int _currentIndex = 0; // Untuk melacak posisi Navbar
+  final int _currentIndex = 0; // Untuk melacak posisi Navbar
   final List<double> _weeklyChartValues = [42, 35, 38, 56, 53, 54, 58];
 
   void _onNavbarTap(int index) {

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class SavedContentPage extends StatefulWidget {
   const SavedContentPage({super.key});
@@ -29,7 +31,7 @@ class _SavedContentPageState extends State<SavedContentPage> {
 
     if (index == 1) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const NotificationPage()),
+        MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
       );
       return;
     }
@@ -42,9 +44,9 @@ class _SavedContentPageState extends State<SavedContentPage> {
     }
 
     if (index == 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Halaman profil belum tersedia')),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
     }
   }
 

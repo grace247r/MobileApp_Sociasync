@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+// Pastikan path import di bawah ini sesuai dengan folder di project kamu
+import 'package:sociasync_app/widgets/app_background_wrapper.dart';
+import 'package:sociasync_app/widgets/app_navbar.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class AddCalendarPage extends StatefulWidget {
-  /// Jika diisi, halaman berjalan dalam mode Edit
   final Map<String, dynamic>? initialData;
 
   const AddCalendarPage({super.key, this.initialData});
@@ -61,10 +67,22 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
     super.dispose();
   }
 
+  // --- Helper Formatter ---
   String _formatDate(DateTime d) {
     const months = [
-      '', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+      '',
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC',
     ];
     return '${d.day} ${months[d.month]} ${d.year}';
   }
@@ -76,6 +94,7 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
     return '$hour.$m $period';
   }
 
+  // --- Pickers ---
   Future<void> _pickDate(bool isStart) async {
     final initial = isStart ? startDate : endDate;
     final picked = await showDatePicker(
@@ -85,8 +104,10 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
       lastDate: DateTime(2030),
       builder: (c, child) => Theme(
         data: Theme.of(c).copyWith(
-          colorScheme:
-              ColorScheme.light(primary: primaryBlue, onPrimary: Colors.white),
+          colorScheme: ColorScheme.light(
+            primary: primaryBlue,
+            onPrimary: Colors.white,
+          ),
         ),
         child: child!,
       ),
@@ -110,29 +131,43 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
       initialTime: initial,
       builder: (c, child) => Theme(
         data: Theme.of(c).copyWith(
-          colorScheme:
-              ColorScheme.light(primary: primaryBlue, onPrimary: Colors.white),
+          colorScheme: ColorScheme.light(
+            primary: primaryBlue,
+            onPrimary: Colors.white,
+          ),
         ),
         child: child!,
       ),
     );
     if (picked != null) {
       setState(() {
-        if (isStart) startTime = picked;
-        else endTime = picked;
+        if (isStart) {
+          startTime = picked;
+        } else {
+          endTime = picked;
+        }
       });
     }
   }
 
-  void _showPickerDialog(String title, List<String> options, String current,
-      ValueChanged<String> onSelect) {
+  void _showPickerDialog(
+    String title,
+    List<String> options,
+    String current,
+    ValueChanged<String> onSelect,
+  ) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title,
-            style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: primaryBlue)),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: primaryBlue,
+          ),
+        ),
         contentPadding: const EdgeInsets.symmetric(vertical: 10),
         content: SizedBox(
           width: double.maxFinite,
@@ -145,13 +180,16 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
               final isSelected = options[i] == current;
               return ListTile(
                 dense: true,
-                title: Text(options[i],
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? primaryBlue : Colors.black87,
-                    )),
+                title: Text(
+                  options[i],
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isSelected ? primaryBlue : Colors.black87,
+                  ),
+                ),
                 trailing: isSelected
                     ? Icon(Icons.check, color: primaryBlue, size: 18)
                     : null,
@@ -163,31 +201,13 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
             },
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-        ],
       ),
     );
   }
 
   void _submitEvent() {
     final title = _titleCtrl.text.trim();
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please enter an event title'),
-          backgroundColor: primaryBlue,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-      return;
-    }
-
+    if (title.isEmpty) return; // Tambahkan snackbar jika perlu
     Navigator.pop(context, {
       'title': title,
       'location': _locationCtrl.text.trim(),
@@ -204,141 +224,211 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── Header ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      text: 'Hi, ',
-                      style: const TextStyle(
-                          fontSize: 20,
+    return AppBackgroundWrapper(
+      child: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                // ── Header ──
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          text: 'Hi, ',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Rina',
+                              style: TextStyle(
+                                color: primaryBlue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.notifications, color: primaryBlue),
+                    ],
+                  ),
+                ),
+
+                // ── Back + Title ──
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 20, 4),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: primaryBlue),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Text(
+                        _isEditMode ? 'Edit Event' : 'Add Event',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
                           color: Colors.black87,
-                          fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Form Content ──
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                      20,
+                      4,
+                      20,
+                      120,
+                    ), // Padding bawah untuk Navbar
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextSpan(
-                          text: 'Rina',
+                        _buildTextField(_titleCtrl, 'Title...'),
+                        const SizedBox(height: 10),
+                        _buildTextField(_locationCtrl, 'Location...'),
+                        const SizedBox(height: 16),
+                        _buildScheduleGroup(),
+                        const SizedBox(height: 12),
+                        _buildOptionTile(
+                          'Repeat',
+                          repeat,
+                          onTap: () => _showPickerDialog(
+                            'Repeat',
+                            repeatOptions,
+                            repeat,
+                            (v) => setState(() => repeat = v),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildOptionTile(
+                          'Reminder',
+                          reminder,
+                          onTap: () => _showPickerDialog(
+                            'Reminder',
+                            reminderOptions,
+                            reminder,
+                            (v) => setState(() => reminder = v),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Notes',
                           style: TextStyle(
-                              color: primaryBlue, fontWeight: FontWeight.bold),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        _buildNotesField(),
+                        const SizedBox(height: 30),
+
+                        // Submit Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _submitEvent,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryBlue,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: Text(
+                              _isEditMode ? 'Update Event' : '+ Add event',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  Icon(Icons.notifications, color: primaryBlue),
-                ],
-              ),
-            ),
-
-            // ── Back + Title (Add / Edit) ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 20, 4),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back, color: primaryBlue),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  Text(
-                    _isEditMode ? 'Edit Event' : 'Add Event',
-                    style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Form ──
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTextField(_titleCtrl, 'Title...'),
-                    const SizedBox(height: 10),
-                    _buildTextField(_locationCtrl, 'Location...'),
-                    const SizedBox(height: 16),
-                    _buildScheduleGroup(),
-                    const SizedBox(height: 12),
-                    _buildOptionTile('Repeat', repeat,
-                        onTap: () => _showPickerDialog(
-                            'Repeat', repeatOptions, repeat,
-                            (v) => setState(() => repeat = v))),
-                    const SizedBox(height: 10),
-                    _buildOptionTile('Reminder', reminder,
-                        onTap: () => _showPickerDialog(
-                            'Reminder', reminderOptions, reminder,
-                            (v) => setState(() => reminder = v))),
-                    const SizedBox(height: 12),
-                    const Text('Notes',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87)),
-                    const SizedBox(height: 6),
-                    _buildNotesField(),
-                    const SizedBox(height: 24),
-                  ],
                 ),
-              ),
+              ],
             ),
+          ),
 
-            // ── Submit Button ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitEvent,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
-                    elevation: 2,
-                  ),
-                  child: Text(
-                    _isEditMode ? 'Update Event' : '+ Add event',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
+          // ── App Navbar Melayang ──
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: AppNavbar(
+              selectedIndex: 1,
+              backgroundColor: primaryBlue,
+              onTap: (index) {
+                if (index == 0) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardPage()),
+                  );
+                  return;
+                }
+
+                if (index == 1) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+                  );
+                  return;
+                }
+
+                if (index == 2) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const InboxPage()),
+                  );
+                  return;
+                }
+
+                if (index == 3) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfilePage()),
+                  );
+                }
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      bottomNavigationBar: _buildBottomNav(context),
     );
   }
+
+  // --- Helper Widgets ---
 
   Widget _buildTextField(TextEditingController ctrl, String hint) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4FB),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
         controller: ctrl,
-        style: const TextStyle(fontSize: 14, color: Colors.black87),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
+          hintStyle: const TextStyle(color: Colors.black38),
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );
@@ -347,67 +437,54 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
   Widget _buildScheduleGroup() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4FB),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(14),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
-                child: Text('Daily',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87)),
+              const Text(
+                'Daily',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
               Switch(
                 value: isDaily,
                 onChanged: (v) => setState(() => isDaily = v),
-                activeColor: Colors.white,
-                activeTrackColor: primaryBlue,
-                inactiveThumbColor: Colors.white,
-                inactiveTrackColor: Colors.grey.shade300,
+                activeThumbColor: primaryBlue,
               ),
             ],
           ),
-          Divider(height: 8, color: Colors.grey.shade300),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              SizedBox(
-                  width: 48,
-                  child: Text('Start',
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87))),
-              const SizedBox(width: 6),
-              _chip(_formatDate(startDate), onTap: () => _pickDate(true)),
-              const SizedBox(width: 8),
-              _chip(_formatTime(startTime), onTap: () => _pickTime(true)),
-            ],
-          ),
+          const Divider(),
+          _buildTimeRow('Start', startDate, startTime, true),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              SizedBox(
-                  width: 48,
-                  child: Text('End',
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87))),
-              const SizedBox(width: 6),
-              _chip(_formatDate(endDate), onTap: () => _pickDate(false)),
-              const SizedBox(width: 8),
-              _chip(_formatTime(endTime), onTap: () => _pickTime(false)),
-            ],
-          ),
-          const SizedBox(height: 4),
+          _buildTimeRow('End', endDate, endTime, false),
         ],
       ),
+    );
+  }
+
+  Widget _buildTimeRow(
+    String label,
+    DateTime date,
+    TimeOfDay time,
+    bool isStart,
+  ) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 50,
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        _chip(_formatDate(date), onTap: () => _pickDate(isStart)),
+        const SizedBox(width: 8),
+        _chip(_formatTime(time), onTap: () => _pickTime(isStart)),
+      ],
     );
   }
 
@@ -415,44 +492,46 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: primaryBlue,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(label,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600)),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildOptionTile(String label, String value,
-      {required VoidCallback onTap}) {
+  Widget _buildOptionTile(
+    String label,
+    String value, {
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F4FB),
+          color: Colors.white.withOpacity(0.6),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: Text(label,
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87)),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Row(
+              children: [
+                Text(value, style: const TextStyle(color: Colors.black45)),
+                const Icon(Icons.chevron_right, color: Colors.black38),
+              ],
             ),
-            Text(value,
-                style:
-                    const TextStyle(fontSize: 14, color: Colors.black45)),
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
           ],
         ),
       ),
@@ -461,47 +540,19 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
 
   Widget _buildNotesField() {
     return Container(
-      height: 130,
+      height: 120,
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4FB),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
         controller: _notesCtrl,
         maxLines: null,
-        expands: true,
-        textAlignVertical: TextAlignVertical.top,
-        style: const TextStyle(fontSize: 14, color: Colors.black87),
         decoration: const InputDecoration(
-          hintText: 'Write your notes here...',
-          hintStyle: TextStyle(color: Colors.black38, fontSize: 14),
+          hintText: 'Write notes here...',
           border: InputBorder.none,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: EdgeInsets.all(16),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(15),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: primaryBlue,
-        borderRadius: BorderRadius.circular(40),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.home, color: Colors.white, size: 30),
-          ),
-          const Icon(Icons.history, color: Colors.white, size: 30),
-          const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
-          const Icon(Icons.person_outline, color: Colors.white, size: 30),
-        ],
       ),
     );
   }

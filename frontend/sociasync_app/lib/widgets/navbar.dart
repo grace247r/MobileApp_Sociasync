@@ -28,8 +28,8 @@ class Navbar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildNavItem(Icons.home_filled, 0), // Icon Rumah
-          _buildNavItem(Icons.history, 1), // Icon History/Clock
-          _buildNavItem(Icons.chat_bubble_outline, 2), // Icon Chat
+          _buildNavItem(Icons.access_time, 1), // Icon Calendar
+          _buildNavItem(Icons.message_outlined, 2), // Icon Inbox
           _buildNavItem(Icons.person_outline, 3), // Icon Profile
         ],
       ),

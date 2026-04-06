@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'chat_detail_page.dart';
 
 enum InboxFilter { all, unread, priority, group }
@@ -34,7 +36,7 @@ class InboxPage extends StatefulWidget {
 
 class _InboxPageState extends State<InboxPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  int _currentIndex = 2;
+  final int _currentIndex = 2;
   InboxFilter _activeFilter = InboxFilter.all;
 
   final List<_InboxChatItemData> _chatItems = [
@@ -131,16 +133,16 @@ class _InboxPageState extends State<InboxPage> {
     }
 
     if (index == 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Halaman Schedule belum tersedia')),
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
       );
       return;
     }
 
     if (index == 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Halaman profil belum tersedia')),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
     }
   }
 

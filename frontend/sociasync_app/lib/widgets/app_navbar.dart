@@ -16,8 +16,8 @@ class AppNavbar extends StatelessWidget {
   Widget build(BuildContext context) {
     const icons = <IconData>[
       Icons.home,
-      Icons.history,
-      Icons.chat_bubble_outline,
+      Icons.access_time,
+      Icons.message_outlined,
       Icons.person_outline,
     ];
 

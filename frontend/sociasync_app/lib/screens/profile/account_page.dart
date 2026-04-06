@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/widgets/app_navbar.dart';
+import 'package:sociasync_app/widgets/app_background_wrapper.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class AccountPage extends StatefulWidget {
@@ -45,8 +49,10 @@ class _AccountPageState extends State<AccountPage> {
           autofocus: true,
           decoration: InputDecoration(
             hintText: 'Enter $title',
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: primaryBlue),
@@ -89,9 +95,18 @@ class _AccountPageState extends State<AccountPage> {
     try {
       final parts = dateOfBirth.split(' ');
       final months = {
-        'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4,
-        'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8,
-        'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12,
+        'Jan': 1,
+        'Feb': 2,
+        'Mar': 3,
+        'Apr': 4,
+        'May': 5,
+        'Jun': 6,
+        'Jul': 7,
+        'Aug': 8,
+        'Sep': 9,
+        'Oct': 10,
+        'Nov': 11,
+        'Dec': 12,
       };
       initial = DateTime(
         int.parse(parts[2]),
@@ -114,8 +129,7 @@ class _AccountPageState extends State<AccountPage> {
               primary: primaryBlue,
               onPrimary: Colors.white,
               onSurface: Colors.black87,
-            ),
-            dialogBackgroundColor: Colors.white,
+            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -124,8 +138,19 @@ class _AccountPageState extends State<AccountPage> {
 
     if (picked != null) {
       final monthNames = [
-        '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       setState(() {
         dateOfBirth =
@@ -137,9 +162,17 @@ class _AccountPageState extends State<AccountPage> {
   // ── Popup Account Region (pilihan dropdown) ──
   void _showRegionPicker() {
     const regions = [
-      'Indonesia', 'Malaysia', 'Singapore', 'Thailand',
-      'Philippines', 'Vietnam', 'United States', 'United Kingdom',
-      'Australia', 'Japan', 'South Korea',
+      'Indonesia',
+      'Malaysia',
+      'Singapore',
+      'Thailand',
+      'Philippines',
+      'Vietnam',
+      'United States',
+      'United Kingdom',
+      'Australia',
+      'Japan',
+      'South Korea',
     ];
 
     showDialog(
@@ -170,8 +203,9 @@ class _AccountPageState extends State<AccountPage> {
                   regions[i],
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     color: isSelected ? primaryBlue : Colors.black87,
                   ),
                 ),
@@ -209,8 +243,9 @@ class _AccountPageState extends State<AccountPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'Change Password',
             style: TextStyle(
@@ -226,16 +261,14 @@ class _AccountPageState extends State<AccountPage> {
                 controller: oldCtrl,
                 label: 'Current Password',
                 obscure: obscureOld,
-                onToggle: () =>
-                    setDialogState(() => obscureOld = !obscureOld),
+                onToggle: () => setDialogState(() => obscureOld = !obscureOld),
               ),
               const SizedBox(height: 12),
               _passwordField(
                 controller: newCtrl,
                 label: 'New Password',
                 obscure: obscureNew,
-                onToggle: () =>
-                    setDialogState(() => obscureNew = !obscureNew),
+                onToggle: () => setDialogState(() => obscureNew = !obscureNew),
               ),
               const SizedBox(height: 12),
               _passwordField(
@@ -250,8 +283,7 @@ class _AccountPageState extends State<AccountPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -263,17 +295,18 @@ class _AccountPageState extends State<AccountPage> {
                     backgroundColor: primaryBlue,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child:
-                  const Text('Save', style: TextStyle(color: Colors.white)),
+              child: const Text('Save', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -293,8 +326,10 @@ class _AccountPageState extends State<AccountPage> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(fontSize: 13),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -329,24 +364,24 @@ class _AccountPageState extends State<AccountPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child:
-                const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               // TODO: logic deactivate
             },
-            child: const Text('Deactivate',
-                style: TextStyle(color: Colors.orange)),
+            child: const Text(
+              'Deactivate',
+              style: TextStyle(color: Colors.orange),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               // TODO: logic delete
             },
-            child: const Text('Delete',
-                style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -355,103 +390,109 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FB),
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 30),
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 8, left: 2),
-                    child: Text(
-                      'Account Information',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  _buildInfoGroup([
-                    _buildInfoTile(
-                      'Name', name,
-                      onTap: () => _showEditDialog(
-                        title: 'Name',
-                        currentValue: name,
-                        onSave: (v) => setState(() => name = v),
-                      ),
-                    ),
-                    _buildDivider(),
-                    _buildInfoTile(
-                      'Email', email,
-                      onTap: () => _showEditDialog(
-                        title: 'Email',
-                        currentValue: email,
-                        keyboardType: TextInputType.emailAddress,
-                        onSave: (v) => setState(() => email = v),
-                      ),
-                    ),
-                    _buildDivider(),
-                    _buildInfoTile(
-                      'Date of birth', dateOfBirth,
-                      onTap: _showDatePicker,
-                    ),
-                    _buildDivider(),
-                    _buildInfoTile(
-                      'Account Region', accountRegion,
-                      onTap: _showRegionPicker,
-                    ),
-                  ]),
-                  const SizedBox(height: 16),
-                  _buildSingleTile('Password', onTap: _showPasswordDialog),
-                  const SizedBox(height: 16),
-                  _buildSingleTile(
-                    'Deactivate or delete account',
-                    onTap: _showDeactivateDialog,
-                    textColor: Colors.red.shade400,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(15),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: primaryBlue,
-          borderRadius: BorderRadius.circular(40),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return AppBackgroundWrapper(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Column(
           children: [
-            GestureDetector(
-              onTap: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const DashboardPage()),
-                (route) => false,
+            _buildHeader(context),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 30),
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8, left: 2),
+                      child: Text(
+                        'Account Information',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    _buildInfoGroup([
+                      _buildInfoTile(
+                        'Name',
+                        name,
+                        onTap: () => _showEditDialog(
+                          title: 'Name',
+                          currentValue: name,
+                          onSave: (v) => setState(() => name = v),
+                        ),
+                      ),
+                      _buildDivider(),
+                      _buildInfoTile(
+                        'Email',
+                        email,
+                        onTap: () => _showEditDialog(
+                          title: 'Email',
+                          currentValue: email,
+                          keyboardType: TextInputType.emailAddress,
+                          onSave: (v) => setState(() => email = v),
+                        ),
+                      ),
+                      _buildDivider(),
+                      _buildInfoTile(
+                        'Date of birth',
+                        dateOfBirth,
+                        onTap: _showDatePicker,
+                      ),
+                      _buildDivider(),
+                      _buildInfoTile(
+                        'Account Region',
+                        accountRegion,
+                        onTap: _showRegionPicker,
+                      ),
+                    ]),
+                    const SizedBox(height: 16),
+                    _buildSingleTile('Password', onTap: _showPasswordDialog),
+                    const SizedBox(height: 16),
+                    _buildSingleTile(
+                      'Deactivate or delete account',
+                      onTap: _showDeactivateDialog,
+                      textColor: Colors.red.shade400,
+                    ),
+                  ],
+                ),
               ),
-              child: const Icon(Icons.home, color: Colors.white, size: 30),
-            ),
-            const Icon(Icons.history, color: Colors.white, size: 30),
-            const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
-            GestureDetector(
-              onTap: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfilePage()),
-                (route) => false,
-              ),
-              child: const Icon(Icons.person, color: Colors.white, size: 30),
             ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: 3,
+          backgroundColor: primaryBlue,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+              return;
+            }
+
+            if (index == 1) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+              );
+              return;
+            }
+
+            if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const InboxPage()),
+              );
+            }
+          },
         ),
       ),
     );
@@ -544,8 +585,11 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildInfoTile(String label, String value,
-      {required VoidCallback onTap}) {
+  Widget _buildInfoTile(
+    String label,
+    String value, {
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -580,8 +624,11 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildSingleTile(String label,
-      {required VoidCallback onTap, Color? textColor}) {
+  Widget _buildSingleTile(
+    String label, {
+    required VoidCallback onTap,
+    Color? textColor,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
