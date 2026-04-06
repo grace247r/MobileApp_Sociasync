@@ -14,7 +14,6 @@ def get_tokens_for_user(user):
         "access": str(refresh.access_token),
     }
 
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_view(request):
@@ -29,7 +28,6 @@ def register_view(request):
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
