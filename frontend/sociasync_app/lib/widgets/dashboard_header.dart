@@ -35,7 +35,15 @@ class DashboardHeader extends StatelessWidget {
         ),
         IconButton(
           onPressed: onNotificationTap,
-          icon: Icon(Icons.notifications, color: primaryColor),
+          // PERUBAHAN: Menggunakan Image.asset untuk menggantikan Icon bawaan
+          icon: Image.asset(
+            'assets/alarm.png',
+            width: 24, // Ukuran standar icon
+            height: 24,
+            // color & colorBlendMode agar warna asset mengikuti primaryColor
+            color: primaryColor,
+            colorBlendMode: BlendMode.srcIn,
+          ),
           splashRadius: 22,
           tooltip: 'Notifications',
         ),
