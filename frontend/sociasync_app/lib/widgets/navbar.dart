@@ -39,10 +39,9 @@ class Navbar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem('assets/Home (1).png', 0),
-          // Pastikan nama file "Calender.png" sesuai folder kamu
-          _buildNavItem('assets/Calender.png', 1),
-          _buildNavItem('assets/Chat.png', 2),
+          _buildNavItem('assets/home.png', 0),
+          _buildNavItem('assets/calendar.png', 1),
+          _buildNavItem('assets/chat.png', 2),
           _buildNavItem('assets/profile.png', 3),
         ],
       ),
@@ -52,10 +51,10 @@ class Navbar extends StatelessWidget {
   Widget _buildNavItem(String assetPath, int index) {
     final bool isActive = selectedIndex == index;
 
-    // LOGIKA SWITCH: Pastikan string ini sama persis dengan nama file di folder assets
+    // LOGIKA SWITCH: Calendar menggunakan asset berbeda saat aktif
     String finalAsset = assetPath;
     if (index == 1 && isActive) {
-      finalAsset = 'assets/Calender (setelah diklik).png';
+      finalAsset = 'assets/calendar_active.png';
     }
 
     return GestureDetector(
@@ -68,8 +67,8 @@ class Navbar extends StatelessWidget {
             // Kasih width/height sedikit lebih besar kalau aktif biar "pop out"
             width: isActive ? 30 : 28,
             height: isActive ? 30 : 28,
-            // Putih solid kalau aktif, agak redup kalau nggak
-            color: Colors.white.withOpacity(isActive ? 1.0 : 0.7),
+            // Kontras putih lebih kuat saat aktif
+            color: Colors.white.withOpacity(isActive ? 1.0 : 0.52),
             colorBlendMode: BlendMode.modulate,
           ),
           if (isActive)
