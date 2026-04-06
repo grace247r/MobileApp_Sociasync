@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/screens/calendar/add_calendar_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_month_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_year_page.dart';
-import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/dashboard/notification_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
-import 'package:sociasync_app/widgets/app_navbar.dart';
-import 'package:sociasync_app/widgets/dashboard_header.dart';
 
 class CalendarWeekPage extends StatefulWidget {
-  const CalendarWeekPage({super.key});
+  // ← Parameter opsional: tanggal awal yang ditampilkan
+  final DateTime? initialDate;
+
+  const CalendarWeekPage({super.key, this.initialDate});
 
   @override
   State<CalendarWeekPage> createState() => _CalendarWeekPageState();
@@ -17,20 +16,17 @@ class CalendarWeekPage extends StatefulWidget {
 
 class _CalendarWeekPageState extends State<CalendarWeekPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  final int _currentIndex = 1;
 
-  DateTime _focusedDate = DateTime(2026, 3, 3);
+  late DateTime _focusedDate;
 
-  final Map<String, List<String>> _events = {
-    '2026-03-03': [
-      'Deadline Project X',
-      'Deadline Project X',
-      'Deadline Project X',
-      'Deadline Project X',
-    ],
-    '2026-03-05': ['Team Meeting'],
-    '2026-03-07': ['Content Upload', 'Analytics Review'],
-  };
+  final Map<String, List<Map<String, dynamic>>> _events = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Gunakan initialDate jika ada, fallback ke hari ini
+    _focusedDate = widget.initialDate ?? DateTime.now();
+  }
 
   List<DateTime> _getWeekDays(DateTime date) {
     final monday = date.subtract(Duration(days: date.weekday - 1));
@@ -40,7 +36,27 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
   String _eventKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  List<String> _getEvents(DateTime d) => _events[_eventKey(d)] ?? [];
+  List<Map<String, dynamic>> _getEvents(DateTime d) =>
+      _events[_eventKey(d)] ?? [];
+
+  String _monthLabel(DateTime d) {
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[d.month]} ${d.year}';
+  }
 
   String _fullDate(DateTime d) {
     const days = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -105,132 +121,132 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
     );
   }
 
-  void _onNavbarTap(int index) {
-    if (index == _currentIndex) return;
+  Future<void> _goToAddEvent() async {
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(builder: (_) => const AddCalendarPage()),
+    );
 
-    if (index == 0) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardPage()),
-      );
-      return;
-    }
+    if (result != null) {
+      final startDate = result['startDate'] as DateTime;
+      final endDate = result['endDate'] as DateTime;
 
-    if (index == 2) {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
-      return;
-    }
-
-    if (index == 3) {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
+      setState(() {
+        DateTime current = startDate;
+        while (!current.isAfter(endDate)) {
+          final key = _eventKey(current);
+          _events[key] = [...(_events[key] ?? []), result];
+          current = current.add(const Duration(days: 1));
+        }
+        _focusedDate = startDate;
+      });
     }
   }
 
-  void _showAddEventDialog() {
-    final titleCtrl = TextEditingController();
-    DateTime selectedDate = _focusedDate;
+  void _showEventOptions(
+    BuildContext context,
+    DateTime day,
+    Map<String, dynamic> event,
+  ) {
+    final eventName = event['title'] as String;
 
     showDialog(
       context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setD) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Event Options',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: primaryBlue,
           ),
-          title: Text(
-            'Add Event',
-            style: TextStyle(fontWeight: FontWeight.bold, color: primaryBlue),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Event title',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: primaryBlue, width: 2),
-                  ),
-                ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              eventName,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.black45,
               ),
-              const SizedBox(height: 12),
-              InkWell(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: ctx,
-                    initialDate: selectedDate,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                    builder: (c, child) => Theme(
-                      data: Theme.of(c).copyWith(
-                        colorScheme: ColorScheme.light(
-                          primary: primaryBlue,
-                          onPrimary: Colors.white,
-                        ),
-                      ),
-                      child: child!,
-                    ),
-                  );
-                  if (picked != null) setD(() => selectedDate = picked);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade400),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 16, color: primaryBlue),
-                      const SizedBox(width: 8),
-                      Text(
-                        _fullDate(selectedDate),
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
-            ElevatedButton(
-              onPressed: () {
-                if (titleCtrl.text.trim().isNotEmpty) {
-                  final key = _eventKey(selectedDate);
-                  setState(() {
-                    _events[key] = [
-                      ...(_events[key] ?? []),
-                      titleCtrl.text.trim(),
-                    ];
-                  });
-                }
-                Navigator.pop(ctx);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Add', style: TextStyle(color: Colors.white)),
+            const SizedBox(height: 14),
+            const Text(
+              'Choose an action for this event.',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              final start = event['startDate'] as DateTime;
+              final end = event['endDate'] as DateTime;
+              setState(() {
+                DateTime curr = start;
+                while (!curr.isAfter(end)) {
+                  final k = _eventKey(curr);
+                  _events[k]?.removeWhere((e) => e == event);
+                  if (_events[k]?.isEmpty ?? false) _events.remove(k);
+                  curr = curr.add(const Duration(days: 1));
+                }
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final updated = await Navigator.push<Map<String, dynamic>>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AddCalendarPage(initialData: event),
+                ),
+              );
+              if (updated != null) {
+                final oldStart = event['startDate'] as DateTime;
+                final oldEnd = event['endDate'] as DateTime;
+                setState(() {
+                  DateTime curr = oldStart;
+                  while (!curr.isAfter(oldEnd)) {
+                    final k = _eventKey(curr);
+                    _events[k]?.removeWhere((e) => e == event);
+                    if (_events[k]?.isEmpty ?? false) _events.remove(k);
+                    curr = curr.add(const Duration(days: 1));
+                  }
+                  final newStart = updated['startDate'] as DateTime;
+                  final newEnd = updated['endDate'] as DateTime;
+                  curr = newStart;
+                  while (!curr.isAfter(newEnd)) {
+                    final k = _eventKey(curr);
+                    _events[k] = [...(_events[k] ?? []), updated];
+                    curr = curr.add(const Duration(days: 1));
+                  }
+                  _focusedDate = newStart;
+                });
+              }
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Edit Details',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -250,14 +266,30 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
             // ── Header ──
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: DashboardHeader(
-                userName: 'Rina',
-                primaryColor: primaryBlue,
-                onNotificationTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const NotificationPage()),
-                  );
-                },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      text: 'Hi, ',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'Rina',
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.notifications, color: primaryBlue),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -268,9 +300,9 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Mar 2026',
-                    style: TextStyle(
+                  Text(
+                    _monthLabel(_focusedDate),
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
@@ -327,7 +359,8 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                   children: weekDays.map((d) {
                     final isSelected =
                         d.day == _focusedDate.day &&
-                        d.month == _focusedDate.month;
+                        d.month == _focusedDate.month &&
+                        d.year == _focusedDate.year;
                     return GestureDetector(
                       onTap: () => setState(() => _focusedDate = d),
                       child: Container(
@@ -394,7 +427,7 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
             // ── Add Event Button ──
             Center(
               child: GestureDetector(
-                onTap: _showAddEventDialog,
+                onTap: _goToAddEvent,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 40,
@@ -419,7 +452,6 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
           ],
         ),
       ),
-
       bottomNavigationBar: _buildBottomNav(context),
     );
   }
@@ -446,34 +478,38 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
               style: TextStyle(fontSize: 13, color: Colors.grey),
             )
           else
-            ...events.map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: primaryBlue,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        e,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black87,
+            ...events.map((event) {
+              final e = event['title'] as String;
+              return GestureDetector(
+                onTap: () => _showEventOptions(context, day, event),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: primaryBlue,
+                          shape: BoxShape.circle,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          e,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            }),
           const SizedBox(height: 8),
           const Text(
             'Event :',
@@ -494,10 +530,35 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
   }
 
   Widget _buildBottomNav(BuildContext context) {
-    return AppNavbar(
-      selectedIndex: _currentIndex,
-      onTap: _onNavbarTap,
-      backgroundColor: primaryBlue,
+    return Container(
+      margin: const EdgeInsets.all(15),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: primaryBlue,
+        borderRadius: BorderRadius.circular(40),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: const Icon(Icons.home, color: Colors.white, size: 30),
+          ),
+          const Icon(Icons.history, color: Colors.white, size: 30),
+          const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            ),
+            child: const Icon(
+              Icons.person_outline,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
