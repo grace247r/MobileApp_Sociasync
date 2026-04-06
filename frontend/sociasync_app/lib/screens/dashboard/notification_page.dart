@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 // Import wrapper background yang kita buat sebelumnya
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -15,8 +17,7 @@ class NotificationPage extends StatefulWidget {
 
 class _NotificationPageState extends State<NotificationPage> {
   static const Color primaryBlue = Color(0xFF1D5093);
-  final int _currentIndex =
-      1; // Sesuaikan index dengan halaman Notification (misal index 1)
+  final int _currentIndex = 0;
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -24,6 +25,13 @@ class _NotificationPageState extends State<NotificationPage> {
     if (index == 0) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+      return;
+    }
+
+    if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
       );
       return;
     }
@@ -36,9 +44,9 @@ class _NotificationPageState extends State<NotificationPage> {
     }
 
     if (index == 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Halaman profil belum tersedia')),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
     }
   }
 

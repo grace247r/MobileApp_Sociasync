@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/widgets/app_navbar.dart';
+import 'package:sociasync_app/widgets/app_background_wrapper.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class NotificationPage extends StatefulWidget {
@@ -30,10 +34,16 @@ class _NotificationPageState extends State<NotificationPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'In-App Notifications',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryBlue),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryBlue,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -74,16 +84,26 @@ class _NotificationPageState extends State<NotificationPage> {
   // ── Push notification schedule popup ──
   void _showPushScheduleDialog() {
     String selected = 'Always';
-    const options = ['Always', 'During work hours (9AM - 6PM)', 'Custom schedule'];
+    const options = [
+      'Always',
+      'During work hours (9AM - 6PM)',
+      'Custom schedule',
+    ];
 
     showDialog(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'Push Notification Schedule',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryBlue),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryBlue,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -93,15 +113,17 @@ class _NotificationPageState extends State<NotificationPage> {
                 style: TextStyle(fontSize: 13, color: Colors.black54),
               ),
               const SizedBox(height: 8),
-              ...options.map((option) => RadioListTile<String>(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: Text(option, style: const TextStyle(fontSize: 14)),
-                value: option,
-                groupValue: selected,
-                activeColor: primaryBlue,
-                onChanged: (v) => setDialogState(() => selected = v!),
-              )),
+              ...options.map(
+                (option) => RadioListTile<String>(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(option, style: const TextStyle(fontSize: 14)),
+                  value: option,
+                  groupValue: selected,
+                  activeColor: primaryBlue,
+                  onChanged: (v) => setDialogState(() => selected = v!),
+                ),
+              ),
             ],
           ),
           actions: _dialogActions(context),
@@ -121,10 +143,16 @@ class _NotificationPageState extends State<NotificationPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'Email Notifications',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryBlue),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryBlue,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -171,10 +199,16 @@ class _NotificationPageState extends State<NotificationPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'SMS Notifications',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryBlue),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryBlue,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -192,15 +226,17 @@ class _NotificationPageState extends State<NotificationPage> {
                 style: TextStyle(fontSize: 13, color: Colors.black54),
               ),
               const SizedBox(height: 4),
-              ...freqOptions.map((option) => RadioListTile<String>(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: Text(option, style: const TextStyle(fontSize: 14)),
-                value: option,
-                groupValue: frequency,
-                activeColor: primaryBlue,
-                onChanged: (v) => setDialogState(() => frequency = v!),
-              )),
+              ...freqOptions.map(
+                (option) => RadioListTile<String>(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(option, style: const TextStyle(fontSize: 14)),
+                  value: option,
+                  groupValue: frequency,
+                  activeColor: primaryBlue,
+                  onChanged: (v) => setDialogState(() => frequency = v!),
+                ),
+              ),
             ],
           ),
           actions: _dialogActions(context),
@@ -210,19 +246,19 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   List<Widget> _dialogActions(BuildContext ctx) => [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(ctx),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryBlue,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          child: const Text('Save', style: TextStyle(color: Colors.white)),
-        ),
-      ];
+    TextButton(
+      onPressed: () => Navigator.pop(ctx),
+      child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+    ),
+    ElevatedButton(
+      onPressed: () => Navigator.pop(ctx),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryBlue,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      child: const Text('Save', style: TextStyle(color: Colors.white)),
+    ),
+  ];
 
   Widget _dialogSwitchTile({
     required String label,
@@ -233,12 +269,15 @@ class _NotificationPageState extends State<NotificationPage> {
     return Row(
       children: [
         Expanded(
-          child: Text(label, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
         ),
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: const Color(0xFF1D5093),
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: Colors.grey.shade300,
@@ -249,106 +288,135 @@ class _NotificationPageState extends State<NotificationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FB),
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
+    return AppBackgroundWrapper(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Column(
+          children: [
+            _buildHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
 
-                  // "Notification" label
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 8, left: 2),
-                    child: Text(
-                      'Notification',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
+                    // "Notification" label
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8, left: 2),
+                      child: Text(
+                        'Notification',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
 
-                  // Group 1: In-app + Push schedule
-                  _buildGroup([
-                    _buildArrowTile('In-app notifications', onTap: _showInAppDialog),
-                    _buildDivider(),
-                    _buildArrowTile('Push notification schedule', onTap: _showPushScheduleDialog),
-                  ]),
+                    // Group 1: In-app + Push schedule
+                    _buildGroup([
+                      _buildArrowTile(
+                        'In-app notifications',
+                        onTap: _showInAppDialog,
+                      ),
+                      _buildDivider(),
+                      _buildArrowTile(
+                        'Push notification schedule',
+                        onTap: _showPushScheduleDialog,
+                      ),
+                    ]),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Group 2: Toggles
-                  _buildGroup([
-                    _buildToggleTile('Likes', likesEnabled,
-                        (v) => setState(() => likesEnabled = v)),
-                    _buildDivider(),
-                    _buildToggleTile('Comments', commentsEnabled,
-                        (v) => setState(() => commentsEnabled = v)),
-                    _buildDivider(),
-                    _buildToggleTile('New followers', newFollowersEnabled,
-                        (v) => setState(() => newFollowersEnabled = v)),
-                    _buildDivider(),
-                    _buildToggleTile('Profile views', profileViewsEnabled,
-                        (v) => setState(() => profileViewsEnabled = v)),
-                    _buildDivider(),
-                    _buildToggleTile('Post you interacted with', postInteractedEnabled,
-                        (v) => setState(() => postInteractedEnabled = v)),
-                  ]),
+                    // Group 2: Toggles
+                    _buildGroup([
+                      _buildToggleTile(
+                        'Likes',
+                        likesEnabled,
+                        (v) => setState(() => likesEnabled = v),
+                      ),
+                      _buildDivider(),
+                      _buildToggleTile(
+                        'Comments',
+                        commentsEnabled,
+                        (v) => setState(() => commentsEnabled = v),
+                      ),
+                      _buildDivider(),
+                      _buildToggleTile(
+                        'New followers',
+                        newFollowersEnabled,
+                        (v) => setState(() => newFollowersEnabled = v),
+                      ),
+                      _buildDivider(),
+                      _buildToggleTile(
+                        'Profile views',
+                        profileViewsEnabled,
+                        (v) => setState(() => profileViewsEnabled = v),
+                      ),
+                      _buildDivider(),
+                      _buildToggleTile(
+                        'Post you interacted with',
+                        postInteractedEnabled,
+                        (v) => setState(() => postInteractedEnabled = v),
+                      ),
+                    ]),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Group 3: Email + SMS
-                  _buildGroup([
-                    _buildArrowTile('Email notifications', onTap: _showEmailDialog),
-                    _buildDivider(),
-                    _buildArrowTile('SMS notifications', onTap: _showSmsDialog),
-                  ]),
+                    // Group 3: Email + SMS
+                    _buildGroup([
+                      _buildArrowTile(
+                        'Email notifications',
+                        onTap: _showEmailDialog,
+                      ),
+                      _buildDivider(),
+                      _buildArrowTile(
+                        'SMS notifications',
+                        onTap: _showSmsDialog,
+                      ),
+                    ]),
 
-                  const SizedBox(height: 20),
-                ],
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
-
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(15),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: primaryBlue,
-          borderRadius: BorderRadius.circular(40),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const DashboardPage()),
-                (route) => false,
-              ),
-              child: const Icon(Icons.home, color: Colors.white, size: 30),
-            ),
-            const Icon(Icons.history, color: Colors.white, size: 30),
-            const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
-            GestureDetector(
-              onTap: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfilePage()),
-                (route) => false,
-              ),
-              child: const Icon(Icons.person, color: Colors.white, size: 30),
             ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: 3,
+          backgroundColor: primaryBlue,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+              return;
+            }
+
+            if (index == 1) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+              );
+              return;
+            }
+
+            if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const InboxPage()),
+              );
+            }
+          },
         ),
       ),
     );
@@ -441,7 +509,11 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
-  Widget _buildToggleTile(String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildToggleTile(
+    String label,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
@@ -459,7 +531,7 @@ class _NotificationPageState extends State<NotificationPage> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: primaryBlue,
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: Colors.grey.shade300,

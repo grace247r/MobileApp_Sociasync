@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_year_page.dart';
+import 'package:sociasync_app/widgets/app_navbar.dart';
+import 'package:sociasync_app/widgets/app_background_wrapper.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class CalendarMonthPage extends StatefulWidget {
   const CalendarMonthPage({super.key});
@@ -52,7 +57,6 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
     );
   }
 
-  // ── Navigasi ke CalendarWeekPage dengan tanggal 1 bulan yang dipilih ──
   void _onMonthTapped(int month) {
     final selectedDate = DateTime(currentYear, month, 1);
     Navigator.pushReplacement(
@@ -65,126 +69,169 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      text: 'Hi, ',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Rina',
-                          style: TextStyle(
-                            color: primaryBlue,
-                            fontWeight: FontWeight.bold,
+    return AppBackgroundWrapper(
+      child: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header ──
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          text: 'Hi, ',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.notifications, color: primaryBlue),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // ── Year label + dropdown ──
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '$currentYear',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Builder(
-                    builder: (ctx) => GestureDetector(
-                      onTap: () => _showViewDropdown(ctx),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primaryBlue,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: const [
-                            Text(
-                              'Month',
+                          children: [
+                            TextSpan(
+                              text: 'Rina',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: primaryBlue,
                                 fontWeight: FontWeight.bold,
                               ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.keyboard_arrow_down,
-                              color: Colors.white,
-                              size: 18,
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // ── 12 month grid ──
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0F4FB),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  padding: const EdgeInsets.all(10),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                          childAspectRatio: 0.85,
-                        ),
-                    itemCount: 12,
-                    itemBuilder: (_, i) => _buildMiniMonth(i + 1, currentYear),
+                      Icon(Icons.notifications, color: primaryBlue),
+                    ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 16),
+
+                // ── Year label + dropdown ──
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '$currentYear',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Builder(
+                        builder: (ctx) => GestureDetector(
+                          onTap: () => _showViewDropdown(ctx),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primaryBlue,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              children: [
+                                Text(
+                                  'Month',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // ── 12 month grid ──
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                      12,
+                      0,
+                      12,
+                      100,
+                    ), // Padding bawah untuk Navbar
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(
+                          0.4,
+                        ), // Glassmorphism style
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(10),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 0.85,
+                            ),
+                        itemCount: 12,
+                        itemBuilder: (_, i) =>
+                            _buildMiniMonth(i + 1, currentYear),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+
+          // ── App Navbar Melayang ──
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: AppNavbar(
+              selectedIndex: 0, // Bagian dari Home/Calendar
+              backgroundColor: primaryBlue,
+              onTap: (index) {
+                if (index == 0) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardPage()),
+                  );
+                }
+                if (index == 2) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const InboxPage()),
+                  );
+                }
+                if (index == 3) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfilePage()),
+                  );
+                }
+              },
+            ),
+          ),
+        ],
       ),
-      bottomNavigationBar: _buildBottomNav(context),
     );
   }
 
@@ -208,25 +255,26 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
 
     final firstDay = DateTime(year, month, 1);
     final daysInMonth = DateTime(year, month + 1, 0).day;
-    int startOffset = firstDay.weekday % 7; // Sun=0
+    int startOffset = firstDay.weekday % 7;
 
-    final bgColor = isCurrentMonth ? primaryBlue : const Color(0xFFEAEFF8);
+    final bgColor = isCurrentMonth
+        ? primaryBlue
+        : Colors.white.withOpacity(0.6);
     final textColor = isCurrentMonth ? Colors.white : Colors.black87;
     final headerColor = isCurrentMonth ? Colors.white : primaryBlue;
     final dayNumColor = isCurrentMonth ? Colors.white70 : Colors.black54;
 
     return GestureDetector(
-      onTap: () => _onMonthTapped(month), // ← navigasi ke week view
+      onTap: () => _onMonthTapped(month),
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(10),
-          // Efek highlight saat bulan selain current di-tap
           boxShadow: isCurrentMonth
               ? null
               : [
                   BoxShadow(
-                    color: primaryBlue.withOpacity(0.08),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -235,7 +283,6 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
         padding: const EdgeInsets.all(5),
         child: Column(
           children: [
-            // Month name
             Text(
               monthNames[month],
               style: TextStyle(
@@ -245,7 +292,6 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
               ),
             ),
             const SizedBox(height: 3),
-            // Day headers S M T W T F S
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -266,7 +312,6 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
                   .toList(),
             ),
             const SizedBox(height: 2),
-            // Day grid
             Expanded(
               child: GridView.builder(
                 shrinkWrap: true,
@@ -290,29 +335,6 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(15),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: primaryBlue,
-        borderRadius: BorderRadius.circular(40),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.home, color: Colors.white, size: 30),
-          ),
-          const Icon(Icons.calendar_today, color: Colors.white, size: 26),
-          const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
-          const Icon(Icons.person_outline, color: Colors.white, size: 30),
-        ],
       ),
     );
   }

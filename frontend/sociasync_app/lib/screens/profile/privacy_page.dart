@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/widgets/app_navbar.dart';
+import 'package:sociasync_app/widgets/app_background_wrapper.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class PrivacyPage extends StatefulWidget {
@@ -24,7 +28,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'Suggest Your Account to Other',
             style: TextStyle(
@@ -62,7 +68,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text('Save', style: TextStyle(color: Colors.white)),
             ),
@@ -83,7 +91,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'Blocked Accounts',
             style: TextStyle(
@@ -109,22 +119,34 @@ class _PrivacyPageState extends State<PrivacyPage> {
                         backgroundColor: const Color(0xFFDDE8F5),
                         child: Text(
                           blockedUsers[i]['name']![0].toUpperCase(),
-                          style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       title: Text(
                         blockedUsers[i]['name']!,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       subtitle: Text(
                         blockedUsers[i]['handle']!,
-                        style: const TextStyle(fontSize: 12, color: Colors.black45),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black45,
+                        ),
                       ),
                       trailing: TextButton(
                         onPressed: () {
                           setDialogState(() => blockedUsers.removeAt(i));
                         },
-                        child: const Text('Unblock', style: TextStyle(color: Colors.red, fontSize: 12)),
+                        child: const Text(
+                          'Unblock',
+                          style: TextStyle(color: Colors.red, fontSize: 12),
+                        ),
                       ),
                     ),
                   ),
@@ -149,21 +171,31 @@ class _PrivacyPageState extends State<PrivacyPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'Who Can Comment',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryBlue),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryBlue,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: options.map((option) => RadioListTile<String>(
-              dense: true,
-              title: Text(option, style: const TextStyle(fontSize: 14)),
-              value: option,
-              groupValue: selected,
-              activeColor: primaryBlue,
-              onChanged: (v) => setDialogState(() => selected = v!),
-            )).toList(),
+            children: options
+                .map(
+                  (option) => RadioListTile<String>(
+                    dense: true,
+                    title: Text(option, style: const TextStyle(fontSize: 14)),
+                    value: option,
+                    groupValue: selected,
+                    activeColor: primaryBlue,
+                    onChanged: (v) => setDialogState(() => selected = v!),
+                  ),
+                )
+                .toList(),
           ),
           actions: [
             TextButton(
@@ -174,7 +206,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text('Save', style: TextStyle(color: Colors.white)),
             ),
@@ -193,21 +227,31 @@ class _PrivacyPageState extends State<PrivacyPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'Who Can Mention You',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryBlue),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryBlue,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: options.map((option) => RadioListTile<String>(
-              dense: true,
-              title: Text(option, style: const TextStyle(fontSize: 14)),
-              value: option,
-              groupValue: selected,
-              activeColor: primaryBlue,
-              onChanged: (v) => setDialogState(() => selected = v!),
-            )).toList(),
+            children: options
+                .map(
+                  (option) => RadioListTile<String>(
+                    dense: true,
+                    title: Text(option, style: const TextStyle(fontSize: 14)),
+                    value: option,
+                    groupValue: selected,
+                    activeColor: primaryBlue,
+                    onChanged: (v) => setDialogState(() => selected = v!),
+                  ),
+                )
+                .toList(),
           ),
           actions: [
             TextButton(
@@ -218,7 +262,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text('Save', style: TextStyle(color: Colors.white)),
             ),
@@ -237,21 +283,31 @@ class _PrivacyPageState extends State<PrivacyPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'Who Can View Your Profile',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryBlue),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryBlue,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: options.map((option) => RadioListTile<String>(
-              dense: true,
-              title: Text(option, style: const TextStyle(fontSize: 14)),
-              value: option,
-              groupValue: selected,
-              activeColor: primaryBlue,
-              onChanged: (v) => setDialogState(() => selected = v!),
-            )).toList(),
+            children: options
+                .map(
+                  (option) => RadioListTile<String>(
+                    dense: true,
+                    title: Text(option, style: const TextStyle(fontSize: 14)),
+                    value: option,
+                    groupValue: selected,
+                    activeColor: primaryBlue,
+                    onChanged: (v) => setDialogState(() => selected = v!),
+                  ),
+                )
+                .toList(),
           ),
           actions: [
             TextButton(
@@ -262,7 +318,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text('Save', style: TextStyle(color: Colors.white)),
             ),
@@ -274,132 +332,150 @@ class _PrivacyPageState extends State<PrivacyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FB),
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-
-                  // "Privacy" label
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 8, left: 2),
-                    child: Text(
-                      'Privacy',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-
-                  // Group 1: Private account, Suggest, Blocked
-                  _buildGroup([
-                    // Private account (toggle)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  'Private account',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'With a private account, only users you approve can follow you and watch your videos',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.black45,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Switch(
-                            value: isPrivateAccount,
-                            onChanged: (v) => setState(() => isPrivateAccount = v),
-                            activeColor: Colors.white,
-                            activeTrackColor: primaryBlue,
-                            inactiveThumbColor: Colors.white,
-                            inactiveTrackColor: Colors.grey.shade300,
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildDivider(),
-                    _buildArrowTile('Suggest your account to other', onTap: _showSuggestDialog),
-                    _buildDivider(),
-                    _buildArrowTile('Blocked account', onTap: _showBlockedDialog),
-                  ]),
-
-                  const SizedBox(height: 16),
-
-                  // Group 2: Comments
-                  _buildSingleArrowTile('Comments', onTap: _showCommentsDialog),
-
-                  const SizedBox(height: 16),
-
-                  // Group 3: Mentions
-                  _buildSingleArrowTile('Mentions', onTap: _showMentionsDialog),
-
-                  const SizedBox(height: 16),
-
-                  // Group 4: Viewers
-                  _buildSingleArrowTile('Viewers', onTap: _showViewersDialog),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(15),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: primaryBlue,
-          borderRadius: BorderRadius.circular(40),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return AppBackgroundWrapper(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Column(
           children: [
-            GestureDetector(
-              onTap: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const DashboardPage()),
-                (route) => false,
+            _buildHeader(context),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+
+                    // "Privacy" label
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8, left: 2),
+                      child: Text(
+                        'Privacy',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+
+                    // Group 1: Private account, Suggest, Blocked
+                    _buildGroup([
+                      // Private account (toggle)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'Private account',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'With a private account, only users you approve can follow you and watch your videos',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black45,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Switch(
+                              value: isPrivateAccount,
+                              onChanged: (v) =>
+                                  setState(() => isPrivateAccount = v),
+                              activeThumbColor: Colors.white,
+                              activeTrackColor: primaryBlue,
+                              inactiveThumbColor: Colors.white,
+                              inactiveTrackColor: Colors.grey.shade300,
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildDivider(),
+                      _buildArrowTile(
+                        'Suggest your account to other',
+                        onTap: _showSuggestDialog,
+                      ),
+                      _buildDivider(),
+                      _buildArrowTile(
+                        'Blocked account',
+                        onTap: _showBlockedDialog,
+                      ),
+                    ]),
+
+                    const SizedBox(height: 16),
+
+                    // Group 2: Comments
+                    _buildSingleArrowTile(
+                      'Comments',
+                      onTap: _showCommentsDialog,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Group 3: Mentions
+                    _buildSingleArrowTile(
+                      'Mentions',
+                      onTap: _showMentionsDialog,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Group 4: Viewers
+                    _buildSingleArrowTile('Viewers', onTap: _showViewersDialog),
+                  ],
+                ),
               ),
-              child: const Icon(Icons.home, color: Colors.white, size: 30),
-            ),
-            const Icon(Icons.history, color: Colors.white, size: 30),
-            const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
-            GestureDetector(
-              onTap: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfilePage()),
-                (route) => false,
-              ),
-              child: const Icon(Icons.person, color: Colors.white, size: 30),
             ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: 3,
+          backgroundColor: primaryBlue,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+              return;
+            }
+
+            if (index == 1) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+              );
+              return;
+            }
+
+            if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const InboxPage()),
+              );
+            }
+          },
         ),
       ),
     );
@@ -540,12 +616,15 @@ class _PrivacyPageState extends State<PrivacyPage> {
     return Row(
       children: [
         Expanded(
-          child: Text(label, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
         ),
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: const Color(0xFF1D5093),
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: Colors.grey.shade300,

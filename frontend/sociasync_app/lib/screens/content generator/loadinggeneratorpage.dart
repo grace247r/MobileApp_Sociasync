@@ -3,7 +3,11 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/generator_loading.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/content generator/generation_result_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class LoadingGeneratorPage extends StatefulWidget {
   const LoadingGeneratorPage({super.key});
@@ -14,7 +18,7 @@ class LoadingGeneratorPage extends StatefulWidget {
 
 class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  int _currentIndex = 2;
+  final int _currentIndex = 2;
   void _goToResultPage() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -24,7 +28,33 @@ class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
-    // Loading page typically doesn't navigate on navbar
+
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+      return;
+    }
+
+    if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+      );
+      return;
+    }
+
+    if (index == 2) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      return;
+    }
+
+    if (index == 3) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
+    }
   }
 
   @override

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/widgets/app_navbar.dart';
+import 'package:sociasync_app/widgets/app_background_wrapper.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/profile/profile_page.dart';
+import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 
 class HelpPage extends StatelessWidget {
   const HelpPage({super.key});
@@ -9,7 +12,8 @@ class HelpPage extends StatelessWidget {
 
   // Konten tiap topik help
   static const Map<String, String> _helpContent = {
-    'Account growth': '''Growing your account on SociaSync takes consistency and strategy. Here are some tips:
+    'Account growth':
+        '''Growing your account on SociaSync takes consistency and strategy. Here are some tips:
 
 • Post regularly — aim for at least 3–5 times per week.
 • Use relevant hashtags to increase discoverability.
@@ -21,7 +25,8 @@ class HelpPage extends StatelessWidget {
 
 Consistency is key. Accounts that post regularly see up to 3x more engagement than those that post sporadically.''',
 
-    'Your account status': '''Your account status indicates the health and standing of your SociaSync account.
+    'Your account status':
+        '''Your account status indicates the health and standing of your SociaSync account.
 
 Account statuses:
 • Active — Your account is in good standing.
@@ -36,7 +41,8 @@ If your account is restricted or suspended, please contact our support team at s
 
 Appeals are reviewed within 3–5 business days.''',
 
-    'Account safety': '''Keeping your SociaSync account safe is our top priority. Follow these best practices:
+    'Account safety':
+        '''Keeping your SociaSync account safe is our top priority. Follow these best practices:
 
 Passwords:
 • Use a strong password with at least 8 characters, including uppercase, lowercase, numbers, and symbols.
@@ -55,7 +61,8 @@ Privacy settings:
 • Set your account to Private to control who sees your content.
 • Review your blocked accounts list regularly.''',
 
-    'Updating name': '''You can update your display name at any time from your account settings.
+    'Updating name':
+        '''You can update your display name at any time from your account settings.
 
 Steps to update your name:
 1. Go to Profile → Account.
@@ -70,7 +77,8 @@ Important notes:
 • Names must be between 2–50 characters.
 • Special characters are allowed, but avoid misleading or offensive names.''',
 
-    'Forgot my password': '''If you forgot your password, you can reset it easily.
+    'Forgot my password':
+        '''If you forgot your password, you can reset it easily.
 
 Steps to reset your password:
 1. On the login screen, tap "Forgot Password".
@@ -87,7 +95,8 @@ Tips:
 Already logged in but want to change your password?
 Go to Profile → Account → Password.''',
 
-    'Editing, posting, and deleting': '''Managing your content on SociaSync is simple.
+    'Editing, posting, and deleting':
+        '''Managing your content on SociaSync is simple.
 
 Posting content:
 • Tap the "+ Generate" button on the Dashboard to create a new post.
@@ -108,7 +117,8 @@ Deleting a post:
 
 Important: Deleted posts cannot be recovered. Make sure you want to permanently remove the content before confirming.''',
 
-    'Searching for content': '''SociaSync makes it easy to find content and inspiration.
+    'Searching for content':
+        '''SociaSync makes it easy to find content and inspiration.
 
 How to search:
 • Use the search bar at the top of the Explore screen.
@@ -128,7 +138,8 @@ Tips for better search results:
 • Search hashtags with "#" prefix (e.g., #foodvlog).
 • Save posts you like by tapping the bookmark icon.''',
 
-    'Unable to follow a user': '''If you are having trouble following a user, here are some possible reasons and solutions:
+    'Unable to follow a user':
+        '''If you are having trouble following a user, here are some possible reasons and solutions:
 
 Possible reasons:
 
@@ -223,7 +234,10 @@ Still having issues? Contact us at support@sociasync.com with the username you a
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: const Text('Got it', style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'Got it',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
             ],
@@ -237,71 +251,73 @@ Still having issues? Contact us at support@sociasync.com with the username you a
   Widget build(BuildContext context) {
     final topics = _helpContent.keys.toList();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FB),
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-
-                  // Title
-                  const Text(
-                    'How can we help?',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // List of help topics (no group card, individual rows)
-                  ...topics.map((topic) => _buildHelpTile(context, topic)),
-
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(15),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: primaryBlue,
-          borderRadius: BorderRadius.circular(40),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return AppBackgroundWrapper(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Column(
           children: [
-            GestureDetector(
-              onTap: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const DashboardPage()),
-                (route) => false,
+            _buildHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+
+                    // Title
+                    const Text(
+                      'How can we help?',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // List of help topics (no group card, individual rows)
+                    ...topics.map((topic) => _buildHelpTile(context, topic)),
+
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
-              child: const Icon(Icons.home, color: Colors.white, size: 30),
-            ),
-            const Icon(Icons.history, color: Colors.white, size: 30),
-            const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 30),
-            GestureDetector(
-              onTap: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfilePage()),
-                (route) => false,
-              ),
-              child: const Icon(Icons.person, color: Colors.white, size: 30),
             ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: 3,
+          backgroundColor: primaryBlue,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+              return;
+            }
+
+            if (index == 1) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+              );
+              return;
+            }
+
+            if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const InboxPage()),
+              );
+            }
+          },
         ),
       ),
     );
