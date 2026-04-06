@@ -14,33 +14,53 @@ class AppNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const icons = <IconData>[
-      Icons.home,
-      Icons.access_time,
-      Icons.message_outlined,
-      Icons.person_outline,
+    const iconAssets = <String>[
+      'assets/home.png',
+      'assets/calendar.png',
+      'assets/chat.png',
+      'assets/profile.png',
     ];
+    const calendarActiveAsset = 'assets/calendar_active.png';
 
     return Container(
-      margin: const EdgeInsets.all(15),
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.fromLTRB(15, 10, 15, 18),
+      height: 68,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(40),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(icons.length, (index) {
+        children: List.generate(iconAssets.length, (index) {
           final isSelected = index == selectedIndex;
+          final iconPath = (index == 1 && isSelected)
+              ? calendarActiveAsset
+              : iconAssets[index];
 
           return IconButton(
             onPressed: () => onTap?.call(index),
-            icon: Icon(
-              icons[index],
-              color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
-              size: isSelected ? 32 : 30,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            icon: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected
+                    ? Colors.white.withOpacity(0.12)
+                    : Colors.transparent,
+              ),
+              child: Image.asset(
+                iconPath,
+                width: isSelected ? 27 : 24,
+                height: isSelected ? 27 : 24,
+                color: Colors.white.withOpacity(isSelected ? 1.0 : 0.52),
+                colorBlendMode: BlendMode.modulate,
+              ),
             ),
-            splashRadius: 24,
+            splashRadius: 22,
             tooltip: 'Menu ${index + 1}',
           );
         }),
