@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({
@@ -34,13 +35,17 @@ class DashboardHeader extends StatelessWidget {
           ),
         ),
         IconButton(
-          onPressed: onNotificationTap,
-          // PERUBAHAN: Menggunakan Image.asset untuk menggantikan Icon bawaan
+          onPressed: () {
+            // LOGIKA: Berpindah ke halaman NotificationPage saat diklik
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NotificationPage()),
+            );
+          },
           icon: Image.asset(
-            'assets/alarm.png',
-            width: 24, // Ukuran standar icon
+            'assets/Alarm.png', // Pastikan nama file sesuai (besar/kecil hurufnya)
+            width: 24,
             height: 24,
-            // color & colorBlendMode agar warna asset mengikuti primaryColor
             color: primaryColor,
             colorBlendMode: BlendMode.srcIn,
           ),
