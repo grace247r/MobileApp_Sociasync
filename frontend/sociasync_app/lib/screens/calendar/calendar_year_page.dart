@@ -324,21 +324,24 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
                 selectedIndex: 1, // Tab Calendar
                 backgroundColor: primaryBlue,
                 onTap: (index) {
-                  if (index == 0)
+                  if (index == 0) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const DashboardPage()),
                     );
-                  if (index == 2)
+                  }
+                  if (index == 2) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const InboxPage()),
                     );
-                  if (index == 3)
+                  }
+                  if (index == 3) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const ProfilePage()),
                     );
+                  }
                 },
               ),
             ),
