@@ -5,8 +5,8 @@ import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
-import 'package:sociasync_app/screens/content generator/saved_content_page.dart';
-import 'package:sociasync_app/screens/content generator/content_ideas_page.dart';
+import 'package:sociasync_app/screens/content_generator/saved_content_page.dart';
+import 'package:sociasync_app/screens/content_generator/content_ideas_page.dart';
 import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 

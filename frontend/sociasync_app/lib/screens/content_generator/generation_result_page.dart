@@ -7,7 +7,7 @@ import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
-import 'package:sociasync_app/screens/content generator/saved_content_page.dart';
+import 'package:sociasync_app/screens/content_generator/saved_content_page.dart';
 
 class GenerationResultPage extends StatefulWidget {
   const GenerationResultPage({super.key});

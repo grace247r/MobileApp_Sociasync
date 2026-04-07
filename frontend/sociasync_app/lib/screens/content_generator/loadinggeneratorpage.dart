@@ -5,7 +5,7 @@ import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/generator_loading.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/content generator/generation_result_page.dart';
+import 'package:sociasync_app/screens/content_generator/generation_result_page.dart';
 import 'package:sociasync_app/screens/inbox/inbox_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
