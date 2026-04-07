@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/screens/content%20generator/script_result_page.dart';
+import 'package:sociasync_app/screens/content_generator/script_result_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
