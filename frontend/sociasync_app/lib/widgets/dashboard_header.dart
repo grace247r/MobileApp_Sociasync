@@ -43,7 +43,7 @@ class DashboardHeader extends StatelessWidget {
             );
           },
           icon: Image.asset(
-            'assets/Alarm.png', // Pastikan nama file sesuai (besar/kecil hurufnya)
+            'assets/alarm.png',
             width: 24,
             height: 24,
             color: primaryColor,

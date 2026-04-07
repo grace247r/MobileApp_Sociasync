@@ -82,7 +82,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                 // Title & Bookmark Icon
                 Padding(
                   padding: const EdgeInsets.only(
-                    right: 8.0,
+                    right: .0,
                   ), // Menyesuaikan agar sejajar dengan icon lonceng
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -95,7 +95,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                           color: Color(0xFF2E2E2E),
                         ),
                       ),
-                      // Icon Bookmark disamakan ukurannya dengan icon notifikasi di header
+                      
                       IconButton(
                         onPressed: () {
                           Navigator.of(context).push(
