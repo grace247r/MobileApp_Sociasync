@@ -7,7 +7,7 @@ import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/content_generator/loadinggeneratorpage.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class CaptionResultPage extends StatefulWidget {
@@ -51,7 +51,7 @@ class _CaptionResultPageState extends State<CaptionResultPage> {
     } else if (index == 2) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const InboxPage()),
+        MaterialPageRoute(builder: (_) => const ChatbotPage()),
       );
     } else if (index == 3) {
       Navigator.pushReplacement(

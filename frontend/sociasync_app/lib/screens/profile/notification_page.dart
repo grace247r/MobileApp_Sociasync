@@ -3,7 +3,7 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -412,7 +412,7 @@ class _NotificationPageState extends State<NotificationPage> {
             if (index == 2) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const InboxPage()),
+                MaterialPageRoute(builder: (_) => const ChatbotPage()),
               );
             }
           },
@@ -451,7 +451,7 @@ class _NotificationPageState extends State<NotificationPage> {
                 onPressed: () => Navigator.pop(context),
               ),
               const Text(
-                'Profile',
+                'Notification',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,

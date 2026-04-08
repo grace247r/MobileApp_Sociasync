@@ -6,7 +6,7 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class CalendarWeekPage extends StatefulWidget {
@@ -102,10 +102,7 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
       items: [
         const PopupMenuItem(
           value: 'Week',
-          child: Text(
-            'Week',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          child: Text('Week', style: TextStyle(fontWeight: FontWeight.bold)),
         ),
         const PopupMenuItem(value: 'Month', child: Text('Month')),
         const PopupMenuItem(value: 'Year', child: Text('Year')),
@@ -275,14 +272,15 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                       context,
                       MaterialPageRoute(builder: (_) => const DashboardPage()),
                     );
-                  }
-                  if (index == 2) {
+                  } else if (index == 1) {
+                    // On calendar page, stay on calendar (do nothing)
+                    return;
+                  } else if (index == 2) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => const InboxPage()),
+                      MaterialPageRoute(builder: (_) => const ChatbotPage()),
                     );
-                  }
-                  if (index == 3) {
+                  } else if (index == 3) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const ProfilePage()),

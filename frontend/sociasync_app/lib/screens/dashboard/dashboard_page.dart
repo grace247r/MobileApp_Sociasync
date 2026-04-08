@@ -5,7 +5,7 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/analytics/monthly_summary_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -33,7 +33,7 @@ class _DashboardPageState extends State<DashboardPage> {
     } else if (index == 2) {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ChatbotPage()));
     } else if (index == 3) {
       Navigator.of(
         context,
@@ -208,14 +208,16 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: GridView.count(
+            child: GridView(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio:
-                  2.1, // Aspect ratio dijaga agar box stats proporsional
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                mainAxisExtent:
+                    98, // Tinggi tetap supaya isi kartu tidak overflow
+              ),
               children: [
                 _buildStatCard('4.8%', 'Engagement'),
                 _buildStatCard('45.7 K', 'Reach'),
@@ -377,7 +379,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildStatCard(String value, String label) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -395,8 +397,10 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 33,
+              fontSize: 29,
               fontWeight: FontWeight.w900,
               color: primaryBlue,
             ),
@@ -404,8 +408,10 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 2),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               color: Colors.grey,
               fontWeight: FontWeight.w600,
             ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
+import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
@@ -19,14 +21,19 @@ class _ChatbotPageState extends State<ChatbotPage> {
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
 
-    if (index == 2) {
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+    } else if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+      );
+    } else if (index == 2) {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
-      return;
-    }
-
-    if (index == 3) {
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ChatbotPage()));
+    } else if (index == 3) {
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));

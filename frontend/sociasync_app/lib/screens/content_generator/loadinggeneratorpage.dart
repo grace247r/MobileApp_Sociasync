@@ -6,7 +6,7 @@ import 'package:sociasync_app/widgets/generator_loading.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/content_generator/generation_result_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class LoadingGeneratorPage extends StatefulWidget {
@@ -46,7 +46,7 @@ class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
     if (index == 2) {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ChatbotPage()));
       return;
     }
 
