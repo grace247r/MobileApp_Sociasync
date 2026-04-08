@@ -78,7 +78,6 @@ class _NotificationPageState extends State<NotificationPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DashboardHeader(
-                  userName: 'Rina',
                   primaryColor: primaryBlue,
                   onNotificationTap: () {
                     // Sudah di page notification, bisa dikosongkan atau pop

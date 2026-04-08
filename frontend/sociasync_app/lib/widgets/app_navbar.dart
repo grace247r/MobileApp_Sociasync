@@ -14,17 +14,24 @@ class AppNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const iconAssets = <String>[
+    final iconAssets = <String>[
       'assets/home.png',
       'assets/calendar.png',
-      'assets/chat.png',
-      'assets/profile.png',
+      'assets/Chat.png',
+      'assets/Profile.png',
     ];
     const calendarActiveAsset = 'assets/calendar_active.png';
 
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallDevice = screenHeight < 600;
+
+    // Responsive sizing
+    final navbarHeight = isSmallDevice ? 56.0 : 68.0;
+    final iconBaseSize = isSmallDevice ? 20.0 : 24.0;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(15, 10, 15, 18),
-      height: 68,
+      height: navbarHeight,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -41,7 +48,10 @@ class AppNavbar extends StatelessWidget {
           return IconButton(
             onPressed: () => onTap?.call(index),
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            constraints: BoxConstraints(
+              minWidth: 44,
+              minHeight: navbarHeight * 0.7,
+            ),
             icon: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOut,
@@ -54,8 +64,9 @@ class AppNavbar extends StatelessWidget {
               ),
               child: Image.asset(
                 iconPath,
-                width: isSelected ? 27 : 24,
-                height: isSelected ? 27 : 24,
+                width: isSelected ? iconBaseSize + 3 : iconBaseSize,
+                height: isSelected ? iconBaseSize + 3 : iconBaseSize,
+                fit: BoxFit.contain,
                 color: Colors.white.withOpacity(isSelected ? 1.0 : 0.52),
                 colorBlendMode: BlendMode.modulate,
               ),

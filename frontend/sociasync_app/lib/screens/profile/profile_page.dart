@@ -13,10 +13,51 @@ import 'package:sociasync_app/screens/profile/privacy_page.dart';
 import 'package:sociasync_app/screens/profile/notification_page.dart';
 import 'package:sociasync_app/screens/profile/help_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
   final Color primaryBlue = const Color(0xFF1D5093);
+  String _userName = 'User';
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.profileNotifier.addListener(_onProfileChanged);
+    _onProfileChanged();
+    _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    AuthService.profileNotifier.removeListener(_onProfileChanged);
+    super.dispose();
+  }
+
+  void _onProfileChanged() {
+    final profile = AuthService.currentProfile;
+    final nextName = (profile?.name ?? '').trim();
+    if (!mounted || nextName.isEmpty) return;
+    if (_userName == nextName) return;
+    setState(() => _userName = nextName);
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await AuthService.getMe();
+      if (!mounted) return;
+      final nextName = profile.name.trim();
+      if (nextName.isNotEmpty) {
+        setState(() => _userName = nextName);
+      }
+    } catch (_) {
+      // Keep default display name if request fails.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +269,7 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Rina',
+                  _userName,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,

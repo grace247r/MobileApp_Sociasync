@@ -75,7 +75,6 @@ class _CaptionResultPageState extends State<CaptionResultPage> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
                     child: DashboardHeader(
-                      userName: 'Rina',
                       primaryColor: primaryColor,
                       onNotificationTap: () {
                         Navigator.push(

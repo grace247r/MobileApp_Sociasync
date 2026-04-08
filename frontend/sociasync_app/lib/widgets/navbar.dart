@@ -16,9 +16,16 @@ class Navbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallDevice = screenHeight < 600;
+
+    // Responsive sizing
+    final navbarHeight = isSmallDevice ? 56.0 : 70.0;
+    final iconBaseSize = isSmallDevice ? 20.0 : 28.0;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 25),
-      height: 70,
+      height: navbarHeight,
       decoration: BoxDecoration(
         color: backgroundColor ?? primaryBlue,
         borderRadius: BorderRadius.circular(35),
@@ -39,16 +46,16 @@ class Navbar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem('assets/home.png', 0),
-          _buildNavItem('assets/calendar.png', 1),
-          _buildNavItem('assets/chat.png', 2),
-          _buildNavItem('assets/profile.png', 3),
+          _buildNavItem('assets/home.png', 0, iconBaseSize),
+          _buildNavItem('assets/calendar.png', 1, iconBaseSize),
+          _buildNavItem('assets/Chat.png', 2, iconBaseSize),
+          _buildNavItem('assets/Profile.png', 3, iconBaseSize),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(String assetPath, int index) {
+  Widget _buildNavItem(String assetPath, int index, double baseIconSize) {
     final bool isActive = selectedIndex == index;
 
     // LOGIKA SWITCH: Calendar menggunakan asset berbeda saat aktif
@@ -64,9 +71,10 @@ class Navbar extends StatelessWidget {
         children: [
           Image.asset(
             finalAsset,
-            // Kasih width/height sedikit lebih besar kalau aktif biar "pop out"
-            width: isActive ? 30 : 28,
-            height: isActive ? 30 : 28,
+            // Responsive sizing: lebih besar kalau aktif
+            width: isActive ? baseIconSize + 2 : baseIconSize,
+            height: isActive ? baseIconSize + 2 : baseIconSize,
+            fit: BoxFit.contain,
             // Kontras putih lebih kuat saat aktif
             color: Colors.white.withOpacity(isActive ? 1.0 : 0.52),
             colorBlendMode: BlendMode.modulate,

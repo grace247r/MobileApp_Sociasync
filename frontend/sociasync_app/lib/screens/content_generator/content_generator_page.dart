@@ -68,7 +68,6 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
               children: [
                 // Menggunakan widget Header yang sudah ada
                 DashboardHeader(
-                  userName: 'Rina',
                   primaryColor: primaryBlue,
                   onNotificationTap: () {
                     Navigator.of(context).pushReplacement(

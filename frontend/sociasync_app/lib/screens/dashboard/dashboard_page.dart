@@ -9,6 +9,7 @@ import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -20,9 +21,39 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   final int _currentIndex = 0;
+  String _userName = 'User';
 
   final PageController _statsPageController = PageController();
   int _activeStatsPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.profileNotifier.addListener(_onProfileChanged);
+    _onProfileChanged();
+    _loadProfile();
+  }
+
+  void _onProfileChanged() {
+    final profile = AuthService.currentProfile;
+    final nextName = (profile?.name ?? '').trim();
+    if (!mounted || nextName.isEmpty) return;
+    if (_userName == nextName) return;
+    setState(() => _userName = nextName);
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await AuthService.getMe();
+      if (!mounted) return;
+      final nextName = profile.name.trim();
+      if (nextName.isNotEmpty) {
+        setState(() => _userName = nextName);
+      }
+    } catch (_) {
+      // Keep default greeting if profile request fails.
+    }
+  }
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -43,6 +74,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   void dispose() {
+    AuthService.profileNotifier.removeListener(_onProfileChanged);
     _statsPageController.dispose();
     super.dispose();
   }
@@ -63,7 +95,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   // HEADER
                   DashboardHeader(
-                    userName: 'Rina',
                     primaryColor: primaryBlue,
                     onNotificationTap: () {
                       Navigator.of(context).push(

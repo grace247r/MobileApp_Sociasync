@@ -51,7 +51,6 @@ class _ChatbotPageState extends State<ChatbotPage> {
               children: [
                 // 1. WIDGET ATAS: Header yang sudah ada
                 DashboardHeader(
-                  userName: 'Rina',
                   primaryColor: primaryBlue,
                   onNotificationTap: () {},
                 ),

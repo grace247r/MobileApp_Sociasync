@@ -59,7 +59,6 @@ class _ContentIdeasPageState extends State<ContentIdeasPage> {
               children: [
                 // HEADER
                 DashboardHeader(
-                  userName: 'Rina',
                   primaryColor: primaryBlue,
                   onNotificationTap: () {},
                 ),

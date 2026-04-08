@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sociasync_app/config/api_config.dart';
@@ -16,6 +17,10 @@ class AuthException implements Exception {
 class AuthService {
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
+  static final ValueNotifier<UserProfile?> profileNotifier =
+      ValueNotifier<UserProfile?>(null);
+
+  static UserProfile? get currentProfile => profileNotifier.value;
 
   static Uri _uri(String path) {
     return Uri.parse('${ApiConfig.baseUrl}${ApiConfig.authPrefix}/$path');
@@ -27,6 +32,8 @@ class AuthService {
     required String gender,
     required String password,
     required String confirmPassword,
+    DateTime? dateOfBirth,
+    required String region,
   }) async {
     late final http.Response response;
     try {
@@ -39,6 +46,9 @@ class AuthService {
           'gender': gender,
           'password': password,
           'confirm_password': confirmPassword,
+          if (dateOfBirth != null)
+            'date_of_birth': dateOfBirth.toIso8601String().split('T').first,
+          'region': region,
         }),
       );
     } catch (_) {
@@ -52,6 +62,12 @@ class AuthService {
         access: tokens?['access'] as String? ?? '',
         refresh: tokens?['refresh'] as String? ?? '',
       );
+
+      // Load user profile after register
+      final userData = data['user'] as Map<String, dynamic>?;
+      if (userData != null) {
+        profileNotifier.value = UserProfile.fromJson(userData);
+      }
       return;
     }
 
@@ -75,17 +91,28 @@ class AuthService {
 
     final data = _decode(response.body);
     if (response.statusCode == 200) {
+      final tokens = data['tokens'] as Map<String, dynamic>?;
       await _saveTokens(
-        access: (data['access'] ?? '') as String,
-        refresh: (data['refresh'] ?? '') as String,
+        access: tokens?['access'] as String? ?? '',
+        refresh: tokens?['refresh'] as String? ?? '',
       );
+
+      // Load user profile after login
+      final userData = data['user'] as Map<String, dynamic>?;
+      if (userData != null) {
+        profileNotifier.value = UserProfile.fromJson(userData);
+      }
       return;
     }
 
     throw AuthException(_extractErrorMessage(data));
   }
 
-  static Future<UserProfile> getMe() async {
+  static Future<UserProfile> getMe({bool forceRefresh = false}) async {
+    if (!forceRefresh && currentProfile != null) {
+      return currentProfile!;
+    }
+
     final token = await _getAccessTokenOrRefresh();
     if (token == null) {
       throw AuthException('Sesi login tidak ditemukan.');
@@ -102,7 +129,9 @@ class AuthService {
     }
 
     if (response.statusCode == 200) {
-      return UserProfile.fromJson(_decode(response.body));
+      final profile = UserProfile.fromJson(_decode(response.body));
+      profileNotifier.value = profile;
+      return profile;
     }
 
     if (response.statusCode == 401) {
@@ -122,7 +151,9 @@ class AuthService {
         throw AuthException(_connectionErrorMessage());
       }
       if (retryResponse.statusCode == 200) {
-        return UserProfile.fromJson(_decode(retryResponse.body));
+        final profile = UserProfile.fromJson(_decode(retryResponse.body));
+        profileNotifier.value = profile;
+        return profile;
       }
     }
 
@@ -150,7 +181,9 @@ class AuthService {
     }
 
     if (response.statusCode == 200) {
-      return UserProfile.fromJson(_decode(response.body));
+      final profile = UserProfile.fromJson(_decode(response.body));
+      profileNotifier.value = profile;
+      return profile;
     }
 
     throw AuthException('Gagal menyimpan profil.');
@@ -170,6 +203,7 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_accessKey);
     await prefs.remove(_refreshKey);
+    profileNotifier.value = null;
   }
 
   static Future<String?> _getAccessTokenOrRefresh() async {

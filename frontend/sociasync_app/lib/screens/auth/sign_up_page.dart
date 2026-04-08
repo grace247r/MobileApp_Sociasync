@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sociasync_app/services/auth_service.dart';
+import 'package:sociasync_app/config/api_config.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'login_page.dart';
 import '../dashboard/dashboard_page.dart';
 
@@ -15,17 +18,55 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _obscureConfirmPassword = true;
   bool _isSubmitting = false;
   String _selectedGender = '';
+  DateTime? _selectedDateOfBirth;
+  String _selectedRegion = '';
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  List<Map<String, String>> regions = [];
+  bool _isLoadingRegions = true;
+
   String? _nameError;
   String? _emailError;
   String? _genderError;
   String? _passwordError;
   String? _confirmPasswordError;
+  String? _dateOfBirthError;
+  String? _regionError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRegions();
+  }
+
+  Future<void> _loadRegions() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}${ApiConfig.authPrefix}/regions/'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            regions = List<Map<String, String>>.from(
+              (data['regions'] as List).map(
+                (r) => {'value': r['value'] as String, 'label': r['label'] as String},
+              ),
+            );
+            _isLoadingRegions = false;
+          });
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingRegions = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -47,6 +88,8 @@ class _SignUpPageState extends State<SignUpPage> {
     String? genderErr;
     String? passwordErr;
     String? confirmPasswordErr;
+    String? dateOfBirthErr;
+    String? regionErr;
 
     // Validasi nama
     if (name.isEmpty) {
@@ -67,6 +110,16 @@ class _SignUpPageState extends State<SignUpPage> {
     // Validasi gender
     if (_selectedGender.isEmpty) {
       genderErr = 'Pilih jenis kelamin';
+    }
+
+    // Validasi date of birth
+    if (_selectedDateOfBirth == null) {
+      dateOfBirthErr = 'Pilih tanggal lahir';
+    }
+
+    // Validasi region
+    if (_selectedRegion.isEmpty) {
+      regionErr = 'Pilih region';
     }
 
     // Validasi password
@@ -93,13 +146,17 @@ class _SignUpPageState extends State<SignUpPage> {
       _genderError = genderErr;
       _passwordError = passwordErr;
       _confirmPasswordError = confirmPasswordErr;
+      _dateOfBirthError = dateOfBirthErr;
+      _regionError = regionErr;
     });
 
     return nameErr == null &&
         emailErr == null &&
         genderErr == null &&
         passwordErr == null &&
-        confirmPasswordErr == null;
+        confirmPasswordErr == null &&
+        dateOfBirthErr == null &&
+        regionErr == null;
   }
 
   Future<void> _submitRegister() async {
@@ -115,6 +172,8 @@ class _SignUpPageState extends State<SignUpPage> {
         gender: _selectedGender.toLowerCase(),
         password: _passwordController.text,
         confirmPassword: _confirmPasswordController.text,
+        dateOfBirth: _selectedDateOfBirth,
+        region: _selectedRegion,
       );
 
       if (!mounted) return;
@@ -243,6 +302,24 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         if (_genderError != null)
                           _buildErrorText(_genderError!),
+
+                        const SizedBox(height: 14),
+
+                        // Date of Birth
+                        _buildLabel('Date of Birth'),
+                        const SizedBox(height: 6),
+                        _buildDatePickerField(),
+                        if (_dateOfBirthError != null)
+                          _buildErrorText(_dateOfBirthError!),
+
+                        const SizedBox(height: 14),
+
+                        // Region
+                        _buildLabel('Region'),
+                        const SizedBox(height: 6),
+                        _buildRegionDropdown(),
+                        if (_regionError != null)
+                          _buildErrorText(_regionError!),
 
                         const SizedBox(height: 14),
 
@@ -441,6 +518,132 @@ class _SignUpPageState extends State<SignUpPage> {
                 ? const Color(0xFF0D1B4B)
                 : const Color(0xFF1A2E6E).withOpacity(0.7),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePickerField() {
+    final hasError = _dateOfBirthError != null;
+    final dateText = _selectedDateOfBirth == null
+        ? 'Select date...'
+        : '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year}';
+
+    return GestureDetector(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate:
+              _selectedDateOfBirth ??
+              DateTime.now().subtract(const Duration(days: 365 * 18)),
+          firstDate: DateTime(1950),
+          lastDate: DateTime.now(),
+        );
+        if (picked != null) {
+          setState(() {
+            _selectedDateOfBirth = picked;
+            _dateOfBirthError = null;
+          });
+        }
+      },
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.55),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasError
+                ? const Color(0xFFFF4D4D)
+                : Colors.white.withOpacity(0.8),
+            width: hasError ? 1.5 : 1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                dateText,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _selectedDateOfBirth == null
+                      ? Colors.grey.withOpacity(0.6)
+                      : const Color(0xFF1A1A2E),
+                ),
+              ),
+              Icon(Icons.calendar_today, color: Colors.grey.shade500, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegionDropdown() {
+    final hasError = _regionError != null;
+
+    if (_isLoadingRegions) {
+      return Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.55),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.8),
+            width: 1,
+          ),
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.55),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: hasError
+              ? const Color(0xFFFF4D4D)
+              : Colors.white.withOpacity(0.8),
+          width: hasError ? 1.5 : 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: DropdownButton<String>(
+          value: _selectedRegion.isEmpty ? null : _selectedRegion,
+          hint: const Text(
+            'Select region...',
+            style: TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+          isExpanded: true,
+          underline: const SizedBox(),
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFF1A1A2E),
+          ),
+          items: regions.map((region) {
+            return DropdownMenuItem(
+              value: region['value'],
+              child: Text(region['label'] ?? region['value'] ?? ''),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _selectedRegion = value;
+                _regionError = null;
+              });
+            }
+          },
         ),
       ),
     );
