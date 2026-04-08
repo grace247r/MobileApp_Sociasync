@@ -52,7 +52,8 @@ class _ContentIdeasPageState extends State<ContentIdeasPage> {
       child: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -118,8 +119,6 @@ class _ContentIdeasPageState extends State<ContentIdeasPage> {
                       'Top 3 affordable eats content gets more saves. Try budget-friendly list.',
                   primaryColor: primaryBlue,
                 ),
-
-                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -226,9 +225,7 @@ class ContentIdeaCard extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const ScriptResultPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const ScriptResultPage()),
                 );
               },
               style: ElevatedButton.styleFrom(

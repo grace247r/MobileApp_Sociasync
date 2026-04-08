@@ -20,6 +20,8 @@ class AppBackgroundWrapper extends StatelessWidget {
         return Scaffold(
           // Memastikan background berwarna putih dasar
           backgroundColor: Colors.white,
+          // Memungkinkan konten ekstens di belakang navbar
+          extendBody: true,
           // Menggunakan Stack untuk menumpuk background dan konten
           body: Stack(
             children: [

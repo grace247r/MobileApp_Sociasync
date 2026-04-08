@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/screens/auth/login_page.dart';
+import 'package:sociasync_app/screens/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1D5093)),
         useMaterial3: true,
       ),
-      home: const LoginPage(),
+      home: const SplashScreen(),
     );
   }
 }

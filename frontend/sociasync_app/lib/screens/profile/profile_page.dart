@@ -5,6 +5,7 @@ import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/splash_screen.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 
 // Import sub-halaman
 import 'package:sociasync_app/screens/profile/account_page.dart';
@@ -334,11 +335,15 @@ class ProfilePage extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => const SplashScreen()),
-              (route) => false,
-            ),
+            onPressed: () async {
+              await AuthService.logout();
+              if (!context.mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const SplashScreen()),
+                (route) => false,
+              );
+            },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Log Out', style: TextStyle(color: Colors.white)),
           ),

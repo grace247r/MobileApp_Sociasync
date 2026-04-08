@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 import 'login_page.dart';
 import '../dashboard/dashboard_page.dart';
 
@@ -12,6 +13,7 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
   String _selectedGender = '';
 
   final _nameController = TextEditingController();
@@ -98,6 +100,42 @@ class _SignUpPageState extends State<SignUpPage> {
         genderErr == null &&
         passwordErr == null &&
         confirmPasswordErr == null;
+  }
+
+  Future<void> _submitRegister() async {
+    if (!_validate() || _isSubmitting) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await AuthService.register(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        gender: _selectedGender.toLowerCase(),
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal daftar. Coba lagi.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -252,15 +290,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           width: double.infinity,
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: () {
-                              if (_validate()) {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) => const DashboardPage(),
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed: _isSubmitting ? null : _submitRegister,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white.withOpacity(0.25),
                               foregroundColor: Colors.white,
@@ -273,14 +303,25 @@ class _SignUpPageState extends State<SignUpPage> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Sign Up',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                         ),
 
