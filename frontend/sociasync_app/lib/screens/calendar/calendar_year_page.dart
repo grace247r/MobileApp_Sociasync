@@ -94,7 +94,6 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: DashboardHeader(
-                      userName: 'Rina',
                       primaryColor: primaryBlue,
                       onNotificationTap: () {},
                     ),

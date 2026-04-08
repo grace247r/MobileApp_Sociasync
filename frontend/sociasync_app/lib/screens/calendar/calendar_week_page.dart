@@ -141,7 +141,6 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: DashboardHeader(
-                      userName: 'Rina',
                       primaryColor: primaryBlue,
                       onNotificationTap: () {},
                     ),

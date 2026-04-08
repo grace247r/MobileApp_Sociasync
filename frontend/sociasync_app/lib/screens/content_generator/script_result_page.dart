@@ -105,7 +105,7 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
               // HEADER
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-                child: DashboardHeader(userName: 'Rina'),
+                child: DashboardHeader(),
               ),
 
               Expanded(

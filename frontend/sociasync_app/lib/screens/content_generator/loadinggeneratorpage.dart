@@ -70,7 +70,6 @@ class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
               children: [
                 // WIDGET ATAS: DashboardHeader
                 DashboardHeader(
-                  userName: 'Rina',
                   primaryColor: primaryBlue,
                   onNotificationTap: () {},
                 ),

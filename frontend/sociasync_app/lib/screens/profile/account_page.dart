@@ -4,6 +4,8 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
+import 'package:sociasync_app/models/user_profile.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -15,17 +17,119 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
 
-  // Data yang bisa diedit
-  String name = 'Rina';
-  String email = 'rinafoodvlog@gmail.com';
-  String dateOfBirth = '24 Jan 2001';
-  String accountRegion = 'Indonesia';
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  String name = '-';
+  String email = 'Email mengikuti akun login';
+  String gender = 'male';
+  DateTime? dateOfBirth;
+  String accountRegion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  String get _dateOfBirthLabel {
+    if (dateOfBirth == null) return '-';
+    final picked = dateOfBirth!;
+    final monthNames = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${picked.day} ${monthNames[picked.month]} ${picked.year}';
+  }
+
+  String get _genderLabel {
+    if (gender.isEmpty) return '-';
+    return gender[0].toUpperCase() + gender.substring(1);
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await AuthService.getMe();
+      if (!mounted) return;
+      setState(() {
+        name = profile.name;
+        gender = profile.gender;
+        dateOfBirth = profile.dateOfBirth;
+        accountRegion = profile.region;
+        _isLoading = false;
+      });
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal memuat data akun.')));
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (_isSaving) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final updated = await AuthService.updateProfile(
+        UserProfile(
+          name: name,
+          gender: gender,
+          dateOfBirth: dateOfBirth,
+          region: accountRegion,
+        ),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        name = updated.name;
+        gender = updated.gender;
+        dateOfBirth = updated.dateOfBirth;
+        accountRegion = updated.region;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profil berhasil disimpan.')),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal menyimpan profil.')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
 
   // ── Generic popup edit teks biasa ──
   void _showEditDialog({
     required String title,
     required String currentValue,
-    required ValueChanged<String> onSave,
+    required Future<void> Function(String value) onSave,
     TextInputType keyboardType = TextInputType.text,
   }) {
     final controller = TextEditingController(text: currentValue);
@@ -68,11 +172,13 @@ class _AccountPageState extends State<AccountPage> {
             child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (controller.text.trim().isNotEmpty) {
-                onSave(controller.text.trim());
+                await onSave(controller.text.trim());
               }
-              Navigator.pop(context);
+              if (mounted) {
+                Navigator.pop(context);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryBlue,
@@ -89,32 +195,7 @@ class _AccountPageState extends State<AccountPage> {
 
   // ── Popup khusus Date of Birth (DatePicker) ──
   void _showDatePicker() async {
-    // Parse tanggal saat ini
-    DateTime initial;
-    try {
-      final parts = dateOfBirth.split(' ');
-      final months = {
-        'Jan': 1,
-        'Feb': 2,
-        'Mar': 3,
-        'Apr': 4,
-        'May': 5,
-        'Jun': 6,
-        'Jul': 7,
-        'Aug': 8,
-        'Sep': 9,
-        'Oct': 10,
-        'Nov': 11,
-        'Dec': 12,
-      };
-      initial = DateTime(
-        int.parse(parts[2]),
-        months[parts[1]] ?? 1,
-        int.parse(parts[0]),
-      );
-    } catch (_) {
-      initial = DateTime(2001, 1, 24);
-    }
+    final initial = dateOfBirth ?? DateTime(2001, 1, 24);
 
     final picked = await showDatePicker(
       context: context,
@@ -128,7 +209,8 @@ class _AccountPageState extends State<AccountPage> {
               primary: primaryBlue,
               onPrimary: Colors.white,
               onSurface: Colors.black87,
-            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
+            ),
+            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -136,25 +218,10 @@ class _AccountPageState extends State<AccountPage> {
     );
 
     if (picked != null) {
-      final monthNames = [
-        '',
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
       setState(() {
-        dateOfBirth =
-            '${picked.day} ${monthNames[picked.month]} ${picked.year}';
+        dateOfBirth = picked;
       });
+      await _saveProfile();
     }
   }
 
@@ -211,9 +278,70 @@ class _AccountPageState extends State<AccountPage> {
                 trailing: isSelected
                     ? Icon(Icons.check, color: primaryBlue, size: 18)
                     : null,
-                onTap: () {
+                onTap: () async {
                   setState(() => accountRegion = regions[i]);
                   Navigator.pop(context);
+                  await _saveProfile();
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showGenderPicker() {
+    const values = ['male', 'female'];
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Select Gender',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: primaryBlue,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: values.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, indent: 16, endIndent: 16),
+            itemBuilder: (_, i) {
+              final current = values[i];
+              final isSelected = current == gender;
+              return ListTile(
+                dense: true,
+                title: Text(
+                  current[0].toUpperCase() + current.substring(1),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isSelected ? primaryBlue : Colors.black87,
+                  ),
+                ),
+                trailing: isSelected
+                    ? Icon(Icons.check, color: primaryBlue, size: 18)
+                    : null,
+                onTap: () async {
+                  setState(() => gender = current);
+                  Navigator.pop(context);
+                  await _saveProfile();
                 },
               );
             },
@@ -397,71 +525,76 @@ class _AccountPageState extends State<AccountPage> {
           children: [
             _buildHeader(context),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 30),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 8, left: 2),
-                      child: Text(
-                        'Account Information',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 30),
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8, left: 2),
+                            child: Text(
+                              'Account Information',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          _buildInfoGroup([
+                            _buildInfoTile(
+                              'Name',
+                              name,
+                              onTap: () => _showEditDialog(
+                                title: 'Name',
+                                currentValue: name,
+                                onSave: (v) async {
+                                  setState(() => name = v);
+                                  await _saveProfile();
+                                },
+                              ),
+                            ),
+                            _buildDivider(),
+                            _buildInfoTile(
+                              'Gender',
+                              _genderLabel,
+                              onTap: _showGenderPicker,
+                            ),
+                            _buildDivider(),
+                            _buildInfoTile('Email', email, onTap: () {}),
+                            _buildDivider(),
+                            _buildInfoTile(
+                              'Date of birth',
+                              _dateOfBirthLabel,
+                              onTap: _showDatePicker,
+                            ),
+                            _buildDivider(),
+                            _buildInfoTile(
+                              'Account Region',
+                              accountRegion.isEmpty ? '-' : accountRegion,
+                              onTap: _showRegionPicker,
+                            ),
+                          ]),
+                          const SizedBox(height: 16),
+                          _buildSingleTile(
+                            'Password',
+                            onTap: _showPasswordDialog,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSingleTile(
+                            'Deactivate or delete account',
+                            onTap: _showDeactivateDialog,
+                            textColor: Colors.red.shade400,
+                          ),
+                        ],
                       ),
                     ),
-                    _buildInfoGroup([
-                      _buildInfoTile(
-                        'Name',
-                        name,
-                        onTap: () => _showEditDialog(
-                          title: 'Name',
-                          currentValue: name,
-                          onSave: (v) => setState(() => name = v),
-                        ),
-                      ),
-                      _buildDivider(),
-                      _buildInfoTile(
-                        'Email',
-                        email,
-                        onTap: () => _showEditDialog(
-                          title: 'Email',
-                          currentValue: email,
-                          keyboardType: TextInputType.emailAddress,
-                          onSave: (v) => setState(() => email = v),
-                        ),
-                      ),
-                      _buildDivider(),
-                      _buildInfoTile(
-                        'Date of birth',
-                        dateOfBirth,
-                        onTap: _showDatePicker,
-                      ),
-                      _buildDivider(),
-                      _buildInfoTile(
-                        'Account Region',
-                        accountRegion,
-                        onTap: _showRegionPicker,
-                      ),
-                    ]),
-                    const SizedBox(height: 16),
-                    _buildSingleTile('Password', onTap: _showPasswordDialog),
-                    const SizedBox(height: 16),
-                    _buildSingleTile(
-                      'Deactivate or delete account',
-                      onTap: _showDeactivateDialog,
-                      textColor: Colors.red.shade400,
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),

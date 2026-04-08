@@ -61,13 +61,13 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
       child: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Menggunakan widget Header yang sudah ada
                 DashboardHeader(
-                  userName: 'Rina',
                   primaryColor: primaryBlue,
                   onNotificationTap: () {
                     Navigator.of(context).pushReplacement(
@@ -95,7 +95,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                           color: Color(0xFF2E2E2E),
                         ),
                       ),
-                      
+
                       IconButton(
                         onPressed: () {
                           Navigator.of(context).push(
@@ -206,7 +206,6 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 100), // Spasi untuk Navbar
               ],
             ),
           ),

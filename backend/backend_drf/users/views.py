@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, ProfileSerializer
+from .models import User
 from django.contrib.auth import authenticate
 
 
@@ -38,7 +39,12 @@ def login_view(request):
     user = authenticate(username=email, password=password)
 
     if user is not None:
-        return Response(get_tokens_for_user(user))
+        tokens = get_tokens_for_user(user)
+        user_data = ProfileSerializer(user).data
+        return Response({
+            "tokens": tokens,
+            "user": user_data
+        })
 
     return Response({"error": "Invalid credentials"}, status=400)
 
@@ -64,3 +70,10 @@ def update_profile(request):
 def me_view(request):
     serializer = ProfileSerializer(request.user)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_regions(request):
+    regions = [{'value': choice[0], 'label': choice[1]} for choice in User.REGION_CHOICES]
+    return Response({'regions': regions})

@@ -41,7 +41,6 @@ class _GenerationResultPageState extends State<GenerationResultPage> {
                   children: [
                     // HEADER
                     DashboardHeader(
-                      userName: 'Rina',
                       primaryColor: primaryBlue,
                       onNotificationTap: () => Navigator.push(
                         context,
