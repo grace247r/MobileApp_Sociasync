@@ -7,7 +7,7 @@ import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/content_generator/saved_content_page.dart';
 import 'package:sociasync_app/screens/content_generator/content_ideas_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class ContentGeneratorPage extends StatefulWidget {
@@ -44,7 +44,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
     if (index == 2) {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ChatbotPage()));
       return;
     }
 

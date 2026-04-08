@@ -3,7 +3,7 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 
 class HelpPage extends StatelessWidget {
   const HelpPage({super.key});
@@ -314,7 +314,7 @@ Still having issues? Contact us at support@sociasync.com with the username you a
             if (index == 2) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const InboxPage()),
+                MaterialPageRoute(builder: (_) => const ChatbotPage()),
               );
             }
           },
@@ -353,7 +353,7 @@ Still having issues? Contact us at support@sociasync.com with the username you a
                 onPressed: () => Navigator.pop(context),
               ),
               const Text(
-                'Profile',
+                'Help',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
