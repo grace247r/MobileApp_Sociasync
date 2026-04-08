@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
-import 'package:sociasync_app/screens/analytics/ai_suggestion_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
@@ -39,7 +39,7 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
     if (index == 2) {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ChatbotPage()));
       return;
     }
 

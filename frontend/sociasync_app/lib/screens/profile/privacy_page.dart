@@ -3,7 +3,7 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 
 class PrivacyPage extends StatefulWidget {
   const PrivacyPage({super.key});
@@ -471,7 +471,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
             if (index == 2) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const InboxPage()),
+                MaterialPageRoute(builder: (_) => const ChatbotPage()),
               );
             }
           },
@@ -510,7 +510,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
                 onPressed: () => Navigator.pop(context),
               ),
               const Text(
-                'Profile',
+                'Privacy',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,

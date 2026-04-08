@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/screens/content_generator/content_generator_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
-import 'package:sociasync_app/screens/content generator/content_generator_page.dart';
 import 'package:sociasync_app/screens/analytics/monthly_summary_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -18,193 +19,211 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
-  final int _currentIndex = 0; // Untuk melacak posisi Navbar
-  final List<double> _weeklyChartValues = [42, 35, 38, 56, 53, 54, 58];
+  final int _currentIndex = 0;
+
+  final PageController _statsPageController = PageController();
+  int _activeStatsPage = 0;
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
-
     if (index == 1) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
       );
-      return;
-    }
-
-    if (index == 2) {
+    } else if (index == 2) {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
-      return;
-    }
-
-    if (index == 3) {
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ChatbotPage()));
+    } else if (index == 3) {
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
-      return;
     }
   }
 
   @override
+  void dispose() {
+    _statsPageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Kita gunakan AppBackgroundWrapper sebagai pondasi utama
     return AppBackgroundWrapper(
-      child: Stack(
-        children: [
-          // LAPISAN 1: Konten Utama (Header, Stats, Chart, dsb)
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Section
-                DashboardHeader(
-                  userName: 'Rina',
-                  primaryColor: primaryBlue,
-                  onNotificationTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationPage(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 25),
-
-                // Stats Grid
-                // --- STATS GRID DENGAN BACKGROUND WADAH ---
-                Container(
-                  padding: const EdgeInsets.all(
-                    12.0,
-                  ), // Jarak antara wadah biru ke kartu stats
-                  decoration: BoxDecoration(
-                    // Warna biru transparan untuk wadah (mirip di gambar)
-                    color: primaryBlue.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // HEADER
+                  DashboardHeader(
+                    userName: 'Rina',
+                    primaryColor: primaryBlue,
+                    onNotificationTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationPage(),
+                        ),
+                      );
+                    },
                   ),
-                  child: GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10, // Jarak horizontal antar kartu
-                    mainAxisSpacing: 10, // Jarak vertikal antar kartu
-                    childAspectRatio: 1.8,
-                    children: [
-                      _buildStatCard('4.8%', 'Engagement'),
-                      _buildStatCard('45.7 K', 'Reach'),
-                      _buildStatCard('12.9 K', 'Followers'),
-                      _buildStatCard('24', 'Post'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
+                  const SizedBox(height: 15),
 
-                // Weekly Chart Section
-                GestureDetector(
-                  onTap: () {
+                  // --- SLIDABLE STATS GRID (FIXED: TIDAK KEPOTONG) ---
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E7CD9).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          // Tambah tinggi agar row kedua stats tidak kepotong.
+                          height: 290,
+                          child: PageView(
+                            controller: _statsPageController,
+                            onPageChanged: (int page) {
+                              setState(() => _activeStatsPage = page);
+                            },
+                            children: [
+                              _buildStatsPageContent('Instagram @rina_style'),
+                              _buildStatsPageContent('TikTok @rina_creative'),
+                            ],
+                          ),
+                        ),
+                        // Page Indicator
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 15),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              2,
+                              (index) =>
+                                  _buildIndicator(index == _activeStatsPage),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+
+                  // --- WEEKLY CHART SECTION ---
+                  _buildSectionHeader('Weekly Performance', () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const MonthlySummaryPage(),
                       ),
                     );
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Weekly Chart',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          // Menggunakan opacity rendah agar background gradasi tetap tembus pandang
-                          color: primaryBlue.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: primaryBlue.withValues(alpha: 0.1),
+                  }),
+                  const SizedBox(height: 15),
+                  _buildSmoothChartCard(),
+
+                  const SizedBox(height: 30),
+
+                  // --- BEST PERFORMING POST SECTION ---
+                  _buildSectionHeader('Best Performing Post', null),
+                  const SizedBox(height: 15),
+                  SizedBox(
+                    height: 180,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _buildPostItem(),
+                        _buildPostItem(),
+                        _buildPostItem(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // --- GENERATE BUTTON ---
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ContentGeneratorPage(),
                           ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryBlue,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 50,
+                          vertical: 15,
                         ),
-                        child: _buildWeeklyChart(),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
-
-                // Best Performing Post Section
-                const Text(
-                  'Best Performing Post',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                SizedBox(
-                  height: 200,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      _buildPostItem('assets/post1.png'),
-                      _buildPostItem('assets/post2.png'),
-                      _buildPostItem('assets/post3.png'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
-
-                // Generate Button
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ContentGeneratorPage(),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 50,
-                        vertical: 15,
+                        elevation: 4,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                      child: const Text(
+                        '+ Generate',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
-                    child: const Text(
-                      '+ Generate',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
                   ),
-                ),
+                ],
+              ),
+            ),
 
-                // Tambahkan SizedBox besar di bawah agar konten tidak tertutup Navbar melayang
-                const SizedBox(height: 100),
-              ],
+            // NAVBAR
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: AppNavbar(
+                selectedIndex: _currentIndex,
+                backgroundColor: primaryBlue,
+                onTap: _onNavbarTap,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsPageContent(String accountName) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            accountName,
+            style: TextStyle(
+              color: primaryBlue,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
           ),
-
-          // LAPISAN 2: Navbar Melayang (Floating)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AppNavbar(
-              selectedIndex: _currentIndex,
-              backgroundColor: primaryBlue,
-              onTap: _onNavbarTap,
+          const SizedBox(height: 12),
+          Expanded(
+            child: GridView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                mainAxisExtent:
+                    98, // Tinggi tetap supaya isi kartu tidak overflow
+              ),
+              children: [
+                _buildStatCard('4.8%', 'Engagement'),
+                _buildStatCard('45.7 K', 'Reach'),
+                _buildStatCard('12.9 K', 'Followers'),
+                _buildStatCard('24', 'Post'),
+              ],
             ),
           ),
         ],
@@ -212,20 +231,163 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildStatCard(String value, String label) {
+  Widget _buildSmoothChartCard() {
     return Container(
-      padding: const EdgeInsets.all(15),
+      height: 220,
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(
-          alpha: 0.8,
-        ), // Sedikit transparan agar estetik
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.blue.shade100),
+        color: const Color(0xFF2E7CD9).withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: primaryBlue.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
             offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 20, 15, 10),
+        child: LineChart(
+          LineChartData(
+            gridData: const FlGridData(show: false),
+            titlesData: FlTitlesData(
+              show: true,
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  interval: 1,
+                  getTitlesWidget: (value, meta) {
+                    const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+                    final index = value.toInt();
+                    if (value != index.toDouble() ||
+                        index < 0 ||
+                        index >= days.length) {
+                      return const Text('');
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        days[index],
+                        style: const TextStyle(
+                          color: Color(0xFF123B74),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 35,
+                  getTitlesWidget: (value, meta) {
+                    if (value % 20 != 0) return const Text('');
+                    return Text(
+                      '${value.toInt()}K',
+                      style: const TextStyle(
+                        color: Color(0xFF123B74),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            borderData: FlBorderData(show: false),
+            minX: 0,
+            maxX: 6,
+            minY: 0,
+            maxY: 60,
+            lineBarsData: [
+              LineChartBarData(
+                spots: [
+                  const FlSpot(0, 42),
+                  const FlSpot(1, 35),
+                  const FlSpot(2, 38),
+                  const FlSpot(3, 56),
+                  const FlSpot(4, 53),
+                  const FlSpot(5, 54),
+                  const FlSpot(6, 58),
+                ],
+                isCurved: true,
+                color: const Color(0xFF2568B8),
+                barWidth: 4,
+                isStrokeCapRound: true,
+                dotData: const FlDotData(show: true),
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF2568B8).withOpacity(0.3),
+                      const Color(0xFF2568B8).withOpacity(0.0),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+          if (onTap != null) Icon(Icons.chevron_right, color: primaryBlue),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIndicator(bool isActive) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      height: 8,
+      width: isActive ? 22 : 8,
+      decoration: BoxDecoration(
+        color: isActive ? primaryBlue : Colors.grey.shade400,
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String value, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -235,18 +397,23 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 29,
               fontWeight: FontWeight.w900,
               color: primaryBlue,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 10,
               color: Colors.grey,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -254,192 +421,17 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildPostItem(String imagePath) {
+  Widget _buildPostItem() {
     return Container(
       width: 140,
       margin: const EdgeInsets.only(right: 15),
       decoration: BoxDecoration(
         color: Colors.grey.shade300,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
-      child: const Center(child: Icon(Icons.image, color: Colors.white)),
-    );
-  }
-
-  Widget _buildWeeklyChart() {
-    const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _WeeklyChartPainter(
-                primaryBlue: primaryBlue,
-                values: _weeklyChartValues,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 2,
-            right: 2,
-            child: Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Colors.black.withValues(alpha: 0.85),
-              size: 32,
-            ),
-          ),
-          Positioned(
-            left: 34,
-            right: 6,
-            bottom: 25,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(
-                days.length,
-                (_) => Container(
-                  width: 9,
-                  height: 9,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2568B8),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF2568B8).withValues(alpha: 0.25),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 22,
-            right: 0,
-            bottom: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: days
-                  .map(
-                    (day) => Text(
-                      day,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF333333),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ],
+      child: const Center(
+        child: Icon(Icons.image, color: Colors.white, size: 30),
       ),
     );
-  }
-}
-
-class _WeeklyChartPainter extends CustomPainter {
-  _WeeklyChartPainter({required this.primaryBlue, required this.values});
-
-  final Color primaryBlue;
-  final List<double> values;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final axisPaint = Paint()
-      ..color = const Color(0xFF2568B8)
-      ..strokeWidth = 2.2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final linePaint = Paint()
-      ..color = const Color(0xFF2568B8)
-      ..strokeWidth = 2.6
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final fillPaint = Paint()
-      ..color = const Color(0xFF2568B8).withValues(alpha: 0.18)
-      ..style = PaintingStyle.fill;
-
-    const leftPad = 12.0;
-    final rightPad = 6.0;
-    const topPad = 14.0;
-    final baselineY = size.height - 36;
-
-    canvas.drawLine(
-      Offset(leftPad, baselineY),
-      Offset(size.width - rightPad, baselineY),
-      axisPaint,
-    );
-    canvas.drawLine(
-      const Offset(leftPad, 8),
-      Offset(leftPad, baselineY),
-      axisPaint,
-    );
-
-    final pointsCount = values.length < 2 ? 2 : values.length;
-    final chartWidth = size.width - leftPad - rightPad;
-    final stepX = chartWidth / (pointsCount - 1);
-    final xVals = List.generate(
-      pointsCount,
-      (index) => leftPad + stepX * index,
-    );
-
-    final chartTop = topPad;
-    final chartBottom = baselineY - 4;
-    final chartHeight = chartBottom - chartTop;
-
-    final minVal = values.reduce((a, b) => a < b ? a : b);
-    final maxVal = values.reduce((a, b) => a > b ? a : b);
-    final range = (maxVal - minVal).abs() < 0.0001 ? 1.0 : (maxVal - minVal);
-
-    // Tambahkan margin atas-bawah agar garis tidak menempel frame.
-    const normalizedMin = 0.12;
-    const normalizedMax = 0.88;
-
-    final points = List.generate(pointsCount, (index) {
-      final value = values.length > index ? values[index] : values.last;
-      final normalized = (value - minVal) / range;
-      final ratio =
-          normalizedMax - (normalized * (normalizedMax - normalizedMin));
-      final y = chartTop + (ratio * chartHeight);
-      return Offset(xVals[index], y);
-    });
-
-    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
-    for (int i = 0; i < points.length - 1; i++) {
-      final p0 = points[i];
-      final p1 = points[i + 1];
-      final c1 = Offset((p0.dx + p1.dx) / 2, p0.dy);
-      final c2 = Offset((p0.dx + p1.dx) / 2, p1.dy);
-      linePath.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, p1.dx, p1.dy);
-    }
-
-    final fillPath = Path.from(linePath)
-      ..lineTo(points.last.dx, baselineY)
-      ..lineTo(points.first.dx, baselineY)
-      ..close();
-
-    canvas.drawPath(fillPath, fillPaint);
-    canvas.drawPath(linePath, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _WeeklyChartPainter oldDelegate) {
-    return oldDelegate.primaryBlue != primaryBlue ||
-        oldDelegate.values != values;
   }
 }

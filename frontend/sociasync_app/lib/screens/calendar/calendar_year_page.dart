@@ -5,7 +5,7 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart'; // Import Header
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class CalendarYearPage extends StatefulWidget {
@@ -324,21 +324,24 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
                 selectedIndex: 1, // Tab Calendar
                 backgroundColor: primaryBlue,
                 onTap: (index) {
-                  if (index == 0)
+                  if (index == 0) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const DashboardPage()),
                     );
-                  if (index == 2)
+                  }
+                  if (index == 2) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => const InboxPage()),
+                      MaterialPageRoute(builder: (_) => const ChatbotPage()),
                     );
-                  if (index == 3)
+                  }
+                  if (index == 3) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const ProfilePage()),
                     );
+                  }
                 },
               ),
             ),

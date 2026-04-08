@@ -5,9 +5,9 @@ import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
-import 'package:sociasync_app/screens/content generator/saved_content_page.dart';
-import 'package:sociasync_app/screens/content generator/content_ideas_page.dart';
-import 'package:sociasync_app/screens/inbox/inbox_page.dart';
+import 'package:sociasync_app/screens/content_generator/saved_content_page.dart';
+import 'package:sociasync_app/screens/content_generator/content_ideas_page.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class ContentGeneratorPage extends StatefulWidget {
@@ -44,7 +44,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
     if (index == 2) {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const InboxPage()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const ChatbotPage()));
       return;
     }
 
@@ -82,7 +82,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                 // Title & Bookmark Icon
                 Padding(
                   padding: const EdgeInsets.only(
-                    right: 8.0,
+                    right: .0,
                   ), // Menyesuaikan agar sejajar dengan icon lonceng
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -95,7 +95,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                           color: Color(0xFF2E2E2E),
                         ),
                       ),
-                      // Icon Bookmark disamakan ukurannya dengan icon notifikasi di header
+                      
                       IconButton(
                         onPressed: () {
                           Navigator.of(context).push(
