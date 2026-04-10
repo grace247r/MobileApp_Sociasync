@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, ProfileSerializer
+from .models import User
 from django.contrib.auth import authenticate
 
 
@@ -32,13 +33,28 @@ def register_view(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
-    email = request.data.get('email')
+    identifier = (request.data.get('email') or request.data.get('username') or '').strip()
     password = request.data.get('password')
 
-    user = authenticate(username=email, password=password)
+    if not identifier or not password:
+        return Response({"error": "Email/username dan password wajib diisi"}, status=400)
+
+    user_obj = User.objects.filter(email__iexact=identifier).first()
+    if user_obj is None:
+        user_obj = User.objects.filter(username__iexact=identifier).first()
+
+    user = None
+    if user_obj is not None and user_obj.check_password(password) and user_obj.is_active:
+        user = user_obj
+    else:
+        username_for_auth = user_obj.username if user_obj is not None else identifier
+        user = authenticate(username=username_for_auth, password=password)
 
     if user is not None:
-        return Response(get_tokens_for_user(user))
+        return Response({
+            "tokens": get_tokens_for_user(user),
+            "user": ProfileSerializer(user).data,
+        })
 
     return Response({"error": "Invalid credentials"}, status=400)
 
