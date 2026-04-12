@@ -51,6 +51,100 @@ class AuthService {
     throw AuthException(_extractErrorMessage(data));
   }
 
+  static Future<void> register({
+    required String name,
+    required String email,
+    required String gender,
+    required String password,
+    required String confirmPassword,
+    required String dateOfBirth,
+    required String region,
+  }) async {
+    late final http.Response response;
+    try {
+      response = await http.post(
+        _uri('register/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'gender': gender,
+          'password': password,
+          'confirm_password': confirmPassword,
+          'date_of_birth': dateOfBirth,
+          'region': region,
+        }),
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    final data = _decode(response.body);
+    if (response.statusCode == 201) {
+      final tokens = data['tokens'] as Map<String, dynamic>?;
+      await _saveTokens(
+        access: tokens?['access'] as String? ?? '',
+        refresh: tokens?['refresh'] as String? ?? '',
+      );
+      await _saveEmail(email.trim());
+      return;
+    }
+
+    throw AuthException(_extractErrorMessage(data));
+  }
+
+  static Future<void> requestPasswordResetCode({
+    required String identifier,
+  }) async {
+    late final http.Response response;
+    try {
+      response = await http.post(
+        _uri('password-reset/request/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': identifier}),
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    final data = _decode(response.body);
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw AuthException(_extractErrorMessage(data));
+  }
+
+  static Future<void> confirmPasswordReset({
+    required String identifier,
+    required String code,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    late final http.Response response;
+    try {
+      response = await http.post(
+        _uri('password-reset/confirm/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': identifier,
+          'code': code,
+          'new_password': newPassword,
+          'confirm_password': confirmPassword,
+        }),
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    final data = _decode(response.body);
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw AuthException(_extractErrorMessage(data));
+  }
+
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_accessKey);
@@ -101,6 +195,116 @@ class AuthService {
     }
 
     throw AuthException('Gagal memuat profil.');
+  }
+
+  static Future<Map<String, dynamic>> updateProfile(
+    Map<String, dynamic> payload,
+  ) async {
+    final token = await _getAccessTokenOrRefresh();
+    if (token == null) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await http.patch(
+        _uri('profile/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(payload),
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    if (response.statusCode == 200) {
+      final updated = _decode(response.body);
+      if ((updated['email'] ?? '').toString().trim().isNotEmpty) {
+        await _saveEmail((updated['email'] as String).trim());
+      }
+      return updated;
+    }
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      if (!refreshed) {
+        throw AuthException('Sesi habis, silakan login ulang.');
+      }
+
+      final retryToken = await _readToken(_accessKey);
+      late final http.Response retryResponse;
+      try {
+        retryResponse = await http.patch(
+          _uri('profile/'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $retryToken',
+          },
+          body: jsonEncode(payload),
+        );
+      } catch (_) {
+        throw AuthException(_connectionErrorMessage());
+      }
+
+      if (retryResponse.statusCode == 200) {
+        final updated = _decode(retryResponse.body);
+        if ((updated['email'] ?? '').toString().trim().isNotEmpty) {
+          await _saveEmail((updated['email'] as String).trim());
+        }
+        return updated;
+      }
+    }
+
+    throw AuthException('Gagal menyimpan profil.');
+  }
+
+  static Future<void> deleteAccount() async {
+    final token = await _getAccessTokenOrRefresh();
+    if (token == null) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await http.delete(
+        _uri('profile/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    if (response.statusCode == 204) {
+      await logout();
+      return;
+    }
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      if (!refreshed) {
+        throw AuthException('Sesi habis, silakan login ulang.');
+      }
+
+      final retryToken = await _readToken(_accessKey);
+      late final http.Response retryResponse;
+      try {
+        retryResponse = await http.delete(
+          _uri('profile/'),
+          headers: {'Authorization': 'Bearer $retryToken'},
+        );
+      } catch (_) {
+        throw AuthException(_connectionErrorMessage());
+      }
+
+      if (retryResponse.statusCode == 204) {
+        await logout();
+        return;
+      }
+    }
+
+    throw AuthException('Gagal menghapus akun.');
   }
 
   static Future<Map<String, dynamic>> getNotificationSettings() async {
@@ -374,11 +578,18 @@ class AuthService {
 
   static Map<String, dynamic> _decode(String body) {
     if (body.isEmpty) return <String, dynamic>{};
-    final decoded = jsonDecode(body);
-    if (decoded is Map<String, dynamic>) {
-      return decoded;
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      return <String, dynamic>{};
+    } catch (_) {
+      return <String, dynamic>{
+        'error':
+            'Respons server tidak valid. Cek backend log (kemungkinan error 500).',
+      };
     }
-    return <String, dynamic>{};
   }
 
   static Future<String?> _readToken(String key) async {

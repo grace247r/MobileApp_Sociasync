@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 import 'login_page.dart';
 import '../dashboard/dashboard_page.dart';
 
@@ -12,7 +13,24 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
   String _selectedGender = '';
+  DateTime? _selectedDateOfBirth;
+  String _selectedRegion = '';
+
+  static const List<String> _regions = [
+    'Indonesia',
+    'Malaysia',
+    'Singapore',
+    'Thailand',
+    'Philippines',
+    'Vietnam',
+    'United States',
+    'United Kingdom',
+    'Australia',
+    'Japan',
+    'South Korea',
+  ];
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -22,6 +40,8 @@ class _SignUpPageState extends State<SignUpPage> {
   String? _nameError;
   String? _emailError;
   String? _genderError;
+  String? _dateOfBirthError;
+  String? _regionError;
   String? _passwordError;
   String? _confirmPasswordError;
 
@@ -43,6 +63,8 @@ class _SignUpPageState extends State<SignUpPage> {
     String? nameErr;
     String? emailErr;
     String? genderErr;
+    String? dateOfBirthErr;
+    String? regionErr;
     String? passwordErr;
     String? confirmPasswordErr;
 
@@ -67,6 +89,14 @@ class _SignUpPageState extends State<SignUpPage> {
       genderErr = 'Pilih jenis kelamin';
     }
 
+    if (_selectedDateOfBirth == null) {
+      dateOfBirthErr = 'Pilih tanggal lahir';
+    }
+
+    if (_selectedRegion.isEmpty) {
+      regionErr = 'Pilih region';
+    }
+
     // Validasi password
     if (password.isEmpty) {
       passwordErr = 'Password tidak boleh kosong';
@@ -89,6 +119,8 @@ class _SignUpPageState extends State<SignUpPage> {
       _nameError = nameErr;
       _emailError = emailErr;
       _genderError = genderErr;
+      _dateOfBirthError = dateOfBirthErr;
+      _regionError = regionErr;
       _passwordError = passwordErr;
       _confirmPasswordError = confirmPasswordErr;
     });
@@ -96,8 +128,140 @@ class _SignUpPageState extends State<SignUpPage> {
     return nameErr == null &&
         emailErr == null &&
         genderErr == null &&
+        dateOfBirthErr == null &&
+        regionErr == null &&
         passwordErr == null &&
         confirmPasswordErr == null;
+  }
+
+  String _dateLabel() {
+    if (_selectedDateOfBirth == null) {
+      return 'Select date of birth';
+    }
+    final d = _selectedDateOfBirth!;
+    final dd = d.day.toString().padLeft(2, '0');
+    final mm = d.month.toString().padLeft(2, '0');
+    return '$dd-$mm-${d.year}';
+  }
+
+  String _dateForApi() {
+    final d = _selectedDateOfBirth!;
+    final dd = d.day.toString().padLeft(2, '0');
+    final mm = d.month.toString().padLeft(2, '0');
+    return '${d.year}-$mm-$dd';
+  }
+
+  Future<void> _showDateOfBirthPicker() async {
+    final now = DateTime.now();
+    final initial = _selectedDateOfBirth ?? DateTime(now.year - 18, 1, 1);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1950),
+      lastDate: now,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedDateOfBirth = picked;
+        _dateOfBirthError = null;
+      });
+    }
+  }
+
+  Future<void> _showRegionPicker() async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Select Region',
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1D5093),
+          ),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+        contentPadding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: _regions.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, indent: 20, endIndent: 20),
+            itemBuilder: (_, i) {
+              return ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 6,
+                ),
+                title: Text(
+                  _regions[i],
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF2E2E2E),
+                  ),
+                ),
+                onTap: () {
+                  setState(() {
+                    _selectedRegion = _regions[i];
+                    _regionError = null;
+                  });
+                  Navigator.pop(context);
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+        ],
+        actionsPadding: const EdgeInsets.only(right: 12, bottom: 8),
+      ),
+    );
+  }
+
+  Future<void> _submitRegister() async {
+    if (!_validate() || _isSubmitting) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await AuthService.register(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        gender: _selectedGender.toLowerCase(),
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+        dateOfBirth: _dateForApi(),
+        region: _selectedRegion,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal sign up. Coba lagi.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -208,6 +372,32 @@ class _SignUpPageState extends State<SignUpPage> {
 
                         const SizedBox(height: 14),
 
+                        _buildLabel('Date of Birth'),
+                        const SizedBox(height: 6),
+                        _buildPickerField(
+                          text: _dateLabel(),
+                          onTap: _showDateOfBirthPicker,
+                          hasError: _dateOfBirthError != null,
+                        ),
+                        if (_dateOfBirthError != null)
+                          _buildErrorText(_dateOfBirthError!),
+
+                        const SizedBox(height: 14),
+
+                        _buildLabel('Region'),
+                        const SizedBox(height: 6),
+                        _buildPickerField(
+                          text: _selectedRegion.isEmpty
+                              ? 'Select region'
+                              : _selectedRegion,
+                          onTap: _showRegionPicker,
+                          hasError: _regionError != null,
+                        ),
+                        if (_regionError != null)
+                          _buildErrorText(_regionError!),
+
+                        const SizedBox(height: 14),
+
                         // Password
                         _buildLabel('Password'),
                         const SizedBox(height: 6),
@@ -252,15 +442,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           width: double.infinity,
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: () {
-                              if (_validate()) {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) => const DashboardPage(),
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed: _isSubmitting ? null : _submitRegister,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white.withOpacity(0.25),
                               foregroundColor: Colors.white,
@@ -273,14 +455,25 @@ class _SignUpPageState extends State<SignUpPage> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Sign Up',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                         ),
 
@@ -441,6 +634,48 @@ class _SignUpPageState extends State<SignUpPage> {
             vertical: 12,
           ),
           isDense: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPickerField({
+    required String text,
+    required VoidCallback onTap,
+    bool hasError = false,
+  }) {
+    final isPlaceholder =
+        text == 'Select date of birth' || text == 'Select region';
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.55),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasError
+                ? const Color(0xFFFF4D4D)
+                : Colors.white.withOpacity(0.8),
+            width: hasError ? 1.5 : 1,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isPlaceholder
+                      ? Colors.grey.withOpacity(0.8)
+                      : const Color(0xFF1A1A2E),
+                ),
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade500),
+          ],
         ),
       ),
     );

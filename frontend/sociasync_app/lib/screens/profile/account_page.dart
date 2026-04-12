@@ -4,6 +4,7 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
+import 'package:sociasync_app/screens/auth/login_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
 
 class AccountPage extends StatefulWidget {
@@ -16,12 +17,132 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   bool _isLoadingProfile = true;
+  bool _isSavingProfile = false;
+
+  static const List<String> _regions = [
+    'Indonesia',
+    'Malaysia',
+    'Singapore',
+    'Thailand',
+    'Philippines',
+    'Vietnam',
+    'United States',
+    'United Kingdom',
+    'Australia',
+    'Japan',
+    'South Korea',
+  ];
 
   // Data yang bisa diedit
   String name = 'Rina';
   String email = 'rinafoodvlog@gmail.com';
   String dateOfBirth = '24 Jan 2001';
   String accountRegion = 'Indonesia';
+
+  String _formatApiDateToDisplay(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) {
+      return dateOfBirth;
+    }
+    const monthNames = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${parsed.day} ${monthNames[parsed.month]} ${parsed.year}';
+  }
+
+  String _formatDisplayDateToApi(String value) {
+    try {
+      final parts = value.split(' ');
+      final months = {
+        'Jan': 1,
+        'Feb': 2,
+        'Mar': 3,
+        'Apr': 4,
+        'May': 5,
+        'Jun': 6,
+        'Jul': 7,
+        'Aug': 8,
+        'Sep': 9,
+        'Oct': 10,
+        'Nov': 11,
+        'Dec': 12,
+      };
+      final yyyy = int.parse(parts[2]);
+      final mm = (months[parts[1]] ?? 1).toString().padLeft(2, '0');
+      final dd = int.parse(parts[0]).toString().padLeft(2, '0');
+      return '$yyyy-$mm-$dd';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Future<void> _saveProfile(Map<String, dynamic> payload) async {
+    if (_isSavingProfile) return;
+
+    setState(() => _isSavingProfile = true);
+    try {
+      final updated = await AuthService.updateProfile(payload);
+      if (!mounted) return;
+
+      setState(() {
+        final updatedName = (updated['name'] ?? '').toString().trim();
+        final updatedEmail = (updated['email'] ?? '').toString().trim();
+        final updatedDob = (updated['date_of_birth'] ?? '').toString().trim();
+        final updatedRegion = (updated['region'] ?? '').toString().trim();
+
+        if (updatedName.isNotEmpty) name = updatedName;
+        if (updatedEmail.isNotEmpty) email = updatedEmail;
+        if (updatedDob.isNotEmpty) {
+          dateOfBirth = _formatApiDateToDisplay(updatedDob);
+        }
+        if (updatedRegion.isNotEmpty) accountRegion = updatedRegion;
+      });
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingProfile = false);
+      }
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    if (_isSavingProfile) return;
+
+    setState(() => _isSavingProfile = true);
+    try {
+      await AuthService.deleteAccount();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (_) => false,
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingProfile = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -38,35 +159,16 @@ class _AccountPageState extends State<AccountPage> {
       final loadedName = (profile['name'] ?? '').toString().trim();
       final loadedDob = (profile['date_of_birth'] ?? '').toString().trim();
       final loadedRegion = (profile['region'] ?? '').toString().trim();
+      final loadedEmail = (profile['email'] ?? '').toString().trim();
 
       setState(() {
         if (loadedName.isNotEmpty) name = loadedName;
+        if (loadedEmail.isNotEmpty) email = loadedEmail;
         if (savedEmail != null && savedEmail.trim().isNotEmpty) {
           email = savedEmail.trim();
         }
         if (loadedDob.isNotEmpty) {
-          final parts = loadedDob.split('-');
-          if (parts.length == 3) {
-            const monthNames = [
-              '',
-              'Jan',
-              'Feb',
-              'Mar',
-              'Apr',
-              'May',
-              'Jun',
-              'Jul',
-              'Aug',
-              'Sep',
-              'Oct',
-              'Nov',
-              'Dec',
-            ];
-            final yyyy = parts[0];
-            final mm = int.tryParse(parts[1]) ?? 1;
-            final dd = int.tryParse(parts[2]) ?? 1;
-            dateOfBirth = '$dd ${monthNames[mm]} $yyyy';
-          }
+          dateOfBirth = _formatApiDateToDisplay(loadedDob);
         }
         if (loadedRegion.isNotEmpty) accountRegion = loadedRegion;
         _isLoadingProfile = false;
@@ -81,7 +183,7 @@ class _AccountPageState extends State<AccountPage> {
   void _showEditDialog({
     required String title,
     required String currentValue,
-    required ValueChanged<String> onSave,
+    required Future<void> Function(String) onSave,
     TextInputType keyboardType = TextInputType.text,
   }) {
     final controller = TextEditingController(text: currentValue);
@@ -124,10 +226,11 @@ class _AccountPageState extends State<AccountPage> {
             child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (controller.text.trim().isNotEmpty) {
-                onSave(controller.text.trim());
+                await onSave(controller.text.trim());
               }
+              if (!context.mounted) return;
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
@@ -193,7 +296,7 @@ class _AccountPageState extends State<AccountPage> {
     );
 
     if (picked != null) {
-      final monthNames = [
+      const monthNames = [
         '',
         'Jan',
         'Feb',
@@ -208,29 +311,19 @@ class _AccountPageState extends State<AccountPage> {
         'Nov',
         'Dec',
       ];
+      final next = '${picked.day} ${monthNames[picked.month]} ${picked.year}';
       setState(() {
-        dateOfBirth =
-            '${picked.day} ${monthNames[picked.month]} ${picked.year}';
+        dateOfBirth = next;
       });
+      final apiDate = _formatDisplayDateToApi(next);
+      if (apiDate.isNotEmpty) {
+        await _saveProfile({'date_of_birth': apiDate});
+      }
     }
   }
 
   // ── Popup Account Region (pilihan dropdown) ──
   void _showRegionPicker() {
-    const regions = [
-      'Indonesia',
-      'Malaysia',
-      'Singapore',
-      'Thailand',
-      'Philippines',
-      'Vietnam',
-      'United States',
-      'United Kingdom',
-      'Australia',
-      'Japan',
-      'South Korea',
-    ];
-
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -243,20 +336,24 @@ class _AccountPageState extends State<AccountPage> {
             color: primaryBlue,
           ),
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+        contentPadding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.separated(
             shrinkWrap: true,
-            itemCount: regions.length,
+            itemCount: _regions.length,
             separatorBuilder: (_, __) =>
-                const Divider(height: 1, indent: 16, endIndent: 16),
+                const Divider(height: 1, indent: 20, endIndent: 20),
             itemBuilder: (_, i) {
-              final isSelected = regions[i] == accountRegion;
+              final isSelected = _regions[i] == accountRegion;
               return ListTile(
-                dense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
                 title: Text(
-                  regions[i],
+                  _regions[i],
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isSelected
@@ -268,8 +365,10 @@ class _AccountPageState extends State<AccountPage> {
                 trailing: isSelected
                     ? Icon(Icons.check, color: primaryBlue, size: 18)
                     : null,
-                onTap: () {
-                  setState(() => accountRegion = regions[i]);
+                onTap: () async {
+                  setState(() => accountRegion = _regions[i]);
+                  await _saveProfile({'region': _regions[i]});
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                 },
               );
@@ -282,6 +381,7 @@ class _AccountPageState extends State<AccountPage> {
             child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
         ],
+        actionsPadding: const EdgeInsets.only(right: 12, bottom: 8),
       ),
     );
   }
@@ -425,7 +525,11 @@ class _AccountPageState extends State<AccountPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: logic deactivate
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Fitur deactivate belum tersedia.'),
+                ),
+              );
             },
             child: const Text(
               'Deactivate',
@@ -433,9 +537,9 @@ class _AccountPageState extends State<AccountPage> {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: logic delete
+              await _deleteAccount();
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -483,7 +587,9 @@ class _AccountPageState extends State<AccountPage> {
                               onTap: () => _showEditDialog(
                                 title: 'Name',
                                 currentValue: name,
-                                onSave: (v) => setState(() => name = v),
+                                onSave: (v) async {
+                                  await _saveProfile({'name': v});
+                                },
                               ),
                             ),
                             _buildDivider(),
@@ -494,7 +600,9 @@ class _AccountPageState extends State<AccountPage> {
                                 title: 'Email',
                                 currentValue: email,
                                 keyboardType: TextInputType.emailAddress,
-                                onSave: (v) => setState(() => email = v),
+                                onSave: (v) async {
+                                  await _saveProfile({'email': v});
+                                },
                               ),
                             ),
                             _buildDivider(),

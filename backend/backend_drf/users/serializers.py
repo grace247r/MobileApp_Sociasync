@@ -14,6 +14,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             'name',
             'email',
             'gender',
+            'date_of_birth',
+            'region',
             'password',
             'confirm_password'
         ]
@@ -33,6 +35,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             name=validated_data['name'],
             gender=validated_data['gender'],
+            date_of_birth=validated_data.get('date_of_birth'),
+            region=validated_data.get('region', ''),
             password=validated_data['password']
         )
         return user
@@ -41,8 +45,15 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
+            'email',
             'name',
             'gender',
             'date_of_birth',
             'region'
         ]
+
+    def update(self, instance, validated_data):
+        email = validated_data.get('email')
+        if email:
+            instance.username = email
+        return super().update(instance, validated_data)

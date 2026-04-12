@@ -13,3 +13,16 @@ class User(AbstractUser):
 
     date_of_birth = models.DateField(null=True, blank=True)
     region = models.CharField(max_length=100, blank=True)
+
+    # Kolom ini sudah ada di database lama dan wajib diset saat insert.
+    email_verification_token = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+    email_verified = models.BooleanField(default=False)
+    password_reset_token = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
