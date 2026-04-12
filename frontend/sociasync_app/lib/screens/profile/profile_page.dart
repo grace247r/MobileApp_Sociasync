@@ -9,7 +9,7 @@ import 'package:sociasync_app/screens/splash_screen.dart';
 // Import sub-halaman
 import 'package:sociasync_app/screens/profile/account_page.dart';
 import 'package:sociasync_app/screens/profile/privacy_page.dart';
-import 'package:sociasync_app/screens/profile/notification_page.dart';
+import 'package:sociasync_app/screens/profile/notification_page_settings.dart';
 import 'package:sociasync_app/screens/profile/help_page.dart';
 
 class ProfilePage extends StatelessWidget {

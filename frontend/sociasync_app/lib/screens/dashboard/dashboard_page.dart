@@ -9,6 +9,7 @@ import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -20,9 +21,41 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   final int _currentIndex = 0;
+  String _userName = 'User';
+  int _unreadCount = 0;
 
   final PageController _statsPageController = PageController();
   int _activeStatsPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final profile = await AuthService.getMe();
+      if (!mounted) return;
+      final name = (profile['name'] ?? '').toString().trim();
+      if (name.isNotEmpty) {
+        setState(() => _userName = name);
+      }
+    } catch (_) {
+      // Keep fallback name if profile cannot be loaded.
+    }
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final count = await AuthService.getUnreadNotificationCount();
+      if (!mounted) return;
+      setState(() => _unreadCount = count);
+    } catch (_) {
+      // Keep default value if unread count cannot be loaded.
+    }
+  }
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -63,14 +96,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   // HEADER
                   DashboardHeader(
-                    userName: 'Rina',
+                    userName: _userName,
                     primaryColor: primaryBlue,
-                    onNotificationTap: () {
-                      Navigator.of(context).push(
+                    unreadCount: _unreadCount,
+                    onNotificationTap: () async {
+                      await Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const NotificationPage(),
                         ),
                       );
+                      if (!mounted) return;
+                      _loadUnreadCount();
                     },
                   ),
                   const SizedBox(height: 15),

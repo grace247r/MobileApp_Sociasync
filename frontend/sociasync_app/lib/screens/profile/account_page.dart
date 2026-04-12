@@ -4,6 +4,7 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -14,12 +15,67 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
+  bool _isLoadingProfile = true;
 
   // Data yang bisa diedit
   String name = 'Rina';
   String email = 'rinafoodvlog@gmail.com';
   String dateOfBirth = '24 Jan 2001';
   String accountRegion = 'Indonesia';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await AuthService.getMe();
+      final savedEmail = await AuthService.getSavedEmail();
+      if (!mounted) return;
+
+      final loadedName = (profile['name'] ?? '').toString().trim();
+      final loadedDob = (profile['date_of_birth'] ?? '').toString().trim();
+      final loadedRegion = (profile['region'] ?? '').toString().trim();
+
+      setState(() {
+        if (loadedName.isNotEmpty) name = loadedName;
+        if (savedEmail != null && savedEmail.trim().isNotEmpty) {
+          email = savedEmail.trim();
+        }
+        if (loadedDob.isNotEmpty) {
+          final parts = loadedDob.split('-');
+          if (parts.length == 3) {
+            const monthNames = [
+              '',
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec',
+            ];
+            final yyyy = parts[0];
+            final mm = int.tryParse(parts[1]) ?? 1;
+            final dd = int.tryParse(parts[2]) ?? 1;
+            dateOfBirth = '$dd ${monthNames[mm]} $yyyy';
+          }
+        }
+        if (loadedRegion.isNotEmpty) accountRegion = loadedRegion;
+        _isLoadingProfile = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingProfile = false);
+    }
+  }
 
   // ── Generic popup edit teks biasa ──
   void _showEditDialog({
@@ -128,7 +184,8 @@ class _AccountPageState extends State<AccountPage> {
               primary: primaryBlue,
               onPrimary: Colors.white,
               onSurface: Colors.black87,
-            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
+            ),
+            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -397,71 +454,76 @@ class _AccountPageState extends State<AccountPage> {
           children: [
             _buildHeader(context),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 30),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 8, left: 2),
-                      child: Text(
-                        'Account Information',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
+              child: _isLoadingProfile
+                  ? const Center(child: CircularProgressIndicator())
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 30),
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8, left: 2),
+                            child: Text(
+                              'Account Information',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          _buildInfoGroup([
+                            _buildInfoTile(
+                              'Name',
+                              name,
+                              onTap: () => _showEditDialog(
+                                title: 'Name',
+                                currentValue: name,
+                                onSave: (v) => setState(() => name = v),
+                              ),
+                            ),
+                            _buildDivider(),
+                            _buildInfoTile(
+                              'Email',
+                              email,
+                              onTap: () => _showEditDialog(
+                                title: 'Email',
+                                currentValue: email,
+                                keyboardType: TextInputType.emailAddress,
+                                onSave: (v) => setState(() => email = v),
+                              ),
+                            ),
+                            _buildDivider(),
+                            _buildInfoTile(
+                              'Date of birth',
+                              dateOfBirth,
+                              onTap: _showDatePicker,
+                            ),
+                            _buildDivider(),
+                            _buildInfoTile(
+                              'Account Region',
+                              accountRegion,
+                              onTap: _showRegionPicker,
+                            ),
+                          ]),
+                          const SizedBox(height: 16),
+                          _buildSingleTile(
+                            'Password',
+                            onTap: _showPasswordDialog,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSingleTile(
+                            'Deactivate or delete account',
+                            onTap: _showDeactivateDialog,
+                            textColor: Colors.red.shade400,
+                          ),
+                        ],
                       ),
                     ),
-                    _buildInfoGroup([
-                      _buildInfoTile(
-                        'Name',
-                        name,
-                        onTap: () => _showEditDialog(
-                          title: 'Name',
-                          currentValue: name,
-                          onSave: (v) => setState(() => name = v),
-                        ),
-                      ),
-                      _buildDivider(),
-                      _buildInfoTile(
-                        'Email',
-                        email,
-                        onTap: () => _showEditDialog(
-                          title: 'Email',
-                          currentValue: email,
-                          keyboardType: TextInputType.emailAddress,
-                          onSave: (v) => setState(() => email = v),
-                        ),
-                      ),
-                      _buildDivider(),
-                      _buildInfoTile(
-                        'Date of birth',
-                        dateOfBirth,
-                        onTap: _showDatePicker,
-                      ),
-                      _buildDivider(),
-                      _buildInfoTile(
-                        'Account Region',
-                        accountRegion,
-                        onTap: _showRegionPicker,
-                      ),
-                    ]),
-                    const SizedBox(height: 16),
-                    _buildSingleTile('Password', onTap: _showPasswordDialog),
-                    const SizedBox(height: 16),
-                    _buildSingleTile(
-                      'Deactivate or delete account',
-                      onTap: _showDeactivateDialog,
-                      textColor: Colors.red.shade400,
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),

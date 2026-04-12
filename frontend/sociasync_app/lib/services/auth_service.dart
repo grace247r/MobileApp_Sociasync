@@ -16,6 +16,7 @@ class AuthException implements Exception {
 class AuthService {
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
+  static const _emailKey = 'user_email';
 
   static Uri _uri(String path) {
     return Uri.parse('${ApiConfig.baseUrl}${ApiConfig.authPrefix}/$path');
@@ -43,6 +44,7 @@ class AuthService {
         access: tokens?['access'] as String? ?? '',
         refresh: tokens?['refresh'] as String? ?? '',
       );
+      await _saveEmail(email.trim());
       return;
     }
 
@@ -53,6 +55,266 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_accessKey);
     await prefs.remove(_refreshKey);
+    await prefs.remove(_emailKey);
+  }
+
+  static Future<Map<String, dynamic>> getMe() async {
+    final token = await _getAccessTokenOrRefresh();
+    if (token == null) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await http.get(
+        _uri('me/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    if (response.statusCode == 200) {
+      return _decode(response.body);
+    }
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      if (!refreshed) {
+        throw AuthException('Sesi habis, silakan login ulang.');
+      }
+
+      final retryToken = await _readToken(_accessKey);
+      late final http.Response retryResponse;
+      try {
+        retryResponse = await http.get(
+          _uri('me/'),
+          headers: {'Authorization': 'Bearer $retryToken'},
+        );
+      } catch (_) {
+        throw AuthException(_connectionErrorMessage());
+      }
+
+      if (retryResponse.statusCode == 200) {
+        return _decode(retryResponse.body);
+      }
+    }
+
+    throw AuthException('Gagal memuat profil.');
+  }
+
+  static Future<Map<String, dynamic>> getNotificationSettings() async {
+    final token = await _getAccessTokenOrRefresh();
+    if (token == null) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/notifications/settings/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    if (response.statusCode == 200) {
+      return _decode(response.body);
+    }
+
+    throw AuthException('Gagal memuat pengaturan notifikasi.');
+  }
+
+  static Future<Map<String, dynamic>> updateNotificationSettings(
+    Map<String, dynamic> payload,
+  ) async {
+    final token = await _getAccessTokenOrRefresh();
+    if (token == null) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}/api/notifications/settings/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(payload),
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    if (response.statusCode == 200) {
+      return _decode(response.body);
+    }
+
+    throw AuthException('Gagal menyimpan pengaturan notifikasi.');
+  }
+
+  static Future<List<Map<String, dynamic>>> getNotifications() async {
+    final token = await _getAccessTokenOrRefresh();
+    if (token == null) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/notifications/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is List) {
+        return decoded.whereType<Map>().map((e) {
+          return e.map((key, value) => MapEntry(key.toString(), value));
+        }).toList();
+      }
+      return const <Map<String, dynamic>>[];
+    }
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      if (!refreshed) {
+        throw AuthException('Sesi habis, silakan login ulang.');
+      }
+
+      final retryToken = await _readToken(_accessKey);
+      late final http.Response retryResponse;
+      try {
+        retryResponse = await http.get(
+          Uri.parse('${ApiConfig.baseUrl}/api/notifications/'),
+          headers: {'Authorization': 'Bearer $retryToken'},
+        );
+      } catch (_) {
+        throw AuthException(_connectionErrorMessage());
+      }
+
+      if (retryResponse.statusCode == 200) {
+        final decoded = jsonDecode(retryResponse.body);
+        if (decoded is List) {
+          return decoded.whereType<Map>().map((e) {
+            return e.map((key, value) => MapEntry(key.toString(), value));
+          }).toList();
+        }
+      }
+    }
+
+    throw AuthException('Gagal memuat notifikasi.');
+  }
+
+  static Future<int> getUnreadNotificationCount() async {
+    final token = await _getAccessTokenOrRefresh();
+    if (token == null) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/notifications/unread-count/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    if (response.statusCode == 200) {
+      final data = _decode(response.body);
+      final rawCount = data['unread_count'];
+      if (rawCount is int) return rawCount;
+      return int.tryParse(rawCount?.toString() ?? '0') ?? 0;
+    }
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      if (!refreshed) {
+        throw AuthException('Sesi habis, silakan login ulang.');
+      }
+
+      final retryToken = await _readToken(_accessKey);
+      late final http.Response retryResponse;
+      try {
+        retryResponse = await http.get(
+          Uri.parse('${ApiConfig.baseUrl}/api/notifications/unread-count/'),
+          headers: {'Authorization': 'Bearer $retryToken'},
+        );
+      } catch (_) {
+        throw AuthException(_connectionErrorMessage());
+      }
+
+      if (retryResponse.statusCode == 200) {
+        final data = _decode(retryResponse.body);
+        final rawCount = data['unread_count'];
+        if (rawCount is int) return rawCount;
+        return int.tryParse(rawCount?.toString() ?? '0') ?? 0;
+      }
+    }
+
+    throw AuthException('Gagal memuat jumlah notifikasi belum dibaca.');
+  }
+
+  static Future<int> markAllNotificationsRead() async {
+    final token = await _getAccessTokenOrRefresh();
+    if (token == null) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/notifications/read-all/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    if (response.statusCode == 200) {
+      final data = _decode(response.body);
+      final rawUpdated = data['updated'];
+      if (rawUpdated is int) return rawUpdated;
+      return int.tryParse(rawUpdated?.toString() ?? '0') ?? 0;
+    }
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      if (!refreshed) {
+        throw AuthException('Sesi habis, silakan login ulang.');
+      }
+
+      final retryToken = await _readToken(_accessKey);
+      late final http.Response retryResponse;
+      try {
+        retryResponse = await http.post(
+          Uri.parse('${ApiConfig.baseUrl}/api/notifications/read-all/'),
+          headers: {'Authorization': 'Bearer $retryToken'},
+        );
+      } catch (_) {
+        throw AuthException(_connectionErrorMessage());
+      }
+
+      if (retryResponse.statusCode == 200) {
+        final data = _decode(retryResponse.body);
+        final rawUpdated = data['updated'];
+        if (rawUpdated is int) return rawUpdated;
+        return int.tryParse(rawUpdated?.toString() ?? '0') ?? 0;
+      }
+    }
+
+    throw AuthException('Gagal menandai notifikasi sebagai dibaca.');
+  }
+
+  static Future<String?> getSavedEmail() {
+    return _readToken(_emailKey);
   }
 
   static Future<void> _saveTokens({
@@ -68,6 +330,48 @@ class AuthService {
     await prefs.setString(_refreshKey, refresh);
   }
 
+  static Future<void> _saveEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_emailKey, email);
+  }
+
+  static Future<String?> _getAccessTokenOrRefresh() async {
+    final access = await _readToken(_accessKey);
+    if (access != null && access.isNotEmpty) {
+      return access;
+    }
+
+    final refreshed = await _refreshAccessToken();
+    if (!refreshed) return null;
+    return _readToken(_accessKey);
+  }
+
+  static Future<bool> _refreshAccessToken() async {
+    final refresh = await _readToken(_refreshKey);
+    if (refresh == null || refresh.isEmpty) {
+      return false;
+    }
+
+    late final http.Response response;
+    try {
+      response = await http.post(
+        _uri('refresh/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh': refresh}),
+      );
+    } catch (_) {
+      return false;
+    }
+
+    final data = _decode(response.body);
+    if (response.statusCode == 200 && data['access'] != null) {
+      await _saveTokens(access: data['access'] as String, refresh: refresh);
+      return true;
+    }
+
+    return false;
+  }
+
   static Map<String, dynamic> _decode(String body) {
     if (body.isEmpty) return <String, dynamic>{};
     final decoded = jsonDecode(body);
@@ -75,6 +379,11 @@ class AuthService {
       return decoded;
     }
     return <String, dynamic>{};
+  }
+
+  static Future<String?> _readToken(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
   }
 
   static String _extractErrorMessage(Map<String, dynamic> data) {

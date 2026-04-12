@@ -7,6 +7,7 @@ import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -18,6 +19,58 @@ class NotificationPage extends StatefulWidget {
 class _NotificationPageState extends State<NotificationPage> {
   static const Color primaryBlue = Color(0xFF1D5093);
   final int _currentIndex = 0;
+  bool _isLoading = true;
+  String _userName = 'User';
+  List<_NotificationItem> _notifications = const <_NotificationItem>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final profile = await AuthService.getMe();
+      await AuthService.markAllNotificationsRead();
+      final notifications = await AuthService.getNotifications();
+      if (!mounted) return;
+
+      final name = (profile['name'] ?? '').toString().trim();
+      final mapped = notifications.map(_mapNotification).toList();
+
+      setState(() {
+        if (name.isNotEmpty) {
+          _userName = name;
+        }
+        _notifications = mapped
+            .map((item) => item.copyWith(isHighlighted: false))
+            .toList();
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
+  _NotificationItem _mapNotification(Map<String, dynamic> item) {
+    final title = (item['title'] ?? '').toString().trim();
+    final message = (item['message'] ?? '').toString().trim();
+    final createdAtRaw = (item['created_at'] ?? '').toString();
+    final createdAt = DateTime.tryParse(createdAtRaw)?.toLocal();
+
+    final hh = createdAt?.hour.toString().padLeft(2, '0') ?? '--';
+    final mm = createdAt?.minute.toString().padLeft(2, '0') ?? '--';
+    final isRead = item['is_read'] == true;
+
+    return _NotificationItem(
+      title: title.isEmpty ? 'Notification' : title,
+      message: message.isEmpty ? '-' : message,
+      time: '$hh:$mm',
+      isHighlighted: !isRead,
+    );
+  }
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -52,21 +105,6 @@ class _NotificationPageState extends State<NotificationPage> {
 
   @override
   Widget build(BuildContext context) {
-    const notifications = <_NotificationItem>[
-      _NotificationItem(
-        title: 'Yeayyy!!',
-        message: 'You get more 20K views in this week !',
-        time: '19.34',
-        isHighlighted: true,
-      ),
-      _NotificationItem(
-        title: 'Alert ! New Device Login',
-        message: 'System detected new login device Jakarta, Indonesia',
-        time: '21.30',
-      ),
-      _NotificationItem(title: 'Lili', message: 'Hi?', time: '22.16'),
-    ];
-
     // Gunakan AppBackgroundWrapper sebagai pengganti Container image background
     return AppBackgroundWrapper(
       child: Stack(
@@ -78,7 +116,7 @@ class _NotificationPageState extends State<NotificationPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DashboardHeader(
-                  userName: 'Rina',
+                  userName: _userName,
                   primaryColor: primaryBlue,
                   onNotificationTap: () {
                     // Sudah di page notification, bisa dikosongkan atau pop
@@ -95,15 +133,31 @@ class _NotificationPageState extends State<NotificationPage> {
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  child: ListView.separated(
-                    // Tambahkan padding bawah agar tidak mentok navbar
-                    padding: const EdgeInsets.only(bottom: 100),
-                    itemCount: notifications.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      return _NotificationCard(item: notifications[index]);
-                    },
-                  ),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _notifications.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Belum ada notifikasi.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          // Tambahkan padding bawah agar tidak mentok navbar
+                          padding: const EdgeInsets.only(bottom: 100),
+                          itemCount: _notifications.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            return _NotificationCard(
+                              item: _notifications[index],
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -206,4 +260,18 @@ class _NotificationItem {
   final String message;
   final String time;
   final bool isHighlighted;
+
+  _NotificationItem copyWith({
+    String? title,
+    String? message,
+    String? time,
+    bool? isHighlighted,
+  }) {
+    return _NotificationItem(
+      title: title ?? this.title,
+      message: message ?? this.message,
+      time: time ?? this.time,
+      isHighlighted: isHighlighted ?? this.isHighlighted,
+    );
+  }
 }
