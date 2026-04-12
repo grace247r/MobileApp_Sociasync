@@ -68,121 +68,126 @@ class _ChatbotPageState extends State<ChatbotPage> {
         backgroundColor: primaryBlue,
         onTap: _onNavbarTap,
       ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. WIDGET ATAS: Header yang sudah ada
-                DashboardHeader(
-                  userName: _userName,
-                  primaryColor: primaryBlue,
-                  onNotificationTap: () {},
-                ),
-                const SizedBox(height: 15),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. WIDGET ATAS: Header yang sudah ada
+                  DashboardHeader(
+                    userName: _userName,
+                    primaryColor: primaryBlue,
+                    onNotificationTap: () {},
+                  ),
+                  const SizedBox(height: 15),
 
-                // 2. Title & Back Button
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: primaryBlue,
-                        size: 28,
+                  // 2. Title & Back Button
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: primaryBlue,
+                          size: 28,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Sociasync AI',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2E2E2E),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Sociasync AI',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2E2E2E),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 15),
-
-                // 3. MAIN CHAT CONTAINER (Wadah ber-border biru)
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: primaryBlue.withOpacity(0.5)),
-                    ),
-                    child: Column(
-                      children: [
-                        // Blue Header inside Chat Container
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 15,
-                            vertical: 10,
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                ],
+              ),
+            ),
+            // 3. MAIN CHAT CONTAINER (Wadah ber-border biru)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: primaryBlue.withOpacity(0.5)),
+                  ),
+                  child: Column(
+                    children: [
+                      // Blue Header inside Chat Container
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryBlue,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(19),
                           ),
-                          decoration: BoxDecoration(
-                            color: primaryBlue,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(19),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: CircleAvatar(
-                                  radius: 15,
-                                  backgroundColor: Colors.white,
-                                  child: Image.asset(
-                                    'assets/chatbotAI.png',
-                                    width: 22,
-                                    height: 22,
-                                    fit: BoxFit.cover,
-                                    alignment: Alignment.bottomCenter,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Text(
-                                'Sociasync AI',
-                                style: TextStyle(
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                  width: 2,
                                 ),
                               ),
-                            ],
-                          ),
+                              child: CircleAvatar(
+                                radius: 15,
+                                backgroundColor: Colors.white,
+                                child: Image.asset(
+                                  'assets/chatbotAI.png',
+                                  width: 22,
+                                  height: 22,
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.bottomCenter,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Sociasync AI',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
 
-                        // Chat Messages Area
-                        Expanded(
-                          child: ListView(
-                            padding: const EdgeInsets.all(15),
-                            children: [_buildBotMessage(_userName)],
-                          ),
+                      // Chat Messages Area
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.all(15),
+                          children: [_buildBotMessage(_userName)],
                         ),
+                      ),
 
-                        // Input Area (Hi, Artnity can i help you?....)
-                        _buildChatInput(),
-                      ],
-                    ),
+                      // Input Area (Hi, Artnity can i help you?....)
+                      _buildChatInput(),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 100), // Jarak untuk Navbar
-              ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
@@ -286,7 +291,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
               ),
               child: const TextField(
                 decoration: InputDecoration(
-                  hintText: 'Hi, Artnity can i help you?.....',
+                  hintText: 'Hi, how can I help you?',
                   hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
                   border: InputBorder.none,
                 ),
@@ -303,7 +308,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
-            child: const Text('Kirim', style: TextStyle(color: Colors.white)),
+            child: const Text('Send', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

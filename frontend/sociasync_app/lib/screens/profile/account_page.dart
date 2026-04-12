@@ -659,7 +659,7 @@ class _AccountPageState extends State<AccountPage> {
             Expanded(
               child: _isLoadingProfile
                   ? const Center(child: CircularProgressIndicator())
-                  : Padding(
+                  : SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 10,
@@ -667,7 +667,7 @@ class _AccountPageState extends State<AccountPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 60),
                           const Padding(
                             padding: EdgeInsets.only(bottom: 8, left: 2),
                             child: Text(
@@ -728,6 +728,7 @@ class _AccountPageState extends State<AccountPage> {
                             onTap: _showDeactivateDialog,
                             textColor: Colors.red.shade400,
                           ),
+                          const SizedBox(height: 100),
                         ],
                       ),
                     ),
@@ -773,7 +774,7 @@ class _AccountPageState extends State<AccountPage> {
         ClipPath(
           clipper: _WaveClipper(),
           child: Container(
-            height: 200,
+            height: 160,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -808,7 +809,7 @@ class _AccountPageState extends State<AccountPage> {
           ),
         ),
         Positioned(
-          bottom: -45,
+          bottom: -40,
           left: 0,
           right: 0,
           child: Center(
@@ -953,12 +954,12 @@ class _WaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.lineTo(0, size.height - 50);
+    path.lineTo(0, size.height - 40);
     path.quadraticBezierTo(
       size.width / 2,
-      size.height + 20,
+      size.height + 15,
       size.width,
-      size.height - 50,
+      size.height - 40,
     );
     path.lineTo(size.width, 0);
     path.close();

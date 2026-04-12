@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
+import 'package:sociasync_app/widgets/date_range_picker_dialog.dart'
+    as date_picker;
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
@@ -17,6 +20,15 @@ class MonthlySummaryPage extends StatefulWidget {
 class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   final int _currentIndex = 1;
+  late DateTime _startDate;
+  late DateTime _endDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _startDate = DateTime(2026, 1, 1);
+    _endDate = DateTime(2026, 7, 31);
+  }
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -84,28 +96,114 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
 
                 // Chart Container (Besar di Atas)
                 Container(
-                  height: 220,
+                  height: 280,
                   width: double.infinity,
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
                     color: primaryBlue.withOpacity(0.20),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Column(
-                    children: [
-                      const Align(
-                        alignment: Alignment.topRight,
-                        child: Icon(
-                          Icons.keyboard_arrow_down,
-                          color: Colors.black54,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 20, 15, 10),
+                    child: LineChart(
+                      LineChartData(
+                        gridData: const FlGridData(show: false),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              interval: 1,
+                              getTitlesWidget: (value, meta) {
+                                const months = [
+                                  'Jan',
+                                  'Feb',
+                                  'Mar',
+                                  'Apr',
+                                  'May',
+                                  'Jun',
+                                  'Jul',
+                                ];
+                                final index = value.toInt();
+                                if (value != index.toDouble() ||
+                                    index < 0 ||
+                                    index >= months.length) {
+                                  return const Text('');
+                                }
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    months[index],
+                                    style: const TextStyle(
+                                      color: Color(0xFF123B74),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 35,
+                              getTitlesWidget: (value, meta) {
+                                if (value % 20 != 0) return const Text('');
+                                return Text(
+                                  '${value.toInt()}K',
+                                  style: const TextStyle(
+                                    color: Color(0xFF123B74),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ),
+                        borderData: FlBorderData(show: false),
+                        minX: 0,
+                        maxX: 6,
+                        minY: 0,
+                        maxY: 60,
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: [
+                              const FlSpot(0, 42),
+                              const FlSpot(1, 35),
+                              const FlSpot(2, 38),
+                              const FlSpot(3, 56),
+                              const FlSpot(4, 53),
+                              const FlSpot(5, 54),
+                              const FlSpot(6, 58),
+                            ],
+                            isCurved: true,
+                            color: const Color(0xFF2568B8),
+                            barWidth: 4,
+                            isStrokeCapRound: true,
+                            dotData: const FlDotData(show: true),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFF2568B8).withOpacity(0.3),
+                                  const Color(0xFF2568B8).withOpacity(0.0),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const Spacer(),
-                      const Center(
-                        child: Text("Line Chart Jan - Jul Placeholder"),
-                      ),
-                      const Spacer(),
-                    ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -113,28 +211,34 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                 // Date Filter Badge (Jan - Jul 2026)
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primaryBlue,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Text(
-                          'Jan - Jul 2026',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                        Icon(
-                          Icons.keyboard_arrow_down,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ],
+                  child: GestureDetector(
+                    onTap: _selectDateRange,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryBlue,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${_getMonthName(_startDate.month)} - ${_getMonthName(_endDate.month)} ${_endDate.year}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -147,19 +251,24 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                     color: primaryBlue.withOpacity(0.20),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.8,
-                    children: [
-                      _buildStatCard('19%', 'Engagement'),
-                      _buildStatCard('1,9 M', 'Reach'),
-                      _buildStatCard('167 K', 'Followers'),
-                      _buildStatCard('457', 'Post'),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
+                      return GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.5,
+                        children: [
+                          _buildStatCard('19%', 'Engagement'),
+                          _buildStatCard('1,9 M', 'Reach'),
+                          _buildStatCard('167 K', 'Followers'),
+                          _buildStatCard('457', 'Post'),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -185,10 +294,6 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                     );
                   },
                 ),
-                const SizedBox(height: 12),
-
-                // Card Boost Insight
-                _buildInsightCard('Boost Insight', 'Try Now'),
 
                 const SizedBox(height: 100), // Spasi Navbar
               ],
@@ -197,6 +302,44 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
         ],
       ),
     );
+  }
+
+  void _selectDateRange() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return date_picker.CustomDateRangeDialog(
+          primaryColor: primaryBlue,
+          initialStartDate: _startDate,
+          initialEndDate: _endDate,
+          onApply: (startDate, endDate) {
+            setState(() {
+              _startDate = startDate;
+              _endDate = endDate;
+            });
+          },
+        );
+      },
+    );
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month];
   }
 
   // Widget Helper untuk Stats (Sama seperti Dashboard)
@@ -211,20 +354,26 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF1B67C0),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF1B67C0),
+              ),
             ),
           ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Color(0xFF535353),
-              fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF535353),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
