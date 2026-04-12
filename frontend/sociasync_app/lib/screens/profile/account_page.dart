@@ -34,10 +34,10 @@ class _AccountPageState extends State<AccountPage> {
   ];
 
   // Data yang bisa diedit
-  String name = 'Rina';
-  String email = 'rinafoodvlog@gmail.com';
-  String dateOfBirth = '24 Jan 2001';
-  String accountRegion = 'Indonesia';
+  String name = 'User';
+  String email = '-';
+  String dateOfBirth = '-';
+  String accountRegion = '-';
 
   String _formatApiDateToDisplay(String value) {
     final parsed = DateTime.tryParse(value);

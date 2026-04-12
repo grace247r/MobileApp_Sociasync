@@ -11,6 +11,7 @@ import 'package:sociasync_app/screens/profile/account_page.dart';
 import 'package:sociasync_app/screens/profile/privacy_page.dart';
 import 'package:sociasync_app/screens/profile/notification_page_settings.dart';
 import 'package:sociasync_app/screens/profile/help_page.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -226,13 +227,22 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Rina',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: primaryBlue,
-                  ),
+                FutureBuilder<Map<String, dynamic>>(
+                  future: AuthService.getMe(),
+                  builder: (context, snapshot) {
+                    final rawName = (snapshot.data?['name'] ?? '')
+                        .toString()
+                        .trim();
+                    final name = rawName.isEmpty ? 'User' : rawName;
+                    return Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: primaryBlue,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

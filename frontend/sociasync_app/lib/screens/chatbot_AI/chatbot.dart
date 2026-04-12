@@ -5,6 +5,7 @@ import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
+import 'package:sociasync_app/services/auth_service.dart';
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
@@ -16,6 +17,26 @@ class ChatbotPage extends StatefulWidget {
 class _ChatbotPageState extends State<ChatbotPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   final int _currentIndex = 2;
+  String _userName = 'User';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final profile = await AuthService.getMe();
+      if (!mounted) return;
+      final name = (profile['name'] ?? '').toString().trim();
+      if (name.isNotEmpty) {
+        setState(() => _userName = name);
+      }
+    } catch (_) {
+      // Keep fallback value when profile cannot be loaded.
+    }
+  }
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -51,7 +72,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
               children: [
                 // 1. WIDGET ATAS: Header yang sudah ada
                 DashboardHeader(
-                  userName: 'Rina',
+                  userName: _userName,
                   primaryColor: primaryBlue,
                   onNotificationTap: () {},
                 ),
@@ -142,7 +163,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                         Expanded(
                           child: ListView(
                             padding: const EdgeInsets.all(15),
-                            children: [_buildBotMessage()],
+                            children: [_buildBotMessage(_userName)],
                           ),
                         ),
 
@@ -174,7 +195,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   // Widget Bubble Chat Bot
-  Widget _buildBotMessage() {
+  Widget _buildBotMessage(String userName) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -219,9 +240,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Hi Rina! 👋',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              Text(
+                'Hi $userName! 👋',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 10),
               const Text(
