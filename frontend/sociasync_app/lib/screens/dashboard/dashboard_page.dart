@@ -210,19 +210,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
-
-            // NAVBAR
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: AppNavbar(
-                selectedIndex: _currentIndex,
-                backgroundColor: primaryBlue,
-                onTap: _onNavbarTap,
-              ),
-            ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: _currentIndex,
+          backgroundColor: primaryBlue,
+          onTap: _onNavbarTap,
         ),
       ),
     );

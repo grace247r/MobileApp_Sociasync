@@ -52,6 +52,11 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   @override
   Widget build(BuildContext context) {
     return AppBackgroundWrapper(
+      bottomNavigationBar: AppNavbar(
+        selectedIndex: _currentIndex,
+        onTap: _onNavbarTap,
+        backgroundColor: primaryBlue,
+      ),
       child: Stack(
         children: [
           SingleChildScrollView(
@@ -187,18 +192,6 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
 
                 const SizedBox(height: 100), // Spasi Navbar
               ],
-            ),
-          ),
-
-          // Navbar
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AppNavbar(
-              selectedIndex: _currentIndex,
-              onTap: _onNavbarTap,
-              backgroundColor: primaryBlue,
             ),
           ),
         ],

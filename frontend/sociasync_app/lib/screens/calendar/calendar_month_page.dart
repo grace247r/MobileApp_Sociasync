@@ -178,38 +178,31 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
                 ],
               ),
             ),
-
-            // 4. App Navbar Melayang
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: AppNavbar(
-                selectedIndex: 1, // Fokus pada tab Calendar
-                backgroundColor: primaryBlue,
-                onTap: (index) {
-                  if (index == 0) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DashboardPage()),
-                    );
-                  }
-                  if (index == 2) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ChatbotPage()),
-                    );
-                  }
-                  if (index == 3) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ProfilePage()),
-                    );
-                  }
-                },
-              ),
-            ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: 1, // Fokus pada tab Calendar
+          backgroundColor: primaryBlue,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+            }
+            if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatbotPage()),
+              );
+            }
+            if (index == 3) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            }
+          },
         ),
       ),
     );

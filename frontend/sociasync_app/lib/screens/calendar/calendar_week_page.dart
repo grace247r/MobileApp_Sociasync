@@ -257,39 +257,31 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                 ],
               ),
             ),
-
-            // 5. Navbar (Index 1: Calendar)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: AppNavbar(
-                selectedIndex: 1,
-                backgroundColor: primaryBlue,
-                onTap: (index) {
-                  if (index == 0) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DashboardPage()),
-                    );
-                  } else if (index == 1) {
-                    // On calendar page, stay on calendar (do nothing)
-                    return;
-                  } else if (index == 2) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ChatbotPage()),
-                    );
-                  } else if (index == 3) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ProfilePage()),
-                    );
-                  }
-                },
-              ),
-            ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: 1,
+          backgroundColor: primaryBlue,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+            } else if (index == 1) {
+              return;
+            } else if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatbotPage()),
+              );
+            } else if (index == 3) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            }
+          },
         ),
       ),
     );

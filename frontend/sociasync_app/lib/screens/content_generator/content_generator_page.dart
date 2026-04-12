@@ -58,6 +58,11 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
   @override
   Widget build(BuildContext context) {
     return AppBackgroundWrapper(
+      bottomNavigationBar: AppNavbar(
+        selectedIndex: _currentIndex,
+        backgroundColor: primaryBlue,
+        onTap: _onNavbarTap,
+      ),
       child: Stack(
         children: [
           SingleChildScrollView(
@@ -95,7 +100,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                           color: Color(0xFF2E2E2E),
                         ),
                       ),
-                      
+
                       IconButton(
                         onPressed: () {
                           Navigator.of(context).push(
@@ -208,18 +213,6 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                 ),
                 const SizedBox(height: 100), // Spasi untuk Navbar
               ],
-            ),
-          ),
-
-          // Navbar Melayang
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AppNavbar(
-              selectedIndex: _currentIndex,
-              backgroundColor: primaryBlue,
-              onTap: _onNavbarTap,
             ),
           ),
         ],

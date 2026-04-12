@@ -63,6 +63,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
   @override
   Widget build(BuildContext context) {
     return AppBackgroundWrapper(
+      bottomNavigationBar: AppNavbar(
+        selectedIndex: _currentIndex,
+        backgroundColor: primaryBlue,
+        onTap: _onNavbarTap,
+      ),
       child: Stack(
         children: [
           Padding(
@@ -175,18 +180,6 @@ class _ChatbotPageState extends State<ChatbotPage> {
                 ),
                 const SizedBox(height: 100), // Jarak untuk Navbar
               ],
-            ),
-          ),
-
-          // 4. WIDGET BAWAH: Navbar Melayang
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AppNavbar(
-              selectedIndex: _currentIndex,
-              backgroundColor: primaryBlue,
-              onTap: _onNavbarTap,
             ),
           ),
         ],

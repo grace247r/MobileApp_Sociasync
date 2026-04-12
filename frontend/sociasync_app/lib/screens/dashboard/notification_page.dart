@@ -107,6 +107,11 @@ class _NotificationPageState extends State<NotificationPage> {
   Widget build(BuildContext context) {
     // Gunakan AppBackgroundWrapper sebagai pengganti Container image background
     return AppBackgroundWrapper(
+      bottomNavigationBar: AppNavbar(
+        selectedIndex: _currentIndex,
+        backgroundColor: primaryBlue,
+        onTap: _onNavbarTap,
+      ),
       child: Stack(
         children: [
           // KONTEN UTAMA
@@ -160,18 +165,6 @@ class _NotificationPageState extends State<NotificationPage> {
                         ),
                 ),
               ],
-            ),
-          ),
-
-          // NAVBAR MELAYANG
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AppNavbar(
-              selectedIndex: _currentIndex,
-              backgroundColor: primaryBlue,
-              onTap: _onNavbarTap,
             ),
           ),
         ],

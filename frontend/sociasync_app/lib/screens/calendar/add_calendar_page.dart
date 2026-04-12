@@ -6,7 +6,6 @@ import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
-
 class AddCalendarPage extends StatefulWidget {
   final Map<String, dynamic>? initialData;
 
@@ -289,36 +288,31 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
                 ],
               ),
             ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: AppNavbar(
-                selectedIndex: 1,
-                backgroundColor: primaryBlue,
-                onTap: (index) {
-                  if (index == 0) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DashboardPage()),
-                    );
-                  }
-                  if (index == 2) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ChatbotPage()),
-                    );
-                  }
-                  if (index == 3) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ProfilePage()),
-                    );
-                  }
-                },
-              ),
-            ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: 1,
+          backgroundColor: primaryBlue,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+            }
+            if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatbotPage()),
+              );
+            }
+            if (index == 3) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            }
+          },
         ),
       ),
     );

@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 class AppBackgroundWrapper extends StatelessWidget {
   // 'child' adalah konten halaman (Scaffold dsb) yang akan dibungkus
   final Widget child;
+  final Widget? bottomNavigationBar;
 
-  const AppBackgroundWrapper({super.key, required this.child});
+  const AppBackgroundWrapper({
+    super.key,
+    required this.child,
+    this.bottomNavigationBar,
+  });
 
   // Warna gradasi dari Figma kamu (324AB3)
   final Color baseColor = const Color(0xFF324AB3);
@@ -20,6 +25,7 @@ class AppBackgroundWrapper extends StatelessWidget {
         return Scaffold(
           // Memastikan background berwarna putih dasar
           backgroundColor: Colors.white,
+          bottomNavigationBar: bottomNavigationBar,
           // Menggunakan Stack untuk menumpuk background dan konten
           body: Stack(
             children: [

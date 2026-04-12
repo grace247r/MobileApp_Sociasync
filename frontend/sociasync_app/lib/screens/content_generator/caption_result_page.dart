@@ -101,48 +101,35 @@ class _CaptionResultPageState extends State<CaptionResultPage> {
                               IconButton(
                                 onPressed: () => Navigator.pop(context),
                                 icon: const Icon(
-                                  Icons.arrow_back_ios,
-                                  size: 20,
+                                  Icons.arrow_back,
+                                  color: primaryColor,
                                 ),
-                                color: primaryColor,
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
                               ),
-                              const SizedBox(width: 8),
                               const Text(
-                                "Caption & Hashtags",
+                                'Hashtag Ideas',
                                 style: TextStyle(
-                                  fontSize: 22,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: primaryColor,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 15),
 
                           // CAPTION SECTION
                           _buildResultCard(
-                            title: "✍️ Caption Idea Ready",
+                            title: "✍️ Caption Ideas",
                             description:
-                                "Short storytelling captions are increasing engagement this week.",
-                            content: "Preview:\n\"$caption\"",
-                            buttonLabel: "Generate Other Caption",
+                                "Compelling captions drive higher engagement. Use urgency or curiosity.",
+                            content: caption,
+                            buttonLabel: "Generate Other Captions",
                             onCopy: () =>
                                 _copyToClipboard(caption, "Caption copied!"),
                             onRefresh: () {},
                           ),
 
-                          const SizedBox(height: 25),
-                          const Text(
-                            "Hashtag Ideas",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 40),
 
                           // HASHTAG SECTION
                           _buildResultCard(
@@ -200,19 +187,12 @@ class _CaptionResultPageState extends State<CaptionResultPage> {
                 ],
               ),
             ),
-
-            // NAVBAR POSITIONED (Agar sejajar dengan page lain)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: AppNavbar(
-                selectedIndex: -1,
-                backgroundColor: primaryColor,
-                onTap: _onNavbarTap,
-              ),
-            ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: -1,
+          backgroundColor: primaryColor,
+          onTap: _onNavbarTap,
         ),
       ),
     );

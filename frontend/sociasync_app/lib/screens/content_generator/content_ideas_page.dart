@@ -49,6 +49,11 @@ class _ContentIdeasPageState extends State<ContentIdeasPage> {
   @override
   Widget build(BuildContext context) {
     return AppBackgroundWrapper(
+      bottomNavigationBar: AppNavbar(
+        selectedIndex: _currentIndex,
+        backgroundColor: primaryBlue,
+        onTap: _onNavbarTap,
+      ),
       child: Stack(
         children: [
           SingleChildScrollView(
@@ -121,18 +126,6 @@ class _ContentIdeasPageState extends State<ContentIdeasPage> {
 
                 const SizedBox(height: 100),
               ],
-            ),
-          ),
-
-          // NAVBAR
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AppNavbar(
-              selectedIndex: _currentIndex,
-              backgroundColor: primaryBlue,
-              onTap: _onNavbarTap,
             ),
           ),
         ],
@@ -226,9 +219,7 @@ class ContentIdeaCard extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const ScriptResultPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const ScriptResultPage()),
                 );
               },
               style: ElevatedButton.styleFrom(

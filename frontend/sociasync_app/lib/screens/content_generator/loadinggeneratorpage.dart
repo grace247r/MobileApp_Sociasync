@@ -60,6 +60,11 @@ class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
   @override
   Widget build(BuildContext context) {
     return AppBackgroundWrapper(
+      bottomNavigationBar: AppNavbar(
+        selectedIndex: _currentIndex,
+        onTap: _onNavbarTap,
+        backgroundColor: primaryBlue,
+      ),
       child: Stack(
         children: [
           // BAGIAN 1 & 2: Konten Utama (Header + Kotak Loading)
@@ -101,18 +106,6 @@ class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
                 // Spacer bawah agar proporsional
                 const Spacer(flex: 2),
               ],
-            ),
-          ),
-
-          // BAGIAN 3: WIDGET NAVBAR (Melayang di bawah)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AppNavbar(
-              selectedIndex: _currentIndex,
-              onTap: _onNavbarTap,
-              backgroundColor: primaryBlue,
             ),
           ),
         ],

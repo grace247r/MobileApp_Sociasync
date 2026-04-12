@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
+import 'package:sociasync_app/widgets/date_range_picker_dialog.dart'
+    as date_picker;
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
@@ -78,34 +80,31 @@ class _SavedContentPageState extends State<SavedContentPage> {
     });
   }
 
-  // 3. DATE PICKER LOGIC (Filter by Date Range)
-  Future<void> _selectDateRange() async {
-    final DateTimeRange? picked = await showDateRangePicker(
+  // 3. DATE PICKER LOGIC - Using CustomDateRangeDialog Widget
+  void _selectDateRange() {
+    showDialog(
       context: context,
-      firstDate: DateTime(2025),
-      lastDate: DateTime(2027),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(
-            context,
-          ).copyWith(colorScheme: ColorScheme.light(primary: primaryBlue)),
-          child: child!,
+      builder: (context) {
+        return date_picker.CustomDateRangeDialog(
+          primaryColor: primaryBlue,
+          onApply: (startDate, endDate) {
+            setState(() {
+              filteredData = allData
+                  .where(
+                    (item) =>
+                        item.date.isAfter(
+                          startDate.subtract(const Duration(days: 1)),
+                        ) &&
+                        item.date.isBefore(
+                          endDate.add(const Duration(days: 1)),
+                        ),
+                  )
+                  .toList();
+            });
+          },
         );
       },
     );
-    if (picked != null) {
-      setState(() {
-        filteredData = allData
-            .where(
-              (item) =>
-                  item.date.isAfter(
-                    picked.start.subtract(const Duration(days: 1)),
-                  ) &&
-                  item.date.isBefore(picked.end.add(const Duration(days: 1))),
-            )
-            .toList();
-      });
-    }
   }
 
   @override
@@ -263,38 +262,31 @@ class _SavedContentPageState extends State<SavedContentPage> {
                 ],
               ),
             ),
-
-            // NAVBAR
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: AppNavbar(
-                selectedIndex: _currentIndex,
-                backgroundColor: primaryBlue,
-                onTap: (index) {
-                  if (index == 0) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DashboardPage()),
-                    );
-                  }
-                  if (index == 2) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ChatbotPage()),
-                    );
-                  }
-                  if (index == 3) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ProfilePage()),
-                    );
-                  }
-                },
-              ),
-            ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: _currentIndex,
+          backgroundColor: primaryBlue,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+            }
+            if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatbotPage()),
+              );
+            }
+            if (index == 3) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            }
+          },
         ),
       ),
     );
