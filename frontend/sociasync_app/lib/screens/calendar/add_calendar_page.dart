@@ -369,8 +369,12 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
               ),
             ],
           ),
-          // LOGIC: Start & End otomatis hilang/off jika isDaily aktif
-          if (!isDaily) ...[
+          if (isDaily) ...[
+            const Divider(height: 20),
+            _buildDateOnlyRow('Start', startDate, true),
+            const SizedBox(height: 12),
+            _buildDateOnlyRow('End', endDate, false),
+          ] else ...[
             const Divider(height: 20),
             _buildTimeRow('Start', startDate, startTime, true),
             const SizedBox(height: 12),
@@ -407,6 +411,33 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
               const SizedBox(width: 8),
               _timeChip(_formatTime(time), onTap: () => _pickTime(isStart)),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateOnlyRow(String label, DateTime date, bool isStart) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 50,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1D2f73),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: _timeChip(
+              _formatDate(date),
+              onTap: () => _pickDate(isStart),
+            ),
           ),
         ),
       ],

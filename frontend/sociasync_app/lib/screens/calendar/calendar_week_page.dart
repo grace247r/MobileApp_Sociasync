@@ -131,133 +131,125 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
     return AppBackgroundWrapper(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. Header (User: Rina)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: DashboardHeader(
-                      userName: 'Rina',
-                      primaryColor: primaryBlue,
-                      onNotificationTap: () {},
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Header (User: Rina)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: DashboardHeader(
+                  userName: 'Rina',
+                  primaryColor: primaryBlue,
+                  onNotificationTap: () {},
+                ),
+              ),
+              const SizedBox(height: 20),
 
-                  // 2. Month & Switcher
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // 2. Month & Switcher
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _monthLabel(_focusedDate),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Builder(
+                      builder: (ctx) => GestureDetector(
+                        onTap: () => _showViewDropdown(ctx),
+                        child: _buildViewDropdownBtn(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // 3. Container Utama (Simetris)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Color(0xFF82B0E7), width: 1.5),
+                    ),
+                    child: Column(
                       children: [
-                        Text(
-                          _monthLabel(_focusedDate),
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                        // Strip Hari (Mo, Tu, ...)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 5,
+                          ),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: weekDays
+                                  .map((d) => _buildWeekDayItem(d))
+                                  .toList(),
+                            ),
                           ),
                         ),
-                        Builder(
-                          builder: (ctx) => GestureDetector(
-                            onTap: () => _showViewDropdown(ctx),
-                            child: _buildViewDropdownBtn(),
+                        const Divider(
+                          height: 1,
+                          color: Color(0xFFBDD7EE),
+                          thickness: 1.5,
+                        ),
+
+                        // Kolom Hari (Kiri & Kanan)
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(child: _buildDayColumn(leftDay)),
+                              Container(width: 1.5, color: lightBlueBorder),
+                              Expanded(child: _buildDayColumn(rightDay)),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-
-                  // 3. Container Utama (Simetris)
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Color(0xFF82B0E7),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            // Strip Hari (Mo, Tu, ...)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 5,
-                              ),
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  children: weekDays
-                                      .map((d) => _buildWeekDayItem(d))
-                                      .toList(),
-                                ),
-                              ),
-                            ),
-                            const Divider(
-                              height: 1,
-                              color: Color(0xFFBDD7EE),
-                              thickness: 1.5,
-                            ),
-
-                            // Kolom Hari (Kiri & Kanan)
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Expanded(child: _buildDayColumn(leftDay)),
-                                  Container(width: 1.5, color: lightBlueBorder),
-                                  Expanded(child: _buildDayColumn(rightDay)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 4. Button Add Event
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AddCalendarPage(),
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryBlue,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 50,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        '+ Add event',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 110),
-                ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+
+              // 4. Button Add Event
+              Center(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddCalendarPage()),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBlue,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 50,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    '+ Add event',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
         bottomNavigationBar: AppNavbar(
           selectedIndex: 1,
