@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/splash_screen.dart';
+import 'package:sociasync_app/config/api_config.dart';
 
 // Import sub-halaman
 import 'package:sociasync_app/screens/profile/account_page.dart';
@@ -13,10 +15,126 @@ import 'package:sociasync_app/screens/profile/notification_page_settings.dart';
 import 'package:sociasync_app/screens/profile/help_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
   final Color primaryBlue = const Color(0xFF1D5093);
+  String _userName = 'User';
+  String? _profileImageUrl;
+  bool _isUploadingImage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await AuthService.getMe();
+      if (!mounted) return;
+      final loadedName = (profile['name'] ?? '').toString().trim();
+      final loadedImage = (profile['profile_image'] ?? '').toString().trim();
+      setState(() {
+        if (loadedName.isNotEmpty) _userName = loadedName;
+        _profileImageUrl = _resolveProfileImageUrl(loadedImage);
+      });
+    } catch (_) {
+      // Keep fallback values when profile cannot be loaded.
+    }
+  }
+
+  String? _resolveProfileImageUrl(String raw) {
+    if (raw.trim().isEmpty) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    return '${ApiConfig.baseUrl}${raw.startsWith('/') ? raw : '/$raw'}';
+  }
+
+  Future<void> _pickAndUploadProfileImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: source, imageQuality: 80);
+    if (picked == null || _isUploadingImage) return;
+
+    setState(() => _isUploadingImage = true);
+    try {
+      final updated = await AuthService.uploadProfileImage(picked);
+      if (!mounted) return;
+      final updatedImage = (updated['profile_image'] ?? '').toString().trim();
+      setState(() {
+        _profileImageUrl = _resolveProfileImageUrl(updatedImage);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto profil berhasil diperbarui.')),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
+
+  void _showAddPhotoPopup() {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 42,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                Text(
+                  'Tambah Foto Profil',
+                  style: TextStyle(
+                    color: primaryBlue,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Pilih dari Galeri'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndUploadProfileImage(ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('Ambil dari Kamera'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndUploadProfileImage(ImageSource.camera);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -220,29 +338,43 @@ class ProfilePage extends StatelessWidget {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: CircleAvatar(
-                    radius: 45,
-                    backgroundImage: const AssetImage('assets/logo.png'),
-                    backgroundColor: const Color(0xFFDDE8F5),
+                  child: GestureDetector(
+                    onTap: _showAddPhotoPopup,
+                    child: CircleAvatar(
+                      radius: 45,
+                      backgroundImage: _profileImageUrl != null
+                          ? NetworkImage(_profileImageUrl!)
+                          : null,
+                      backgroundColor: const Color(0xFFDDE8F5),
+                      child: _profileImageUrl == null
+                          ? (_isUploadingImage
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Color(0xFF1D5093),
+                                      ),
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: primaryBlue.withOpacity(0.75),
+                                  ))
+                          : null,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
-                FutureBuilder<Map<String, dynamic>>(
-                  future: AuthService.getMe(),
-                  builder: (context, snapshot) {
-                    final rawName = (snapshot.data?['name'] ?? '')
-                        .toString()
-                        .trim();
-                    final name = rawName.isEmpty ? 'User' : rawName;
-                    return Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: primaryBlue,
-                      ),
-                    );
-                  },
+                Text(
+                  _userName,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: primaryBlue,
+                  ),
                 ),
               ],
             ),

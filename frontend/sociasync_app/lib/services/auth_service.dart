@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sociasync_app/config/api_config.dart';
 
@@ -258,6 +259,67 @@ class AuthService {
     }
 
     throw AuthException('Gagal menyimpan profil.');
+  }
+
+  static Future<Map<String, dynamic>> uploadProfileImage(
+    XFile imageFile,
+  ) async {
+    final token = await _getAccessTokenOrRefresh();
+    if (token == null) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    Future<http.StreamedResponse> send(String authToken) async {
+      final request = http.MultipartRequest('PATCH', _uri('profile/'));
+      request.headers['Authorization'] = 'Bearer $authToken';
+      final bytes = await imageFile.readAsBytes();
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'profile_image',
+          bytes,
+          filename: imageFile.name,
+        ),
+      );
+      return request.send();
+    }
+
+    http.StreamedResponse streamedResponse;
+    try {
+      streamedResponse = await send(token);
+    } catch (_) {
+      throw AuthException(_connectionErrorMessage());
+    }
+
+    http.Response response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      if (!refreshed) {
+        throw AuthException('Sesi habis, silakan login ulang.');
+      }
+
+      final retryToken = await _readToken(_accessKey);
+      if (retryToken == null || retryToken.isEmpty) {
+        throw AuthException('Sesi login tidak ditemukan.');
+      }
+
+      try {
+        final retryStream = await send(retryToken);
+        response = await http.Response.fromStream(retryStream);
+      } catch (_) {
+        throw AuthException(_connectionErrorMessage());
+      }
+    }
+
+    final data = _decode(response.body);
+    if (response.statusCode == 200) {
+      if ((data['email'] ?? '').toString().trim().isNotEmpty) {
+        await _saveEmail((data['email'] as String).trim());
+      }
+      return data;
+    }
+
+    throw AuthException(_extractErrorMessage(data));
   }
 
   static Future<void> deleteAccount() async {

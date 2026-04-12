@@ -1,7 +1,9 @@
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import parser_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, ProfileSerializer
 from .models import User
@@ -64,6 +66,7 @@ def login_view(request):
 
 @api_view(['PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def update_profile(request):
     if request.method == 'DELETE':
         request.user.delete()

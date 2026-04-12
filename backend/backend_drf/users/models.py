@@ -13,6 +13,11 @@ class User(AbstractUser):
 
     date_of_birth = models.DateField(null=True, blank=True)
     region = models.CharField(max_length=100, blank=True)
+    profile_image = models.ImageField(
+        upload_to='profile_images/',
+        null=True,
+        blank=True,
+    )
 
     # Kolom ini sudah ada di database lama dan wajib diset saat insert.
     email_verification_token = models.CharField(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
@@ -6,6 +7,7 @@ import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/auth/login_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
+import 'package:sociasync_app/config/api_config.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -38,6 +40,7 @@ class _AccountPageState extends State<AccountPage> {
   String email = '-';
   String dateOfBirth = '-';
   String accountRegion = '-';
+  String? _profileImageUrl;
 
   String _formatApiDateToDisplay(String value) {
     final parsed = DateTime.tryParse(value);
@@ -101,6 +104,7 @@ class _AccountPageState extends State<AccountPage> {
         final updatedEmail = (updated['email'] ?? '').toString().trim();
         final updatedDob = (updated['date_of_birth'] ?? '').toString().trim();
         final updatedRegion = (updated['region'] ?? '').toString().trim();
+        final updatedImage = (updated['profile_image'] ?? '').toString().trim();
 
         if (updatedName.isNotEmpty) name = updatedName;
         if (updatedEmail.isNotEmpty) email = updatedEmail;
@@ -108,6 +112,7 @@ class _AccountPageState extends State<AccountPage> {
           dateOfBirth = _formatApiDateToDisplay(updatedDob);
         }
         if (updatedRegion.isNotEmpty) accountRegion = updatedRegion;
+        _profileImageUrl = _resolveProfileImageUrl(updatedImage);
       });
     } on AuthException catch (e) {
       if (!mounted) return;
@@ -160,6 +165,9 @@ class _AccountPageState extends State<AccountPage> {
       final loadedDob = (profile['date_of_birth'] ?? '').toString().trim();
       final loadedRegion = (profile['region'] ?? '').toString().trim();
       final loadedEmail = (profile['email'] ?? '').toString().trim();
+      final loadedProfileImage = (profile['profile_image'] ?? '')
+          .toString()
+          .trim();
 
       setState(() {
         if (loadedName.isNotEmpty) name = loadedName;
@@ -171,12 +179,103 @@ class _AccountPageState extends State<AccountPage> {
           dateOfBirth = _formatApiDateToDisplay(loadedDob);
         }
         if (loadedRegion.isNotEmpty) accountRegion = loadedRegion;
+        _profileImageUrl = _resolveProfileImageUrl(loadedProfileImage);
         _isLoadingProfile = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoadingProfile = false);
     }
+  }
+
+  String? _resolveProfileImageUrl(String raw) {
+    if (raw.trim().isEmpty) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return raw;
+    }
+    return '${ApiConfig.baseUrl}${raw.startsWith('/') ? raw : '/$raw'}';
+  }
+
+  Future<void> _pickAndUploadProfileImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: source, imageQuality: 80);
+    if (picked == null) return;
+
+    if (_isSavingProfile) return;
+    setState(() => _isSavingProfile = true);
+    try {
+      final updated = await AuthService.uploadProfileImage(picked);
+      if (!mounted) return;
+      final updatedImage = (updated['profile_image'] ?? '').toString().trim();
+      setState(() {
+        _profileImageUrl = _resolveProfileImageUrl(updatedImage);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto profil berhasil diperbarui.')),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _isSavingProfile = false);
+    }
+  }
+
+  void _showAddPhotoPopup() {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 42,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                Text(
+                  'Tambah Foto Profil',
+                  style: TextStyle(
+                    color: primaryBlue,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Pilih dari Galeri'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndUploadProfileImage(ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('Ambil dari Kamera'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndUploadProfileImage(ImageSource.camera);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // ── Generic popup edit teks biasa ──
@@ -713,22 +812,34 @@ class _AccountPageState extends State<AccountPage> {
           left: 0,
           right: 0,
           child: Center(
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 4),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const CircleAvatar(
-                radius: 48,
-                backgroundImage: AssetImage('assets/profile.png'),
-                backgroundColor: Color(0xFFDDE8F5),
+            child: GestureDetector(
+              onTap: _showAddPhotoPopup,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: 48,
+                  backgroundColor: const Color(0xFFDDE8F5),
+                  backgroundImage: _profileImageUrl != null
+                      ? NetworkImage(_profileImageUrl!)
+                      : null,
+                  child: _profileImageUrl == null
+                      ? Icon(
+                          Icons.person,
+                          size: 52,
+                          color: primaryBlue.withOpacity(0.75),
+                        )
+                      : null,
+                ),
               ),
             ),
           ),

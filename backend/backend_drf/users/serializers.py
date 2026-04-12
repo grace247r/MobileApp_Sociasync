@@ -49,7 +49,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             'name',
             'gender',
             'date_of_birth',
-            'region'
+            'region',
+            'profile_image',
         ]
 
     def update(self, instance, validated_data):
