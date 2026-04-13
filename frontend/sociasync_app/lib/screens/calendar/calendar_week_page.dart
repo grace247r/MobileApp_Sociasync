@@ -6,9 +6,9 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
+import 'package:sociasync_app/services/schedule_service.dart';
 
 class CalendarWeekPage extends StatefulWidget {
   final DateTime? initialDate;
@@ -23,13 +23,38 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
   final Color lightBlueBorder = const Color(0xFFBDD7EE);
   late DateTime _focusedDate;
 
-  // Data dummy event agar terlihat seperti di desain
   final Map<String, List<Map<String, dynamic>>> _events = {};
 
   @override
   void initState() {
     super.initState();
     _focusedDate = widget.initialDate ?? DateTime.now();
+    _loadSchedules();
+  }
+
+  Future<void> _loadSchedules() async {
+    try {
+      final schedules = await ScheduleService.getSchedules();
+      final grouped = <String, List<Map<String, dynamic>>>{};
+
+      for (final item in schedules) {
+        final rawStart = (item['start_time'] ?? '').toString();
+        final parsedStart = DateTime.tryParse(rawStart);
+        if (parsedStart == null) continue;
+
+        final key = _eventKey(parsedStart.toLocal());
+        grouped.putIfAbsent(key, () => <Map<String, dynamic>>[]).add(item);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _events
+          ..clear()
+          ..addAll(grouped);
+      });
+    } catch (_) {
+      // Keep UI usable even when API fails.
+    }
   }
 
   // --- Logic Helpers ---
@@ -80,11 +105,15 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
     return '${days[d.weekday]}, ${d.day} ${months[d.month]} ${d.year}';
   }
 
+  List<Map<String, dynamic>> _eventsForDay(DateTime day) {
+    return _events[_eventKey(day)] ?? const <Map<String, dynamic>>[];
+  }
+
   // --- Navigasi Dropdown ---
-  void _showViewDropdown(BuildContext context) {
-    final RenderBox button = context.findRenderObject() as RenderBox;
+  void _showViewDropdown(BuildContext anchorContext) {
+    final RenderBox button = anchorContext.findRenderObject() as RenderBox;
     final RenderBox overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
+        Overlay.of(anchorContext).context.findRenderObject() as RenderBox;
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
@@ -97,7 +126,7 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
     );
 
     showMenu<String>(
-      context: context,
+      context: anchorContext,
       position: position.shift(const Offset(0, 45)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       items: [
@@ -109,14 +138,13 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
         const PopupMenuItem(value: 'Year', child: Text('Year')),
       ],
     ).then((value) {
+      if (!mounted) return;
       if (value == 'Month') {
-        Navigator.pushReplacement(
-          context,
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const CalendarMonthPage()),
         );
       } else if (value == 'Year') {
-        Navigator.pushReplacement(
-          context,
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const CalendarYearPage()),
         );
       }
@@ -224,10 +252,17 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
               // 4. Button Add Event
               Center(
                 child: ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AddCalendarPage()),
-                  ),
+                  onPressed: () async {
+                    final created = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AddCalendarPage(),
+                      ),
+                    );
+                    if (created == true) {
+                      await _loadSchedules();
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryBlue,
                     padding: const EdgeInsets.symmetric(
@@ -333,6 +368,8 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
   }
 
   Widget _buildDayColumn(DateTime day) {
+    final events = _eventsForDay(day);
+
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -350,9 +387,15 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
           ),
           const SizedBox(height: 20),
 
-          // Deadline list sesuai gambar
-          _buildDeadlineRow('Deadline Project X'),
-          _buildDeadlineRow('Deadline Project Y'),
+          // Deadline/Event list dari API schedules
+          if (events.isEmpty) ...[
+            _buildDeadlineRow('Belum ada event'),
+          ] else ...[
+            ...events.take(4).map((e) {
+              final title = (e['title'] ?? 'Untitled event').toString();
+              return _buildDeadlineRow(title);
+            }),
+          ],
 
           const Spacer(),
           const Text(
@@ -361,7 +404,7 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
           ),
           const SizedBox(height: 8),
 
-          // Kotak Placeholder Bawah
+          // Ringkasan event harian
           Expanded(
             flex: 2,
             child: Container(
@@ -370,6 +413,33 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
                 color: const Color(0xFF1D5093).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(15),
               ),
+              padding: const EdgeInsets.all(10),
+              child: events.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No event',
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: events.length,
+                      itemBuilder: (_, i) {
+                        final title = (events[i]['title'] ?? 'Untitled event')
+                            .toString();
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            '• $title',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      },
+                    ),
             ),
           ),
         ],

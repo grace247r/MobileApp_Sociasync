@@ -3,9 +3,10 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
+import 'package:sociasync_app/services/auth_service.dart';
+import 'package:sociasync_app/services/schedule_service.dart';
 
 class AddCalendarPage extends StatefulWidget {
   final Map<String, dynamic>? initialData;
@@ -29,10 +30,11 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
   late TimeOfDay endTime;
   late String repeat;
   late String reminder;
+  bool _isSubmitting = false;
 
   bool get _isEditMode => widget.initialData != null;
 
-  final repeatOptions = ['Never', 'Daily', 'Weekly', 'Monthly', 'Yearly'];
+  final repeatOptions = ['Never', 'Daily', 'Weekly', 'Monthly'];
   final reminderOptions = [
     'Never',
     '5 mins before',
@@ -158,22 +160,86 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
     );
   }
 
-  // --- LOGIC SUBMIT ---
-  void _submitEvent() {
-    if (_titleCtrl.text.isEmpty) return;
+  String _repeatToApi(String value) {
+    switch (value.trim().toLowerCase()) {
+      case 'daily':
+        return 'daily';
+      case 'weekly':
+        return 'weekly';
+      case 'monthly':
+        return 'monthly';
+      default:
+        return 'never';
+    }
+  }
 
-    // Data dikirim balik ke CalendarWeekPage
-    Navigator.pop(context, {
-      'title': _titleCtrl.text,
-      'notes': _notesCtrl.text,
-      'isDaily': isDaily,
-      'startDate': startDate,
-      'startTime': startTime,
-      'endDate': endDate,
-      'endTime': endTime,
-      'repeat': repeat,
-      'reminder': reminder,
-    });
+  Future<void> _submitEvent() async {
+    if (_isSubmitting) return;
+    if (_titleCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Judul event wajib diisi.')));
+      return;
+    }
+
+    final startDateTime = DateTime(
+      startDate.year,
+      startDate.month,
+      startDate.day,
+      startTime.hour,
+      startTime.minute,
+    );
+    final endDateTime = DateTime(
+      endDate.year,
+      endDate.month,
+      endDate.day,
+      endTime.hour,
+      endTime.minute,
+    );
+
+    if (endDateTime.isBefore(startDateTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Waktu selesai tidak boleh lebih awal dari mulai.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await ScheduleService.createSchedule(
+        title: _titleCtrl.text.trim(),
+        caption: _notesCtrl.text.trim().isEmpty
+            ? _titleCtrl.text.trim()
+            : _notesCtrl.text.trim(),
+        platform: 'instagram',
+        startTime: startDateTime,
+        endTime: endDateTime,
+        isDaily: isDaily,
+        repeat: _repeatToApi(repeat),
+        reminderType: reminder,
+        notes: _notesCtrl.text.trim(),
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menyimpan event. Coba lagi.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -260,7 +326,7 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
                           const SizedBox(height: 30),
                           Center(
                             child: ElevatedButton(
-                              onPressed: _submitEvent, // Pakai logic submit
+                              onPressed: _isSubmitting ? null : _submitEvent,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primaryBlue,
                                 padding: const EdgeInsets.symmetric(
@@ -271,14 +337,25 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                              child: Text(
-                                _isEditMode ? 'Update Event' : '+ Add event',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      _isEditMode
+                                          ? 'Update Event'
+                                          : '+ Add event',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],

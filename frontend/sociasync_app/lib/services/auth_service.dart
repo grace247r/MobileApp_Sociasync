@@ -589,6 +589,10 @@ class AuthService {
     return _readToken(_emailKey);
   }
 
+  static Future<String?> getAccessToken() {
+    return _getAccessTokenOrRefresh();
+  }
+
   static Future<void> _saveTokens({
     required String access,
     required String refresh,
