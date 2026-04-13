@@ -143,6 +143,7 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: Colors.transparent,
         // KUNCI UTAMA: Membiarkan body naik melewati area atas
         extendBodyBehindAppBar: true,
+        extendBody: true,
         body: Stack(
           children: [
             Column(
@@ -233,44 +234,34 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ],
             ),
-
-            // App Navbar Melayang
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: AppNavbar(
-                selectedIndex: 3,
-                backgroundColor: primaryBlue,
-                onTap: (index) {
-                  if (index == 0) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DashboardPage()),
-                    );
-                  }
-                  if (index == 1) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CalendarWeekPage(),
-                      ),
-                    );
-                  }
-                  if (index == 2) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ChatbotPage()),
-                    );
-                  }
-                  if (index == 3) {
-                    // On profile page, stay on profile (do nothing)
-                    return;
-                  }
-                },
-              ),
-            ),
           ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: 3,
+          backgroundColor: primaryBlue,
+          onTap: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+            }
+            if (index == 1) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const CalendarWeekPage()),
+              );
+            }
+            if (index == 2) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatbotPage()),
+              );
+            }
+            if (index == 3) {
+              return;
+            }
+          },
         ),
       ),
     );

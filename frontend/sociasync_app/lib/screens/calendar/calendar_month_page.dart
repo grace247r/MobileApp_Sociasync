@@ -85,9 +85,6 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
                     child: DashboardHeader(
                       userName: 'Rina',
                       primaryColor: primaryBlue,
-                      onNotificationTap: () {
-                        // Logika notifikasi jika diperlukan
-                      },
                     ),
                   ),
                   const SizedBox(height: 16),

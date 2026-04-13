@@ -60,55 +60,55 @@ class _LoadingGeneratorPageState extends State<LoadingGeneratorPage> {
   @override
   Widget build(BuildContext context) {
     return AppBackgroundWrapper(
-      bottomNavigationBar: AppNavbar(
-        selectedIndex: _currentIndex,
-        onTap: _onNavbarTap,
-        backgroundColor: primaryBlue,
-      ),
-      child: Stack(
-        children: [
-          // BAGIAN 1 & 2: Konten Utama (Header + Kotak Loading)
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // WIDGET ATAS: DashboardHeader
-                DashboardHeader(
-                  userName: 'Rina',
-                  primaryColor: primaryBlue,
-                  onNotificationTap: () {},
-                ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // WIDGET ATAS: DashboardHeader
+                  DashboardHeader(userName: 'Rina', primaryColor: primaryBlue),
 
-                // Spacer agar Kotak Loading berada di tengah layar secara vertikal
-                const Spacer(),
+                  // Spacer agar Kotak Loading berada di tengah layar secara vertikal
+                  const Spacer(),
 
-                // WIDGET TENGAH: Loading Generator
-                SizedBox(
-                  height: 340,
-                  child: Center(
-                    child: GeneratorLoadingWidget(onCompleted: _goToResultPage),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Center(
-                  child: Text(
-                    'Generating Content...',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1D5093),
-                      letterSpacing: 0.3,
+                  // WIDGET TENGAH: Loading Generator
+                  SizedBox(
+                    height: 340,
+                    child: Center(
+                      child: GeneratorLoadingWidget(
+                        onCompleted: _goToResultPage,
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  const Center(
+                    child: Text(
+                      'Generating Content...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1D5093),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
 
-                // Spacer bawah agar proporsional
-                const Spacer(flex: 2),
-              ],
+                  const Spacer(flex: 2),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: _currentIndex,
+          onTap: _onNavbarTap,
+          backgroundColor: primaryBlue,
+        ),
       ),
     );
   }

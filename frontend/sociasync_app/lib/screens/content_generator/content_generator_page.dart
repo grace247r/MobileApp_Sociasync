@@ -58,164 +58,162 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
   @override
   Widget build(BuildContext context) {
     return AppBackgroundWrapper(
-      bottomNavigationBar: AppNavbar(
-        selectedIndex: _currentIndex,
-        backgroundColor: primaryBlue,
-        onTap: _onNavbarTap,
-      ),
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Menggunakan widget Header yang sudah ada
-                DashboardHeader(
-                  userName: 'Rina',
-                  primaryColor: primaryBlue,
-                  onNotificationTap: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationPage(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 25),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DashboardHeader(
+                    userName: 'Rina',
+                    primaryColor: primaryBlue,
+                    onNotificationTap: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 25),
 
-                // Title & Bookmark Icon
-                Padding(
-                  padding: const EdgeInsets.only(
-                    right: .0,
-                  ), // Menyesuaikan agar sejajar dengan icon lonceng
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Padding(
+                    padding: const EdgeInsets.only(right: .0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Content Generator',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2E2E2E),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const SavedContentPage(),
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.bookmark,
+                            color: primaryBlue,
+                            size: 28,
+                          ),
+                          splashRadius: 22,
+                          tooltip: 'Saved Content',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Row(
                     children: [
-                      const Text(
-                        'Content Generator',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2E2E2E),
-                        ),
+                      Expanded(
+                        child: _buildPlatformBtn('TikTok', isTikTokSelected),
                       ),
-
-                      IconButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const SavedContentPage(),
-                            ),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.bookmark,
-                          color: primaryBlue,
-                          size: 28,
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: _buildPlatformBtn(
+                          'Instagram',
+                          !isTikTokSelected,
                         ),
-                        splashRadius: 22,
-                        tooltip: 'Saved Content',
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // Platform Selector (TikTok vs Instagram)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildPlatformBtn('TikTok', isTikTokSelected),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: _buildPlatformBtn('Instagram', !isTikTokSelected),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Topic Input Field
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Enter Topic of Choice..',
-                    hintStyle: TextStyle(color: Color(0XFF1D2F73)),
-                    filled: true,
-                    fillColor: Color.fromRGBO(220, 227, 255, 0.23),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Enter Topic of Choice..',
+                      hintStyle: TextStyle(color: Color(0XFF1D2F73)),
+                      filled: true,
+                      fillColor: Color.fromRGBO(220, 227, 255, 0.23),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // Form Sections
-                _buildFormSection('Goal', [
-                  'Increase Engagement',
-                  'Promote Product',
-                  'Brand Awareness',
-                  'Drive Sales',
-                  'Other..',
-                ]),
-                const SizedBox(height: 20),
-                _buildFormSection('Target Audience', [
-                  'Female',
-                  'Male',
-                  'Teens',
-                  'Young Adults',
-                  'Food Enthusiasts',
-                  'Other..',
-                ]),
-                const SizedBox(height: 20),
-                _buildFormSection('Tone of Voice', [
-                  'Friendly',
-                  'Professional',
-                  'Fun',
-                  'Luxury',
-                  'Informative',
-                  'Other..',
-                ]),
-                const SizedBox(height: 30),
+                  _buildFormSection('Goal', [
+                    'Increase Engagement',
+                    'Promote Product',
+                    'Brand Awareness',
+                    'Drive Sales',
+                    'Other..',
+                  ]),
+                  const SizedBox(height: 20),
+                  _buildFormSection('Target Audience', [
+                    'Female',
+                    'Male',
+                    'Teens',
+                    'Young Adults',
+                    'Food Enthusiasts',
+                    'Other..',
+                  ]),
+                  const SizedBox(height: 20),
+                  _buildFormSection('Tone of Voice', [
+                    'Friendly',
+                    'Professional',
+                    'Fun',
+                    'Luxury',
+                    'Informative',
+                    'Other..',
+                  ]),
+                  const SizedBox(height: 30),
 
-                // Next Button
-                Center(
-                  child: SizedBox(
-                    width: 170, // Mengunci lebar tombol agar tidak kepanjangan
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const ContentIdeasPage(),
+                  Center(
+                    child: SizedBox(
+                      width: 170,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ContentIdeasPage(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFB4BCE2),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFB4BCE2),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          elevation: 0,
                         ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'NEXT',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          letterSpacing: 0,
+                        child: const Text(
+                          'NEXT',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            letterSpacing: 0,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 100), // Spasi untuk Navbar
-              ],
+                  const SizedBox(height: 100),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: _currentIndex,
+          backgroundColor: primaryBlue,
+          onTap: _onNavbarTap,
+        ),
       ),
     );
   }

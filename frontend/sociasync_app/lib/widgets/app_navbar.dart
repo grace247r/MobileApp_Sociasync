@@ -12,23 +12,31 @@ class AppNavbar extends StatelessWidget {
   final ValueChanged<int>? onTap;
   final Color backgroundColor;
 
-  static const double _navBarHeight = 68;
-
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final navBarHeight = (screenWidth * 0.16).clamp(60.0, 74.0).toDouble();
+    final iconSize = (screenWidth * 0.062).clamp(22.0, 26.0).toDouble();
+
     const iconAssets = <String>[
       'assets/home.png',
       'assets/calendar.png',
-      'assets/chat.png',
-      'assets/profile.png',
+      'assets/Chat.png',
+      'assets/Profile.png',
     ];
     const calendarActiveAsset = 'assets/calendar_active.png';
+    const fallbackIcons = <IconData>[
+      Icons.home_rounded,
+      Icons.calendar_month_rounded,
+      Icons.chat_bubble_rounded,
+      Icons.person_rounded,
+    ];
 
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.fromLTRB(15, 10, 15, 18),
       child: Container(
-        height: _navBarHeight,
+        height: navBarHeight,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: backgroundColor,
@@ -53,15 +61,26 @@ class AppNavbar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isSelected
-                      ? Colors.white.withOpacity(0.12)
+                      ? Colors.white.withValues(alpha: 0.12)
                       : Colors.transparent,
                 ),
                 child: Image.asset(
                   iconPath,
-                  width: isSelected ? 27 : 24,
-                  height: isSelected ? 27 : 24,
-                  color: Colors.white.withOpacity(isSelected ? 1.0 : 0.52),
+                  width: isSelected ? iconSize + 2 : iconSize,
+                  height: isSelected ? iconSize + 2 : iconSize,
+                  color: Colors.white.withValues(
+                    alpha: isSelected ? 1.0 : 0.52,
+                  ),
                   colorBlendMode: BlendMode.modulate,
+                  errorBuilder: (_, __, ___) {
+                    return Icon(
+                      fallbackIcons[index],
+                      size: isSelected ? iconSize + 2 : iconSize,
+                      color: Colors.white.withValues(
+                        alpha: isSelected ? 1.0 : 0.52,
+                      ),
+                    );
+                  },
                 ),
               ),
               splashRadius: 22,

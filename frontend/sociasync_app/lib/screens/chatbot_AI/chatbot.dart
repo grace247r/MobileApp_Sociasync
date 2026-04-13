@@ -4,6 +4,7 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
 
@@ -62,131 +63,134 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AppBackgroundWrapper(
-      bottomNavigationBar: AppNavbar(
-        selectedIndex: _currentIndex,
-        backgroundColor: primaryBlue,
-        onTap: _onNavbarTap,
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. WIDGET ATAS: Header yang sudah ada
-                  DashboardHeader(
-                    userName: _userName,
-                    primaryColor: primaryBlue,
-                    onNotificationTap: () {},
-                  ),
-                  const SizedBox(height: 15),
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final navBarHeight = (screenWidth * 0.16).clamp(60.0, 74.0).toDouble();
 
-                  // 2. Title & Back Button
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Icon(
-                          Icons.arrow_back,
-                          color: primaryBlue,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Sociasync AI',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2E2E2E),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                ],
-              ),
-            ),
-            // 3. MAIN CHAT CONTAINER (Wadah ber-border biru)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: primaryBlue.withOpacity(0.5)),
-                  ),
-                  child: Column(
-                    children: [
-                      // Blue Header inside Chat Container
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 15,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primaryBlue,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(19),
+    return AppBackgroundWrapper(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DashboardHeader(
+                      userName: _userName,
+                      primaryColor: primaryBlue,
+                    ),
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Icon(
+                            Icons.arrow_back,
+                            color: primaryBlue,
+                            size: 28,
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Sociasync AI',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2E2E2E),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    bottom: navBarHeight + 12,
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: primaryBlue.withOpacity(0.5)),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primaryBlue,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(19),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 15,
+                                  backgroundColor: Colors.white,
+                                  child: Image.asset(
+                                    'assets/chatbotAI.png',
+                                    width: 22,
+                                    height: 22,
+                                    fit: BoxFit.cover,
+                                    alignment: Alignment.bottomCenter,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Sociasync AI',
+                                style: TextStyle(
                                   color: Colors.white,
-                                  width: 2,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              child: CircleAvatar(
-                                radius: 15,
-                                backgroundColor: Colors.white,
-                                child: Image.asset(
-                                  'assets/chatbotAI.png',
-                                  width: 22,
-                                  height: 22,
-                                  fit: BoxFit.cover,
-                                  alignment: Alignment.bottomCenter,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Sociasync AI',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-
-                      // Chat Messages Area
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.all(15),
-                          children: [_buildBotMessage(_userName)],
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.all(15),
+                            children: [_buildBotMessage(_userName)],
+                          ),
                         ),
-                      ),
-
-                      // Input Area (Hi, Artnity can i help you?....)
-                      _buildChatInput(),
-                    ],
+                        _buildChatInput(),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+            ],
+          ),
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: _currentIndex,
+          backgroundColor: primaryBlue,
+          onTap: _onNavbarTap,
         ),
       ),
     );

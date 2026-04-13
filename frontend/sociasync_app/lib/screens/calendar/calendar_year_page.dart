@@ -96,7 +96,6 @@ class _CalendarYearPageState extends State<CalendarYearPage> {
                     child: DashboardHeader(
                       userName: 'Rina',
                       primaryColor: primaryBlue,
-                      onNotificationTap: () {},
                     ),
                   ),
                   const SizedBox(height: 16),

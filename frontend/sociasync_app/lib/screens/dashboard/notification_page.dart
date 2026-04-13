@@ -105,69 +105,68 @@ class _NotificationPageState extends State<NotificationPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Gunakan AppBackgroundWrapper sebagai pengganti Container image background
     return AppBackgroundWrapper(
-      bottomNavigationBar: AppNavbar(
-        selectedIndex: _currentIndex,
-        backgroundColor: primaryBlue,
-        onTap: _onNavbarTap,
-      ),
-      child: Stack(
-        children: [
-          // KONTEN UTAMA
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                DashboardHeader(
-                  userName: _userName,
-                  primaryColor: primaryBlue,
-                  onNotificationTap: () {
-                    // Sudah di page notification, bisa dikosongkan atau pop
-                  },
-                ),
-                const SizedBox(height: 25),
-                const Text(
-                  'Notification',
-                  style: TextStyle(
-                    fontSize: 20, // Sesuaikan ukuran agar tidak terlalu besar
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF2E2E2E),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DashboardHeader(
+                    userName: _userName,
+                    primaryColor: primaryBlue,
+                    onNotificationTap: () {},
                   ),
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _notifications.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'Belum ada notifikasi.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w500,
+                  const SizedBox(height: 25),
+                  const Text(
+                    'Notification',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2E2E2E),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _notifications.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Belum ada notifikasi.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.only(bottom: 100),
+                            itemCount: _notifications.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              return _NotificationCard(
+                                item: _notifications[index],
+                              );
+                            },
                           ),
-                        )
-                      : ListView.separated(
-                          // Tambahkan padding bawah agar tidak mentok navbar
-                          padding: const EdgeInsets.only(bottom: 100),
-                          itemCount: _notifications.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            return _NotificationCard(
-                              item: _notifications[index],
-                            );
-                          },
-                        ),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: _currentIndex,
+          backgroundColor: primaryBlue,
+          onTap: _onNavbarTap,
+        ),
       ),
     );
   }

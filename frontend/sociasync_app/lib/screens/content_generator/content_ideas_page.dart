@@ -5,7 +5,7 @@ import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-
+import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
@@ -49,86 +49,86 @@ class _ContentIdeasPageState extends State<ContentIdeasPage> {
   @override
   Widget build(BuildContext context) {
     return AppBackgroundWrapper(
-      bottomNavigationBar: AppNavbar(
-        selectedIndex: _currentIndex,
-        backgroundColor: primaryBlue,
-        onTap: _onNavbarTap,
-      ),
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // HEADER
-                DashboardHeader(
-                  userName: 'Rina',
-                  primaryColor: primaryBlue,
-                  onNotificationTap: () {},
-                ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // HEADER
+                  DashboardHeader(userName: 'Rina', primaryColor: primaryBlue),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                const Text(
-                  'Content Generator',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E2E2E),
+                  const Text(
+                    'Content Generator',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2E2E2E),
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                const Text(
-                  'Content Ideas',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF1D5093),
+                  const Text(
+                    'Content Ideas',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF1D5093),
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 15),
+                  const SizedBox(height: 15),
 
-                // 🔥 CONTENT IDEAS ONLY
-                ContentIdeaCard(
-                  title: 'Street Food Hook',
-                  badgeText: 'Content Opportunity',
-                  emoji: '💡',
-                  description:
-                      'Street food videos under 45 seconds are generating higher watch time. Try a quick first bite reaction.',
-                  primaryColor: primaryBlue,
-                ),
+                  // 🔥 CONTENT IDEAS ONLY
+                  ContentIdeaCard(
+                    title: 'Street Food Hook',
+                    badgeText: 'Content Opportunity',
+                    emoji: '💡',
+                    description:
+                        'Street food videos under 45 seconds are generating higher watch time. Try a quick first bite reaction.',
+                    primaryColor: primaryBlue,
+                  ),
 
-                const SizedBox(height: 15),
+                  const SizedBox(height: 15),
 
-                ContentIdeaCard(
-                  title: 'Engagement Booster',
-                  badgeText: 'Comment Driver',
-                  emoji: '🔥',
-                  description:
-                      'Spicy challenge content drives more comments. Try level 1–5 spice test.',
-                  primaryColor: primaryBlue,
-                ),
+                  ContentIdeaCard(
+                    title: 'Engagement Booster',
+                    badgeText: 'Comment Driver',
+                    emoji: '🔥',
+                    description:
+                        'Spicy challenge content drives more comments. Try level 1–5 spice test.',
+                    primaryColor: primaryBlue,
+                  ),
 
-                const SizedBox(height: 15),
+                  const SizedBox(height: 15),
 
-                ContentIdeaCard(
-                  title: 'High Save Potential',
-                  badgeText: 'Content Opportunity',
-                  emoji: '💡',
-                  description:
-                      'Top 3 affordable eats content gets more saves. Try budget-friendly list.',
-                  primaryColor: primaryBlue,
-                ),
+                  ContentIdeaCard(
+                    title: 'High Save Potential',
+                    badgeText: 'Content Opportunity',
+                    emoji: '💡',
+                    description:
+                        'Top 3 affordable eats content gets more saves. Try budget-friendly list.',
+                    primaryColor: primaryBlue,
+                  ),
 
-                const SizedBox(height: 100),
-              ],
+                  const SizedBox(height: 100),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: AppNavbar(
+          selectedIndex: _currentIndex,
+          backgroundColor: primaryBlue,
+          onTap: _onNavbarTap,
+        ),
       ),
     );
   }

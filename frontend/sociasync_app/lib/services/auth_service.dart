@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -18,6 +19,7 @@ class AuthService {
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
   static const _emailKey = 'user_email';
+  static const _requestTimeout = Duration(seconds: 12);
 
   static Uri _uri(String path) {
     return Uri.parse('${ApiConfig.baseUrl}${ApiConfig.authPrefix}/$path');
@@ -29,11 +31,15 @@ class AuthService {
   }) async {
     late final http.Response response;
     try {
-      response = await http.post(
-        _uri('login/'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
+      response = await http
+          .post(
+            _uri('login/'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'password': password}),
+          )
+          .timeout(_requestTimeout);
+    } on TimeoutException {
+      throw AuthException(_timeoutErrorMessage());
     } catch (_) {
       throw AuthException(_connectionErrorMessage());
     }
@@ -677,6 +683,10 @@ class AuthService {
   }
 
   static String _connectionErrorMessage() {
-    return 'Tidak dapat terhubung ke server (${ApiConfig.baseUrl}).';
+    return 'Tidak dapat terhubung ke server (${ApiConfig.baseUrl}). Untuk HP fisik, gunakan --dart-define API_BASE_URL=http://IP_LAPTOP:8000 atau adb reverse tcp:8000 tcp:8000.';
+  }
+
+  static String _timeoutErrorMessage() {
+    return 'Server tidak merespons dalam ${_requestTimeout.inSeconds} detik (${ApiConfig.baseUrl}). Cek backend berjalan dan URL API untuk HP fisik sudah benar.';
   }
 }

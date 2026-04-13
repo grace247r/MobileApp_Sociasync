@@ -3,6 +3,7 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
+import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
@@ -190,7 +191,6 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
                     child: DashboardHeader(
                       userName: 'Rina',
                       primaryColor: primaryBlue,
-                      onNotificationTap: () {},
                     ),
                   ),
                   Padding(
