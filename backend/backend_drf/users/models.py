@@ -35,4 +35,9 @@ class User(AbstractUser):
     # Instagram username for tracking
     instagram_username = models.CharField(max_length=255, blank=True, null=True, unique=True)
     instagram_connected = models.BooleanField(default=False)
+    
+    # TikTok username for tracking
+    tiktok_username = models.CharField(max_length=255, blank=True, null=True, unique=True)
+    tiktok_connected = models.BooleanField(default=False)
+    
     last_scraped = models.DateTimeField(null=True, blank=True)

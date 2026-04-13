@@ -322,20 +322,17 @@ class InstagramViewSet(viewsets.ViewSet):
             scrape_job.posts_scraped = posts_count
             scrape_job.save()
 
-            # Create stats snapshot for dashboard
-            InstagramStats.objects.get_or_create(
+            # Create stats snapshot for dashboard (always create new record for history)
+            InstagramStats.objects.create(
                 user=user,
                 profile=profile,
-                recorded_at__date=datetime.now().date(),
-                defaults={
-                    'total_posts': profile.posts_count,
-                    'followers_count': profile.followers,
-                    'engagement_percentage': engagement_percentage,
-                    'total_likes': total_likes,
-                    'total_comments': total_comments,
-                    'average_likes_per_post': total_likes / profile.posts_count if profile.posts_count > 0 else 0,
-                    'average_comments_per_post': total_comments / profile.posts_count if profile.posts_count > 0 else 0,
-                }
+                total_posts=profile.posts_count,
+                followers_count=profile.followers,
+                engagement_percentage=engagement_percentage,
+                total_likes=total_likes,
+                total_comments=total_comments,
+                average_likes_per_post=total_likes / profile.posts_count if profile.posts_count > 0 else 0,
+                average_comments_per_post=total_comments / profile.posts_count if profile.posts_count > 0 else 0,
             )
             
             # Return metrics for response

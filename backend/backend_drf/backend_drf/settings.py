@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'schedules',
     'notifications',
     'insta_scraper',
+    'tiktok_scraper',
 ]
 
 MIDDLEWARE = [
