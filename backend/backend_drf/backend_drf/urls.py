@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/auth/', include('users.urls')),
     path('api/schedules/', include('schedules.urls')),
     path('api/notifications/', include('notifications.urls')),
+    path('api/instagram/', include('insta_scraper.urls')),
 ]
 
 if settings.DEBUG:
