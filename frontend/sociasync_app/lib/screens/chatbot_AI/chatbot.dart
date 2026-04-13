@@ -4,7 +4,6 @@ import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
 

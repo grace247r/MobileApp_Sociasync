@@ -8,7 +8,6 @@ import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/date_range_picker_dialog.dart'
     as date_picker;
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class MonthlySummaryPage extends StatefulWidget {
