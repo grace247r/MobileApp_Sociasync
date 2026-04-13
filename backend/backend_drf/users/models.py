@@ -10,9 +10,9 @@ class User(AbstractUser):
     name = models.CharField(max_length=100, default='')
     email = models.EmailField(unique=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='male')
-
     date_of_birth = models.DateField(null=True, blank=True)
     region = models.CharField(max_length=100, blank=True)
+
     profile_image = models.ImageField(
         upload_to='profile_images/',
         null=True,
@@ -31,3 +31,8 @@ class User(AbstractUser):
         null=True,
         blank=True,
     )
+    
+    # Instagram username for tracking
+    instagram_username = models.CharField(max_length=255, blank=True, null=True, unique=True)
+    instagram_connected = models.BooleanField(default=False)
+    last_scraped = models.DateTimeField(null=True, blank=True)

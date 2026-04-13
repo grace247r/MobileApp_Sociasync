@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'users',
     'schedules',
     'notifications',
+    'insta_scraper',
 ]
 
 MIDDLEWARE = [
