@@ -201,7 +201,11 @@ class TikTokService {
 
   static String _extractErrorMessage(Map<String, dynamic> data) {
     if (data['error'] is String) {
-      return data['error'] as String;
+      final message = data['error'] as String;
+      if (message.contains('Monthly usage hard limit exceeded')) {
+        return 'Kuota bulanan Apify sudah habis. Tunggu reset kuota atau upgrade paket Apify untuk lanjut scrape.';
+      }
+      return message;
     }
 
     if (data['message'] is String && (data['message'] as String).isNotEmpty) {

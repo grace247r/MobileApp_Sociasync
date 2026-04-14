@@ -217,6 +217,9 @@ class InstagramService {
       if (message.contains('APIFY_API_TOKEN not found')) {
         return 'APIFY token belum diset. Isi APIFY_API_TOKEN di backend/backend_drf/.env lalu restart Django server.';
       }
+      if (message.contains('Monthly usage hard limit exceeded')) {
+        return 'Kuota bulanan Apify sudah habis. Tunggu reset kuota atau upgrade paket Apify untuk lanjut scrape.';
+      }
       return message;
     }
 

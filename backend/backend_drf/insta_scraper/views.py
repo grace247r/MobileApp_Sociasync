@@ -2,9 +2,10 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from datetime import datetime
 from django.db import transaction, models
+from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.dateparse import parse_datetime
 
 from .models import InstagramProfile, InstagramPost, ScrapeJob, InstagramStats
 from .serializers import (
@@ -167,11 +168,11 @@ class InstagramViewSet(viewsets.ViewSet):
 
             # Update job status
             scrape_job.status = 'completed'
-            scrape_job.completed_at = datetime.now()
+            scrape_job.completed_at = timezone.now()
             scrape_job.save()
 
             # Update user's last scraped time
-            user.last_scraped = datetime.now()
+            user.last_scraped = timezone.now()
             user.save()
 
             return Response(
@@ -196,7 +197,7 @@ class InstagramViewSet(viewsets.ViewSet):
             if scrape_job is not None:
                 scrape_job.status = 'failed'
                 scrape_job.error_message = str(e)
-                scrape_job.completed_at = datetime.now()
+                scrape_job.completed_at = timezone.now()
                 scrape_job.save()
 
             return Response(
@@ -374,6 +375,19 @@ class InstagramViewSet(viewsets.ViewSet):
                 # Handle post data (all items contain post data)
                 if 'url' in item and 'shortCode' in item:
                     image_url = self._extract_post_image_url(item)
+                    raw_timestamp = item.get('timestamp')
+                    parsed_timestamp = None
+                    if isinstance(raw_timestamp, str):
+                        parsed_timestamp = parse_datetime(raw_timestamp)
+                    elif hasattr(raw_timestamp, 'tzinfo'):
+                        parsed_timestamp = raw_timestamp
+
+                    if parsed_timestamp is not None and timezone.is_naive(parsed_timestamp):
+                        parsed_timestamp = timezone.make_aware(
+                            parsed_timestamp,
+                            timezone.get_current_timezone(),
+                        )
+
                     post_data = {
                         'post_id': item.get('shortCode', ''),
                         'post_url': item.get('url', ''),
@@ -383,7 +397,7 @@ class InstagramViewSet(viewsets.ViewSet):
                         'likes': item.get('likesCount') or 0,
                         'comments_count': item.get('commentsCount') or 0,
                         'shares': 0,
-                        'post_timestamp': item.get('timestamp', datetime.now()),
+                        'post_timestamp': parsed_timestamp or timezone.now(),
                     }
 
                     total_likes += post_data['likes']
