@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/notifications/', include('notifications.urls')),
     path('api/instagram/', include('insta_scraper.urls')),
     path('api/tiktok/', include('tiktok_scraper.urls')),
+    path('api/content-gen/', include('content_gen.urls')),
 ]
 
 if settings.DEBUG:
