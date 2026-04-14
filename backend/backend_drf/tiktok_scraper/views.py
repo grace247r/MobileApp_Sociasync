@@ -18,6 +18,7 @@ from .serializers import (
     TikTokVideoSerializer,
 )
 from .utils import ApifyTikTokScraper, EngagementCalculator
+from notifications.services import ActivityNotificationService
 
 
 class TikTokViewSet(viewsets.ViewSet):
@@ -355,8 +356,14 @@ class TikTokViewSet(viewsets.ViewSet):
             scrape_job.videos_scraped = videos_count
             scrape_job.save()
 
+            # Get previous stats for comparison
+            previous_stats = TikTokStats.objects.filter(
+                user=user,
+                profile=profile
+            ).order_by('-recorded_at').first()
+
             # Create stats snapshot for dashboard (always create new record for history)
-            TikTokStats.objects.create(
+            new_stats = TikTokStats.objects.create(
                 user=user,
                 profile=profile,
                 total_videos=profile.videos_count,
@@ -368,6 +375,14 @@ class TikTokViewSet(viewsets.ViewSet):
                 total_shares=total_shares,
                 average_likes_per_video=total_likes / videos_count if videos_count > 0 else 0,
                 average_views_per_video=total_views / videos_count if videos_count > 0 else 0,
+            )
+
+            # Check for activity changes and create notifications
+            ActivityNotificationService.check_and_notify_tiktok(
+                user=user,
+                old_stats=previous_stats,
+                new_stats=new_stats,
+                platform='TikTok'
             )
             
             # Return metrics for response

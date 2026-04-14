@@ -16,6 +16,7 @@ from .serializers import (
     InstagramPostSerializer,
 )
 from .utils import ApifyInstagramScraper, EngagementCalculator
+from notifications.services import ActivityNotificationService
 
 
 class InstagramViewSet(viewsets.ViewSet):
@@ -424,8 +425,14 @@ class InstagramViewSet(viewsets.ViewSet):
             scrape_job.posts_scraped = posts_count
             scrape_job.save()
 
+            # Get previous stats for comparison
+            previous_stats = InstagramStats.objects.filter(
+                user=user,
+                profile=profile
+            ).order_by('-recorded_at').first()
+
             # Create stats snapshot for dashboard (always create new record for history)
-            InstagramStats.objects.create(
+            new_stats = InstagramStats.objects.create(
                 user=user,
                 profile=profile,
                 total_posts=profile.posts_count,
@@ -435,6 +442,14 @@ class InstagramViewSet(viewsets.ViewSet):
                 total_comments=total_comments,
                 average_likes_per_post=total_likes / profile.posts_count if profile.posts_count > 0 else 0,
                 average_comments_per_post=total_comments / profile.posts_count if profile.posts_count > 0 else 0,
+            )
+
+            # Check for activity changes and create notifications
+            ActivityNotificationService.check_and_notify_instagram(
+                user=user,
+                old_stats=previous_stats,
+                new_stats=new_stats,
+                platform='Instagram'
             )
             
             # Return metrics for response
