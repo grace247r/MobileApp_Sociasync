@@ -37,13 +37,20 @@ class ActivityNotificationService:
                 message=f'You gained {changes["new_followers"]} new followers! Now at {new_stats.followers_count} followers.',
             )
 
-        if changes['new_likes'] > 0 or changes['new_comments'] > 0:
-            engagement_change = changes['new_likes'] + changes['new_comments']
+        if changes['new_likes'] > 0:
+            Notification.objects.create(
+                recipient=user,
+                notif_type='like',
+                title=f'New Likes on {platform}! ❤️',
+                message=f'You got {changes["new_likes"]} new likes since last check.',
+            )
+
+        if changes['new_comments'] > 0:
             Notification.objects.create(
                 recipient=user,
                 notif_type='engagement',
                 title=f'Your posts have activity! 📈',
-                message=f'You got {changes["new_likes"]} new likes and {changes["new_comments"]} new comments since last check.',
+                message=f'You got {changes["new_comments"]} new comments since last check.',
             )
 
         # Combined activity notification
@@ -87,13 +94,20 @@ class ActivityNotificationService:
                 message=f'You gained {changes["new_followers"]} new followers! Now at {new_stats.followers_count} followers.',
             )
 
-        if changes['new_likes'] > 0 or changes['new_comments'] > 0 or changes['new_views'] > 0:
-            engagement_change = changes['new_likes'] + changes['new_comments']
+        if changes['new_likes'] > 0:
+            Notification.objects.create(
+                recipient=user,
+                notif_type='like',
+                title=f'New Likes on {platform}! ❤️',
+                message=f'You got {changes["new_likes"]} new likes since last check.',
+            )
+
+        if changes['new_comments'] > 0 or changes['new_views'] > 0:
             Notification.objects.create(
                 recipient=user,
                 notif_type='engagement',
                 title=f'Your videos are going viral! 📈',
-                message=f'You got {changes["new_likes"]} new likes, {changes["new_comments"]} new comments, and {changes["new_views"]} new views!',
+                message=f'You got {changes["new_comments"]} new comments and {changes["new_views"]} new views!',
             )
 
         # Combined activity notification

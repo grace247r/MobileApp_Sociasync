@@ -6,12 +6,49 @@ import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/services/chatbot_service.dart';
+import 'package:sociasync_app/services/auth_service.dart';
+import 'package:sociasync_app/services/reminder_service.dart';
 
 class _ChatMessage {
   const _ChatMessage({required this.role, required this.content});
 
   final String role;
   final String content;
+}
+
+class _ReminderItem {
+  const _ReminderItem({
+    required this.id,
+    required this.to,
+    required this.message,
+    required this.day,
+    required this.time,
+  });
+
+  final int id;
+  final String to;
+  final String message;
+  final String day;
+  final String time;
+
+  factory _ReminderItem.fromJson(Map<String, dynamic> json) {
+    return _ReminderItem(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      to: (json['to'] ?? '').toString(),
+      message: (json['message'] ?? '').toString(),
+      day: (json['day'] ?? '').toString(),
+      time: _normalizeTime((json['time'] ?? '').toString()),
+    );
+  }
+
+  static String _normalizeTime(String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return '';
+    if (text.length >= 5 && text.contains(':')) {
+      return text.substring(0, 5);
+    }
+    return text;
+  }
 }
 
 class ChatbotPage extends StatefulWidget {
@@ -31,6 +68,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _chatScrollController = ScrollController();
   bool _isSendingChat = false;
+  bool _isLoadingReminders = false;
+  bool _isReminderActionLoading = false;
   List<_ChatMessage> _chatMessages = const <_ChatMessage>[
     _ChatMessage(
       role: 'assistant',
@@ -39,51 +78,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
     ),
   ];
 
-  // List reminders as state
-  List<Map<String, dynamic>> _reminders = [
-    {
-      'to': 'Victor',
-      'message': 'Don\'t forget to pay the club fee',
-      'day': 'Monday',
-      'time': '09:00',
-    },
-    {
-      'to': 'Anna',
-      'message': 'Project meeting at 3 PM',
-      'day': 'Tuesday',
-      'time': '15:00',
-    },
-    {
-      'to': 'Budi',
-      'message': 'Submit weekly report',
-      'day': 'Wednesday',
-      'time': '10:00',
-    },
-  ];
+  List<_ReminderItem> _reminders = const <_ReminderItem>[];
 
-  final List<String> _days = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
-  final List<String> _times = [
-    '08:00',
-    '09:00',
-    '10:00',
-    '11:00',
-    '12:00',
-    '13:00',
-    '14:00',
-    '15:00',
-    '16:00',
-    '17:00',
-    '18:00',
-    '19:00',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadReminders();
+  }
 
   @override
   void dispose() {
@@ -112,6 +113,196 @@ class _ChatbotPageState extends State<ChatbotPage> {
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
     }
+  }
+
+  Future<void> _loadReminders() async {
+    if (_isLoadingReminders) return;
+
+    setState(() => _isLoadingReminders = true);
+    try {
+      final response = await ReminderService.getReminders();
+      final reminders = response.map(_ReminderItem.fromJson).toList();
+      if (!mounted) return;
+      setState(() {
+        _reminders = reminders;
+      });
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingReminders = false);
+      }
+    }
+  }
+
+  Future<void> _addReminder() async {
+    final form = await _showReminderFormDialog();
+    if (form == null) return;
+
+    setState(() => _isReminderActionLoading = true);
+    try {
+      await ReminderService.createReminder(
+        to: form['to']!,
+        message: form['message']!,
+        day: form['day']!,
+        time: form['time']!,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reminder berhasil ditambahkan.')),
+      );
+      await _loadReminders();
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isReminderActionLoading = false);
+      }
+    }
+  }
+
+  Future<void> _completeReminder(_ReminderItem item) async {
+    if (_isReminderActionLoading) return;
+
+    setState(() => _isReminderActionLoading = true);
+    try {
+      await ReminderService.completeReminder(reminderId: item.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reminder ditandai selesai.')),
+      );
+      await _loadReminders();
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isReminderActionLoading = false);
+      }
+    }
+  }
+
+  Future<void> _editReminder(_ReminderItem item) async {
+    final form = await _showReminderFormDialog(item: item);
+    if (form == null) return;
+
+    setState(() => _isReminderActionLoading = true);
+    try {
+      await ReminderService.updateReminder(
+        reminderId: item.id,
+        to: form['to']!,
+        message: form['message']!,
+        day: form['day']!,
+        time: form['time']!,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reminder berhasil diubah.')),
+      );
+      await _loadReminders();
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isReminderActionLoading = false);
+      }
+    }
+  }
+
+  Future<Map<String, String>?> _showReminderFormDialog({_ReminderItem? item}) {
+    final toController = TextEditingController(text: item?.to ?? '');
+    final messageController = TextEditingController(text: item?.message ?? '');
+    final dayController = TextEditingController(text: item?.day ?? 'Monday');
+    final timeController = TextEditingController(text: item?.time ?? '09:00');
+
+    return showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(item == null ? 'Tambah Reminder' : 'Edit Reminder'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: toController,
+                decoration: const InputDecoration(
+                  labelText: 'To',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: messageController,
+                decoration: const InputDecoration(
+                  labelText: 'Message',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: dayController,
+                decoration: const InputDecoration(
+                  labelText: 'Day',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: timeController,
+                decoration: const InputDecoration(
+                  labelText: 'Time (HH:mm)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final to = toController.text.trim();
+              final message = messageController.text.trim();
+              final day = dayController.text.trim();
+              final time = timeController.text.trim();
+
+              if (to.isEmpty ||
+                  message.isEmpty ||
+                  day.isEmpty ||
+                  time.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Semua field wajib diisi.')),
+                );
+                return;
+              }
+
+              Navigator.pop(context, {
+                'to': to,
+                'message': message,
+                'day': day,
+                'time': time,
+              });
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   List<Map<String, String>> _chatHistoryPayload() {
@@ -338,7 +529,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
     final bool isActive = _activeTab == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _activeTab = index),
+        onTap: () {
+          setState(() => _activeTab = index);
+          if (index == 0) {
+            _loadReminders();
+          }
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
@@ -366,192 +562,159 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   // Tab 0: Konten Reminder
   Widget _buildReminderTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: _reminders.length,
-      itemBuilder: (context, i) {
-        final r = _reminders[i];
-        return Card(
-          elevation: 3,
-          margin: const EdgeInsets.only(bottom: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'To: ${r['to']!}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: primaryBlue,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Divider(height: 1, thickness: 1),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(Icons.message, size: 18, color: Colors.grey[600]),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Message: ${r['message']!}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: 18,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${r['day']!} at ${r['time']!}',
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () => _markAsDone(i),
-                      icon: const Icon(Icons.check, size: 16),
-                      label: const Text('Complete'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: () => _showEditDialog(i),
-                      icon: const Icon(Icons.edit, size: 16),
-                      label: const Text('Edit'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+    if (_isLoadingReminders) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-  void _markAsDone(int index) {
-    setState(() {
-      _reminders.removeAt(index);
-    });
-  }
-
-  void _showEditDialog(int index) {
-    final TextEditingController messageController = TextEditingController(
-      text: _reminders[index]['message'],
-    );
-    String selectedDay = _reminders[index]['day'];
-    String selectedTime = _reminders[index]['time'];
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setLocalState) => AlertDialog(
-          title: const Text('Edit Reminder'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: messageController,
-                  decoration: const InputDecoration(
-                    labelText: 'Message',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedDay,
-                  decoration: const InputDecoration(
-                    labelText: 'Day',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _days.map((day) {
-                    return DropdownMenuItem(value: day, child: Text(day));
-                  }).toList(),
-                  onChanged: (value) {
-                    setLocalState(() => selectedDay = value!);
-                  },
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedTime,
-                  decoration: const InputDecoration(
-                    labelText: 'Time',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _times.map((time) {
-                    return DropdownMenuItem(value: time, child: Text(time));
-                  }).toList(),
-                  onChanged: (value) {
-                    setLocalState(() => selectedTime = value!);
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _reminders[index] = {
-                    'to': _reminders[index]['to'],
-                    'message': messageController.text,
-                    'day': selectedDay,
-                    'time': selectedTime,
-                  };
-                });
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
+    if (_reminders.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Belum ada reminder.'),
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: _isReminderActionLoading ? null : _addReminder,
+              icon: const Icon(Icons.add),
+              label: const Text('Tambah Reminder'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryBlue,
+                foregroundColor: Colors.white,
+              ),
             ),
           ],
         ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadReminders,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: _reminders.length + 1,
+        itemBuilder: (context, i) {
+          if (i == 0) {
+            return Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ElevatedButton.icon(
+                  onPressed: _isReminderActionLoading ? null : _addReminder,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBlue,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final r = _reminders[i - 1];
+          return Card(
+            elevation: 3,
+            margin: const EdgeInsets.only(bottom: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'To: ${r.to}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: primaryBlue,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1, thickness: 1),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.message, size: 18, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Message: ${r.message}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 18,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${r.day} at ${r.time}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _isReminderActionLoading
+                            ? null
+                            : () => _completeReminder(r),
+                        icon: const Icon(Icons.check, size: 16),
+                        label: const Text('Complete'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: _isReminderActionLoading
+                            ? null
+                            : () => _editReminder(r),
+                        icon: const Icon(Icons.edit, size: 16),
+                        label: const Text('Edit'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
