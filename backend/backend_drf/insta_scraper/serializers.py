@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import InstagramProfile, InstagramPost, ScrapeJob, InstagramStats
+from .utils import EngagementCalculator
 
 class InstagramPostSerializer(serializers.ModelSerializer):
     class Meta:
@@ -43,6 +44,13 @@ class InstagramProfileSerializer(serializers.ModelSerializer):
 class InstagramStatsSerializer(serializers.ModelSerializer):
     """Serializer for dashboard statistics"""
     profile_username = serializers.CharField(source='profile.username', read_only=True)
+    estimated_reach = serializers.SerializerMethodField()
+
+    def get_estimated_reach(self, obj):
+        return EngagementCalculator.calculate_estimated_reach(
+            total_likes=obj.total_likes,
+            total_comments=obj.total_comments,
+        )
     
     class Meta:
         model = InstagramStats
@@ -54,6 +62,7 @@ class InstagramStatsSerializer(serializers.ModelSerializer):
             'engagement_percentage',
             'total_likes',
             'total_comments',
+            'estimated_reach',
             'average_likes_per_post',
             'average_comments_per_post',
             'recorded_at',

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime
 from django.db import transaction, models
+from django.utils.dateparse import parse_date
 
 from .models import InstagramProfile, InstagramPost, ScrapeJob, InstagramStats
 from .serializers import (
@@ -19,6 +20,50 @@ from .utils import ApifyInstagramScraper, EngagementCalculator
 class InstagramViewSet(viewsets.ViewSet):
     """Handle Instagram operations"""
     permission_classes = [IsAuthenticated]
+
+    def _extract_post_image_url(self, item):
+        """Pick the best available cover image URL from Apify post payload."""
+        if not isinstance(item, dict):
+            return ''
+
+        candidates = [
+            item.get('displayUrl'),
+            item.get('imageUrl'),
+            item.get('thumbnailSrc'),
+            item.get('thumbnailUrl'),
+        ]
+
+        resources = item.get('displayResourceUrls')
+        if isinstance(resources, list):
+            candidates.extend(resources)
+
+        images = item.get('images')
+        if isinstance(images, list):
+            for image in images:
+                if isinstance(image, dict):
+                    candidates.append(image.get('url'))
+                    candidates.append(image.get('displayUrl'))
+                elif isinstance(image, str):
+                    candidates.append(image)
+
+        for value in candidates:
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return ''
+
+    def _extract_post_video_url(self, item):
+        """Extract the best available video URL from Apify post payload."""
+        if not isinstance(item, dict):
+            return ''
+
+        candidates = [
+            item.get('videoUrl'),
+            item.get('video_url'),
+        ]
+        for value in candidates:
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return ''
 
     @action(detail=False, methods=['post'])
     def connect_username(self, request):
@@ -74,20 +119,27 @@ class InstagramViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        results_limit = request.data.get('results_limit', 200)
+        raw_limit = request.data.get('results_limit', 200)
+        try:
+            results_limit = int(raw_limit)
+        except (TypeError, ValueError):
+            results_limit = 200
+        results_limit = max(1, min(results_limit, 1000))
+
+        scrape_job = None
         
         try:
             # Extract username
             username = user.instagram_username.lstrip('@').lower()
 
-            # Get or create profile
+            # Keep one profile per user and update username/url if needed.
             url = f"https://www.instagram.com/{username}/"
-            profile, _ = InstagramProfile.objects.get_or_create(
-                url=url,
+            profile, _ = InstagramProfile.objects.update_or_create(
+                user=user,
                 defaults={
                     'username': username,
-                    'user': user
-                }
+                    'url': url,
+                },
             )
 
             # Create scrape job
@@ -130,6 +182,10 @@ class InstagramViewSet(viewsets.ViewSet):
                     'posts_scraped': stats_data['posts_count'],
                     'total_likes': stats_data['total_likes'],
                     'total_comments': stats_data['total_comments'],
+                    'estimated_reach': EngagementCalculator.calculate_estimated_reach(
+                        stats_data['total_likes'],
+                        stats_data['total_comments'],
+                    ),
                     'followers_count': profile.followers,
                     'engagement_percentage': scrape_job.engagement_percentage,
                 },
@@ -137,10 +193,11 @@ class InstagramViewSet(viewsets.ViewSet):
             )
 
         except Exception as e:
-            scrape_job.status = 'failed'
-            scrape_job.error_message = str(e)
-            scrape_job.completed_at = datetime.now()
-            scrape_job.save()
+            if scrape_job is not None:
+                scrape_job.status = 'failed'
+                scrape_job.error_message = str(e)
+                scrape_job.completed_at = datetime.now()
+                scrape_job.save()
 
             return Response(
                 {'error': str(e)},
@@ -201,15 +258,33 @@ class InstagramViewSet(viewsets.ViewSet):
     def stats_history(self, request):
         """Get historical stats for the current user"""
         limit = request.query_params.get('limit', 10)
+        start_date = parse_date(request.query_params.get('start_date') or '')
+        end_date = parse_date(request.query_params.get('end_date') or '')
         
         try:
             limit = int(limit)
         except (ValueError, TypeError):
             limit = 10
 
-        stats = InstagramStats.objects.filter(
-            user=request.user
-        ).order_by('-recorded_at')[:limit]
+        if request.query_params.get('start_date') and start_date is None:
+            return Response(
+                {'error': 'Invalid start_date format. Use YYYY-MM-DD.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if request.query_params.get('end_date') and end_date is None:
+            return Response(
+                {'error': 'Invalid end_date format. Use YYYY-MM-DD.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        stats_qs = InstagramStats.objects.filter(user=request.user)
+        if start_date is not None:
+            stats_qs = stats_qs.filter(recorded_at__date__gte=start_date)
+        if end_date is not None:
+            stats_qs = stats_qs.filter(recorded_at__date__lte=end_date)
+
+        stats = stats_qs.order_by('-recorded_at')[:limit]
         
         serializer = InstagramStatsSerializer(stats, many=True)
         return Response(serializer.data)
@@ -232,13 +307,25 @@ class InstagramViewSet(viewsets.ViewSet):
         try:
             # Get user's Instagram profile
             profile = InstagramProfile.objects.get(user=request.user)
-            
-            # Get posts sorted by engagement (likes + comments)
-            posts = InstagramPost.objects.filter(
+
+            base_qs = InstagramPost.objects.filter(
                 profile=profile
             ).annotate(
                 engagement=models.F('likes') + models.F('comments_count')
+            )
+
+            # Prioritize posts that have image cover URL, then fill remaining slots.
+            posts_with_image = base_qs.exclude(image_url__isnull=True).exclude(
+                image_url__exact=''
             ).order_by('-engagement')[:limit]
+
+            posts = list(posts_with_image)
+            if len(posts) < limit:
+                existing_ids = [post.id for post in posts]
+                fallback_posts = base_qs.exclude(id__in=existing_ids).order_by(
+                    '-engagement'
+                )[: max(limit - len(posts), 0)]
+                posts.extend(fallback_posts)
             
             # Serialize posts
             serializer = InstagramPostSerializer(posts, many=True)
@@ -286,12 +373,13 @@ class InstagramViewSet(viewsets.ViewSet):
 
                 # Handle post data (all items contain post data)
                 if 'url' in item and 'shortCode' in item:
+                    image_url = self._extract_post_image_url(item)
                     post_data = {
                         'post_id': item.get('shortCode', ''),
                         'post_url': item.get('url', ''),
                         'caption': item.get('caption', ''),
-                        'image_url': item.get('displayUrl', ''),
-                        'video_url': '',
+                        'image_url': image_url,
+                        'video_url': self._extract_post_video_url(item),
                         'likes': item.get('likesCount') or 0,
                         'comments_count': item.get('commentsCount') or 0,
                         'shares': 0,

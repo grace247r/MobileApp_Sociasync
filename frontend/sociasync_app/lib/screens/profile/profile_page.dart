@@ -7,6 +7,8 @@ import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/splash_screen.dart';
 import 'package:sociasync_app/config/api_config.dart';
+import 'package:sociasync_app/services/instagram_service.dart';
+import 'package:sociasync_app/widgets/instagram_manage_account_dialog.dart';
 
 // Import sub-halaman
 import 'package:sociasync_app/screens/profile/account_page.dart';
@@ -27,6 +29,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String _userName = 'User';
   String? _profileImageUrl;
   bool _isUploadingImage = false;
+  bool _instagramConnected = false;
+  String _instagramUsername = '';
 
   @override
   void initState() {
@@ -40,13 +44,50 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       final loadedName = (profile['name'] ?? '').toString().trim();
       final loadedImage = (profile['profile_image'] ?? '').toString().trim();
+      final profileConnected = profile['instagram_connected'] == true;
+      final profileInstagramUsername = (profile['instagram_username'] ?? '')
+          .toString()
+          .trim();
+
+      var dashboardConnected = profileConnected;
+      var dashboardUsername = profileInstagramUsername;
+
+      try {
+        final dashboard = await InstagramService.getDashboard();
+        dashboardConnected = dashboard['instagram_connected'] == true;
+        dashboardUsername = (dashboard['instagram_username'] ?? '')
+            .toString()
+            .trim();
+      } catch (_) {
+        // Keep profile fallback value when dashboard endpoint cannot be reached.
+      }
+
       setState(() {
         if (loadedName.isNotEmpty) _userName = loadedName;
         _profileImageUrl = _resolveProfileImageUrl(loadedImage);
+        _instagramConnected = dashboardConnected;
+        _instagramUsername = dashboardUsername;
       });
     } catch (_) {
       // Keep fallback values when profile cannot be loaded.
     }
+  }
+
+  Future<void> _openInstagramManageDialog() async {
+    final updated = await showInstagramManageAccountDialog(
+      context: context,
+      initialUsername: _instagramUsername,
+      primaryColor: primaryBlue,
+    );
+
+    if (!updated || !mounted) return;
+
+    await _loadProfile();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Username Instagram berhasil diperbarui.')),
+    );
   }
 
   String? _resolveProfileImageUrl(String raw) {
@@ -215,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         _buildSettingsGroup([
                           _buildConnectTile('TikTok'),
                           _buildDivider(),
-                          _buildConnectTile('Instagram'),
+                          _buildInstagramConnectTile(),
                         ]),
 
                         const SizedBox(height: 25),
@@ -452,6 +493,30 @@ class _ProfilePageState extends State<ProfilePage> {
           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
         ),
       ),
+    );
+  }
+
+  Widget _buildInstagramConnectTile() {
+    final displayUsername = _instagramUsername.trim();
+
+    return ListTile(
+      leading: const Icon(Icons.link, color: Color(0xFF1D5093), size: 22),
+      title: const Text(
+        'Instagram',
+        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        _instagramConnected && displayUsername.isNotEmpty
+            ? '@$displayUsername'
+            : 'Belum terhubung',
+        style: TextStyle(
+          fontSize: 12,
+          color: _instagramConnected ? const Color(0xFF1D5093) : Colors.grey,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+      onTap: _openInstagramManageDialog,
     );
   }
 

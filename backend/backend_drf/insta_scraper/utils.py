@@ -1,13 +1,7 @@
 import os
-from pathlib import Path
+import time
 from apify_client import ApifyClient
 from django.conf import settings
-from dotenv import load_dotenv
-
-# Load environment variables from backend/.env
-backend_dir = Path(__file__).resolve().parent.parent.parent  # Go up 3 levels to backend/
-env_file = backend_dir / '.env'
-load_dotenv(env_file)
 
 
 class ApifyInstagramScraper:
@@ -18,12 +12,14 @@ class ApifyInstagramScraper:
     def __init__(self):
         api_token = os.getenv('APIFY_API_TOKEN') or getattr(settings, 'APIFY_API_TOKEN', None)
         if not api_token:
+            env_hint = getattr(settings, 'BASE_DIR', None)
+            env_path = f"{env_hint}/.env" if env_hint else "backend/backend_drf/.env"
             raise ValueError(
-                "APIFY_API_TOKEN not found. Set it in .env file or Django settings."
+                f"APIFY_API_TOKEN not found. Add APIFY_API_TOKEN=your_apify_token in {env_path} or Django settings."
             )
         self.client = ApifyClient(api_token)
 
-    def scrape_instagram(self, username, results_limit=200):
+    def scrape_instagram(self, username, results_limit=60):
         """
         Scrape Instagram data using Apify
 
@@ -45,11 +41,20 @@ class ApifyInstagramScraper:
             "addParentData": True,
         }
 
-        try:
-            run = self.client.actor(self.ACTOR_ID).call(run_input=run_input)
-            return run
-        except Exception as e:
-            raise Exception(f"Apify scraping error: {str(e)}")
+        last_error = None
+        for attempt in range(1, 3):
+            try:
+                run = self.client.actor(self.ACTOR_ID).call(run_input=run_input)
+                return run
+            except Exception as e:
+                last_error = e
+                # Retry once for transient network/proxy blocks from Instagram.
+                if attempt < 2:
+                    time.sleep(2)
+                    continue
+                break
+
+        raise Exception(f"Apify scraping error: {str(last_error)}")
 
     def get_dataset_items(self, dataset_id):
         """
@@ -124,3 +129,9 @@ class EngagementCalculator:
         
         total_engagement = total_likes + total_comments
         return round(total_engagement / posts_count, 2)
+
+    @staticmethod
+    def calculate_estimated_reach(total_likes, total_comments):
+        """Estimate reach from interactions using fixed multiplier."""
+        total_interaction = (total_likes or 0) + (total_comments or 0)
+        return int(total_interaction * 20)
