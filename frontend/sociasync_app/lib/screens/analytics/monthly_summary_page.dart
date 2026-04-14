@@ -5,15 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
-import 'package:sociasync_app/screens/dashboard/instagram_connect_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
 import 'package:sociasync_app/services/instagram_service.dart';
+import 'package:sociasync_app/services/tiktok_service.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/widgets/date_range_picker_dialog.dart'
     as date_picker;
+import 'package:sociasync_app/widgets/instagram_manage_account_dialog.dart';
+import 'package:sociasync_app/widgets/tiktok_manage_account_dialog.dart';
+
+enum AnalyticsPlatform { instagram, tiktok }
 
 class MonthlySummaryPage extends StatefulWidget {
   const MonthlySummaryPage({super.key});
@@ -29,6 +33,14 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   String _userName = 'User';
   bool _isLoading = true;
   String? _errorMessage;
+
+  AnalyticsPlatform _selectedPlatform = AnalyticsPlatform.instagram;
+
+  bool _instagramConnected = false;
+  String _instagramUsername = '';
+  bool _tiktokConnected = false;
+  String _tiktokUsername = '';
+
   bool _connected = false;
   String _username = '';
 
@@ -45,19 +57,25 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   }
 
   Future<void> _bootstrap() async {
-    await Future.wait([_loadUserName(), _loadAnalyticsData(showLoader: true)]);
+    await _loadUserProfile();
+    await _loadAnalyticsData(showLoader: true);
   }
 
-  Future<void> _loadUserName() async {
+  Future<void> _loadUserProfile() async {
     try {
       final me = await AuthService.getMe();
       if (!mounted) return;
       final name = (me['name'] ?? '').toString().trim();
-      if (name.isNotEmpty) {
-        setState(() => _userName = name);
-      }
+
+      setState(() {
+        if (name.isNotEmpty) _userName = name;
+        _instagramConnected = me['instagram_connected'] == true;
+        _instagramUsername = (me['instagram_username'] ?? '').toString().trim();
+        _tiktokConnected = me['tiktok_connected'] == true;
+        _tiktokUsername = (me['tiktok_username'] ?? '').toString().trim();
+      });
     } catch (_) {
-      // Keep fallback name.
+      // Keep fallback values.
     }
   }
 
@@ -70,41 +88,148 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
     }
 
     try {
+      if (_selectedPlatform == AnalyticsPlatform.instagram) {
+        await _loadInstagramAnalytics();
+      } else {
+        await _loadTikTokAnalytics();
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = _selectedPlatform == AnalyticsPlatform.instagram
+            ? 'Gagal memuat analytics Instagram.'
+            : 'Gagal memuat analytics TikTok.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _loadInstagramAnalytics() async {
+    if (!_instagramConnected) {
+      if (!mounted) return;
+      setState(() {
+        _connected = false;
+        _username = _instagramUsername;
+        _latestStats = null;
+        _history = const <Map<String, dynamic>>[];
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    try {
       final dashboard = await InstagramService.getDashboard();
-      final connected = dashboard['instagram_connected'] == true;
-      final username = (dashboard['instagram_username'] ?? '').toString();
       final latestStats = dashboard['latest_stats'] is Map
           ? Map<String, dynamic>.from(dashboard['latest_stats'] as Map)
           : null;
 
-      List<Map<String, dynamic>> history = const <Map<String, dynamic>>[];
-      if (connected) {
-        history = await InstagramService.getStatsHistory(
-          limit: 120,
-          startDate: _startDate,
-          endDate: _endDate,
-        );
-      }
+      final history = await InstagramService.getStatsHistory(
+        limit: 200,
+        startDate: _startDate,
+        endDate: _endDate,
+      );
 
       if (!mounted) return;
       setState(() {
-        _connected = connected;
-        _username = username;
+        _connected = true;
+        _username = (dashboard['instagram_username'] ?? _instagramUsername)
+            .toString()
+            .trim();
         _latestStats = latestStats;
         _history = history.reversed.toList();
         _errorMessage = null;
       });
     } on InstagramServiceException catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = e.message);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _errorMessage = 'Gagal memuat analytics Instagram.');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      setState(() {
+        _connected = true;
+        _username = _instagramUsername;
+        _latestStats = null;
+        _history = const <Map<String, dynamic>>[];
+        _errorMessage = e.message;
+      });
     }
+  }
+
+  Future<void> _loadTikTokAnalytics() async {
+    if (!_tiktokConnected) {
+      if (!mounted) return;
+      setState(() {
+        _connected = false;
+        _username = _tiktokUsername;
+        _latestStats = null;
+        _history = const <Map<String, dynamic>>[];
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    try {
+      final dashboard = await TikTokService.getDashboard();
+      final latestStats = dashboard['latest_stats'] is Map
+          ? Map<String, dynamic>.from(dashboard['latest_stats'] as Map)
+          : (dashboard.containsKey('latest_stats') ? null : dashboard);
+      final historyRaw = await TikTokService.getStatsHistory(limit: 200);
+
+      final start = DateTime(_startDate.year, _startDate.month, _startDate.day);
+      final end = DateTime(
+        _endDate.year,
+        _endDate.month,
+        _endDate.day,
+        23,
+        59,
+        59,
+      );
+      final history = historyRaw.where((item) {
+        final parsed = DateTime.tryParse(
+          (item['recorded_at'] ?? '').toString(),
+        );
+        if (parsed == null) return false;
+        return !parsed.isBefore(start) && !parsed.isAfter(end);
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _connected = true;
+        _username = _tiktokUsername;
+        _latestStats = latestStats;
+        _history = history.reversed.toList();
+        _errorMessage = null;
+      });
+    } on TikTokServiceException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _connected = true;
+        _username = _tiktokUsername;
+        _latestStats = null;
+        _history = const <Map<String, dynamic>>[];
+        _errorMessage = e.message;
+      });
+    }
+  }
+
+  Future<void> _openConnectDialog() async {
+    bool updated = false;
+    if (_selectedPlatform == AnalyticsPlatform.instagram) {
+      updated = await showInstagramManageAccountDialog(
+        context: context,
+        initialUsername: _instagramUsername,
+        primaryColor: primaryBlue,
+      );
+    } else {
+      updated = await showTikTokManageAccountDialog(
+        context: context,
+        initialUsername: _tiktokUsername,
+        primaryColor: primaryBlue,
+      );
+    }
+
+    if (!updated || !mounted) return;
+    await _loadUserProfile();
+    await _loadAnalyticsData(showLoader: true);
   }
 
   Future<void> _selectDateRange() async {
@@ -117,7 +242,6 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
           initialEndDate: _endDate,
           onApply: (startDate, endDate) async {
             if (!mounted) return;
-
             final normalizedStart = startDate.isBefore(endDate)
                 ? startDate
                 : endDate;
@@ -193,7 +317,9 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
                       color: Color(0xFF2E2E2E),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
+                  _buildPlatformSelector(),
+                  const SizedBox(height: 16),
 
                   _buildChartCard(),
                   const SizedBox(height: 20),
@@ -271,6 +397,85 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
     );
   }
 
+  Widget _buildPlatformSelector() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2E7CD9).withOpacity(0.22),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: primaryBlue.withOpacity(0.16)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<AnalyticsPlatform>(
+          value: _selectedPlatform,
+          isExpanded: true,
+          itemHeight: 48,
+          borderRadius: BorderRadius.circular(14),
+          dropdownColor: const Color(0xFF1D5093),
+          style: const TextStyle(
+            color: Color(0xFFF4F8FF),
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryBlue),
+          items: const [
+            DropdownMenuItem(
+              value: AnalyticsPlatform.instagram,
+              child: Text(
+                'Instagram',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            DropdownMenuItem(
+              value: AnalyticsPlatform.tiktok,
+              child: Text(
+                'TikTok',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+          selectedItemBuilder: (context) => const [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Instagram',
+                style: TextStyle(
+                  color: Color(0xFF123B74),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  height: 1.2,
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'TikTok',
+                style: TextStyle(
+                  color: Color(0xFF123B74),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  height: 1.2,
+                ),
+              ),
+            ),
+          ],
+          onChanged: (value) async {
+            if (value == null || value == _selectedPlatform) return;
+            setState(() => _selectedPlatform = value);
+            await _loadAnalyticsData(showLoader: true);
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildChartCard() {
     if (_isLoading) {
       return _buildMessageCard(
@@ -302,9 +507,11 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Instagram belum terhubung.',
-              style: TextStyle(
+            Text(
+              _selectedPlatform == AnalyticsPlatform.instagram
+                  ? 'Instagram belum terhubung.'
+                  : 'TikTok belum terhubung.',
+              style: const TextStyle(
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF1D5093),
               ),
@@ -316,13 +523,7 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
             ),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const InstagramConnectPage(),
-                  ),
-                );
-              },
+              onPressed: _openConnectDialog,
               child: const Text('Connect Username'),
             ),
           ],
@@ -464,7 +665,7 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
-                  reservedSize: 35,
+                  reservedSize: 40,
                   interval: yInterval,
                   getTitlesWidget: (value, meta) {
                     if (value < 0 || value > chartMaxY - 0.1) {
@@ -523,6 +724,11 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
     final referenceStats = _history.isNotEmpty ? _history.last : data;
     final reach = _estimatedReachFromStats(referenceStats);
 
+    final isInstagram = _selectedPlatform == AnalyticsPlatform.instagram;
+    final totalContent = isInstagram
+        ? _asInt(data['total_posts'])
+        : _asInt(data['total_videos']);
+
     final cards = <Map<String, String>>[
       {
         'value':
@@ -534,7 +740,10 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
         'value': _formatCompact(_asInt(data['followers_count'])),
         'label': 'Followers',
       },
-      {'value': _formatCompact(_asInt(data['total_posts'])), 'label': 'Post'},
+      {
+        'value': _formatCompact(totalContent),
+        'label': isInstagram ? 'Post' : 'Video',
+      },
     ];
 
     return Container(
@@ -727,7 +936,6 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   double _adaptiveChartInterval(double maxY) {
     if (maxY <= 0) return 1.0;
 
-    // Target around 5 labels on Y axis to prevent overlapping text.
     final rawInterval = maxY / 5;
     final magnitude = math.pow(10, (math.log(rawInterval) / math.ln10).floor());
     final normalized = rawInterval / magnitude;
@@ -761,6 +969,10 @@ class _MonthlySummaryPageState extends State<MonthlySummaryPage> {
   }
 
   int _estimatedReachFromStats(Map<String, dynamic> stats) {
+    if (_selectedPlatform == AnalyticsPlatform.tiktok) {
+      return _asInt(stats['total_views']);
+    }
+
     final explicitReach = _asInt(stats['estimated_reach']);
     if (explicitReach > 0) return explicitReach;
 

@@ -1,6 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'package:sociasync_app/screens/analytics/monthly_summary_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
@@ -9,10 +10,14 @@ import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
 import 'package:sociasync_app/services/instagram_service.dart';
+import 'package:sociasync_app/services/tiktok_service.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
-import 'package:sociasync_app/widgets/instagram_manage_account_dialog.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
+import 'package:sociasync_app/widgets/instagram_manage_account_dialog.dart';
+import 'package:sociasync_app/widgets/tiktok_manage_account_dialog.dart';
+
+enum SocialPlatform { instagram, tiktok }
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -24,18 +29,31 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   final int _currentIndex = 0;
+  final PageController _analyticsPageController = PageController();
 
   String _userName = 'User';
   int _unreadCount = 0;
-
   bool _isLoading = true;
-  String? _errorMessage;
+
+  int _analyticsPageIndex = 0;
+  SocialPlatform _bestPerformancePlatform = SocialPlatform.instagram;
+
   bool _instagramConnected = false;
   String _instagramUsername = '';
+  String? _instagramErrorMessage;
+  Map<String, dynamic>? _latestInstagramStats;
+  List<Map<String, dynamic>> _instagramStatsHistory =
+      const <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _bestInstagramPosts =
+      const <Map<String, dynamic>>[];
 
-  Map<String, dynamic>? _latestStats;
-  List<Map<String, dynamic>> _statsHistory = const <Map<String, dynamic>>[];
-  List<Map<String, dynamic>> _bestPosts = const <Map<String, dynamic>>[];
+  bool _tiktokConnected = false;
+  String _tiktokUsername = '';
+  String? _tiktokErrorMessage;
+  Map<String, dynamic>? _latestTikTokStats;
+  List<Map<String, dynamic>> _tiktokStatsHistory =
+      const <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _bestTikTokVideos = const <Map<String, dynamic>>[];
 
   @override
   void initState() {
@@ -43,24 +61,46 @@ class _DashboardPageState extends State<DashboardPage> {
     _bootstrap();
   }
 
-  Future<void> _bootstrap() async {
-    await Future.wait([
-      _loadUserName(),
-      _loadUnreadCount(),
-      _loadInstagramData(showLoader: true),
-    ]);
+  @override
+  void dispose() {
+    _analyticsPageController.dispose();
+    super.dispose();
   }
 
-  Future<void> _loadUserName() async {
+  Future<void> _bootstrap() async {
+    setState(() => _isLoading = true);
+
+    await _loadUserAndConnections();
+    await Future.wait([
+      _loadUnreadCount(),
+      _loadInstagramData(),
+      _loadTikTokData(),
+    ]);
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadUserAndConnections() async {
     try {
       final profile = await AuthService.getMe();
       if (!mounted) return;
+
       final name = (profile['name'] ?? '').toString().trim();
-      if (name.isNotEmpty) {
-        setState(() => _userName = name);
-      }
+      setState(() {
+        if (name.isNotEmpty) _userName = name;
+
+        _instagramConnected = profile['instagram_connected'] == true;
+        _instagramUsername = (profile['instagram_username'] ?? '')
+            .toString()
+            .trim();
+
+        _tiktokConnected = profile['tiktok_connected'] == true;
+        _tiktokUsername = (profile['tiktok_username'] ?? '').toString().trim();
+      });
     } catch (_) {
-      // Keep fallback name if profile cannot be loaded.
+      // Keep fallback values.
     }
   }
 
@@ -70,70 +110,106 @@ class _DashboardPageState extends State<DashboardPage> {
       if (!mounted) return;
       setState(() => _unreadCount = count);
     } catch (_) {
-      // Keep default value if unread count cannot be loaded.
+      // Keep default value.
     }
   }
 
-  Future<void> _loadInstagramData({bool showLoader = false}) async {
-    if (showLoader) {
+  Future<void> _loadInstagramData() async {
+    if (!_instagramConnected) {
+      if (!mounted) return;
       setState(() {
-        _isLoading = true;
-        _errorMessage = null;
+        _latestInstagramStats = null;
+        _instagramStatsHistory = const <Map<String, dynamic>>[];
+        _bestInstagramPosts = const <Map<String, dynamic>>[];
+        _instagramErrorMessage = null;
       });
+      return;
     }
 
     try {
       final dashboard = await InstagramService.getDashboard();
-      final connected = dashboard['instagram_connected'] == true;
-      final username = (dashboard['instagram_username'] ?? '').toString();
       final latestStats = dashboard['latest_stats'] is Map
           ? Map<String, dynamic>.from(dashboard['latest_stats'] as Map)
           : null;
 
-      List<Map<String, dynamic>> history = const <Map<String, dynamic>>[];
-      List<Map<String, dynamic>> bestPosts = const <Map<String, dynamic>>[];
+      final history = await InstagramService.getStatsHistory(limit: 7);
 
-      if (connected) {
-        history = await InstagramService.getStatsHistory(limit: 7);
-        try {
-          final bestPostsResponse = await InstagramService.getBestPosts(
-            limit: 6,
-          );
-          final postsRaw = bestPostsResponse['posts'];
-          if (postsRaw is List) {
-            bestPosts = postsRaw
-                .whereType<Map>()
-                .map((item) => item.map((k, v) => MapEntry(k.toString(), v)))
-                .toList();
-          }
-        } catch (_) {
-          bestPosts = const <Map<String, dynamic>>[];
+      List<Map<String, dynamic>> bestPosts = const <Map<String, dynamic>>[];
+      try {
+        final bestPostsResponse = await InstagramService.getBestPosts(limit: 6);
+        final postsRaw = bestPostsResponse['posts'];
+        if (postsRaw is List) {
+          bestPosts = postsRaw
+              .whereType<Map>()
+              .map((item) => item.map((k, v) => MapEntry(k.toString(), v)))
+              .toList();
         }
+      } catch (_) {
+        bestPosts = const <Map<String, dynamic>>[];
       }
 
       if (!mounted) return;
       setState(() {
-        _instagramConnected = connected;
-        _instagramUsername = username;
-        _latestStats = latestStats;
-        _statsHistory = history.reversed.toList();
-        _bestPosts = bestPosts;
-        _errorMessage = null;
+        _latestInstagramStats = latestStats;
+        _instagramStatsHistory = history.reversed.toList();
+        _bestInstagramPosts = bestPosts;
+        _instagramErrorMessage = null;
       });
     } on InstagramServiceException catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = e.message);
+      setState(() => _instagramErrorMessage = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'Gagal memuat data Instagram.');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      setState(() => _instagramErrorMessage = 'Gagal memuat data Instagram.');
     }
   }
 
-  Future<void> _runScrapeAndRefresh() async {
+  Future<void> _loadTikTokData() async {
+    if (!_tiktokConnected) {
+      if (!mounted) return;
+      setState(() {
+        _latestTikTokStats = null;
+        _tiktokStatsHistory = const <Map<String, dynamic>>[];
+        _bestTikTokVideos = const <Map<String, dynamic>>[];
+        _tiktokErrorMessage = null;
+      });
+      return;
+    }
+
+    try {
+      final dashboard = await TikTokService.getDashboard();
+      final latestStats = dashboard['latest_stats'] is Map
+          ? Map<String, dynamic>.from(dashboard['latest_stats'] as Map)
+          : (dashboard.containsKey('latest_stats') ? null : dashboard);
+      final history = await TikTokService.getStatsHistory(limit: 7);
+      final bestVideosResponse = await TikTokService.getBestVideos(limit: 6);
+
+      List<Map<String, dynamic>> bestVideos = const <Map<String, dynamic>>[];
+      final videosRaw = bestVideosResponse['videos'];
+      if (videosRaw is List) {
+        bestVideos = videosRaw
+            .whereType<Map>()
+            .map((item) => item.map((k, v) => MapEntry(k.toString(), v)))
+            .toList();
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _latestTikTokStats = latestStats;
+        _tiktokStatsHistory = history.reversed.toList();
+        _bestTikTokVideos = bestVideos;
+        _tiktokErrorMessage = null;
+      });
+    } on TikTokServiceException catch (e) {
+      if (!mounted) return;
+      setState(() => _tiktokErrorMessage = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _tiktokErrorMessage = 'Gagal memuat data TikTok.');
+    }
+  }
+
+  Future<void> _runInstagramScrapeAndRefresh() async {
     try {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -142,7 +218,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       );
       await InstagramService.triggerScrape(resultsLimit: 60);
-      await _loadInstagramData(showLoader: true);
+      await _loadInstagramData();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -158,11 +234,31 @@ class _DashboardPageState extends State<DashboardPage> {
           backgroundColor: Colors.red.shade600,
         ),
       );
-    } catch (_) {
+    }
+  }
+
+  Future<void> _runTikTokScrapeAndRefresh() async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Memulai scraping TikTok...'),
+          backgroundColor: primaryBlue,
+        ),
+      );
+      await TikTokService.triggerScrape(resultsLimit: 200);
+      await _loadTikTokData();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Gagal menjalankan scraping.'),
+          content: const Text('Data TikTok berhasil diperbarui.'),
+          backgroundColor: primaryBlue,
+        ),
+      );
+    } on TikTokServiceException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
           backgroundColor: Colors.red.shade600,
         ),
       );
@@ -177,12 +273,33 @@ class _DashboardPageState extends State<DashboardPage> {
     );
     if (!updated || !mounted) return;
 
-    await _loadInstagramData(showLoader: true);
+    await _loadUserAndConnections();
+    await _loadInstagramData();
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Username Instagram berhasil disimpan.'),
+        backgroundColor: primaryBlue,
+      ),
+    );
+  }
+
+  Future<void> _openTikTokManageDialog() async {
+    final updated = await showTikTokManageAccountDialog(
+      context: context,
+      initialUsername: _tiktokUsername,
+      primaryColor: primaryBlue,
+    );
+    if (!updated || !mounted) return;
+
+    await _loadUserAndConnections();
+    await _loadTikTokData();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Username TikTok berhasil disimpan.'),
         backgroundColor: primaryBlue,
       ),
     );
@@ -235,7 +352,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 15),
 
-                  _buildMainContent(),
+                  _buildAnalyticsSwipeContent(),
                   const SizedBox(height: 25),
 
                   _buildSectionHeader('Weekly Performance', () {
@@ -250,9 +367,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
                   const SizedBox(height: 30),
 
-                  _buildSectionHeader('Best Performing Post', null),
+                  _buildBestPerformanceHeader(),
                   const SizedBox(height: 15),
-                  _buildBestPostsSection(),
+                  _buildBestPerformanceSection(),
                   const SizedBox(height: 40),
 
                   Center(
@@ -295,7 +412,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildMainContent() {
+  Widget _buildAnalyticsSwipeContent() {
     if (_isLoading) {
       return Container(
         width: double.infinity,
@@ -304,30 +421,154 @@ class _DashboardPageState extends State<DashboardPage> {
           color: const Color(0xFF2E7CD9).withOpacity(0.18),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
+        child: SizedBox(
+          height: _analyticsCardHeight(context),
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 2.4),
+          ),
+        ),
       );
     }
 
-    if (_errorMessage != null) {
-      return _buildInfoCard(
-        title: 'Data belum bisa dimuat',
-        subtitle: _errorMessage!,
-        actionLabel: 'Coba Lagi',
-        onTap: () => _loadInstagramData(showLoader: true),
-      );
-    }
+    final cardHeight = _analyticsCardHeight(context);
 
+    return Column(
+      children: [
+        SizedBox(
+          height: cardHeight,
+          child: PageView(
+            controller: _analyticsPageController,
+            onPageChanged: (index) {
+              setState(() {
+                _analyticsPageIndex = index;
+                _bestPerformancePlatform = index == 0
+                    ? SocialPlatform.instagram
+                    : SocialPlatform.tiktok;
+              });
+            },
+            children: [_buildInstagramStatsCard(), _buildTikTokStatsCard()],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildPageIndicator(_analyticsPageIndex == 0),
+            const SizedBox(width: 6),
+            _buildPageIndicator(_analyticsPageIndex == 1),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPageIndicator(bool active) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      width: active ? 16 : 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: active ? primaryBlue : primaryBlue.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(20),
+      ),
+    );
+  }
+
+  Widget _buildInstagramStatsCard() {
     if (!_instagramConnected) {
       return _buildInfoCard(
         title: 'Instagram belum terhubung',
-        subtitle:
-            'Tambahkan username dulu supaya dashboard dan analytics menampilkan data real-time.',
-        actionLabel: 'Connect Username',
+        subtitle: 'Hubungkan username Instagram untuk menampilkan analytics.',
+        actionLabel: 'Connect Instagram',
         onTap: _openInstagramManageDialog,
       );
     }
 
-    return _buildStatsCard();
+    if (_instagramErrorMessage != null) {
+      return _buildInfoCard(
+        title: 'Data Instagram belum bisa dimuat',
+        subtitle: _instagramErrorMessage!,
+        actionLabel: 'Coba Lagi',
+        onTap: _loadInstagramData,
+      );
+    }
+
+    final stats = _latestInstagramStats;
+    if (stats == null) {
+      return _buildInfoCard(
+        title: 'Instagram siap dipakai',
+        subtitle: 'Jalankan scrape pertama untuk mengisi statistik Instagram.',
+        actionLabel: 'Run Scrape',
+        onTap: _runInstagramScrapeAndRefresh,
+      );
+    }
+
+    final engagement = _asDouble(stats['engagement_percentage']);
+    final followers = _asInt(stats['followers_count']);
+    final totalPosts = _asInt(stats['total_posts']);
+    final reach = _asInt(stats['estimated_reach']) > 0
+        ? _asInt(stats['estimated_reach'])
+        : (_asInt(stats['total_likes']) + _asInt(stats['total_comments'])) * 20;
+
+    return _buildStatsCard(
+      title:
+          'Instagram @${_instagramUsername.isEmpty ? '-' : _instagramUsername}',
+      metricItems: [
+        MapEntry('${engagement.toStringAsFixed(2)}%', 'Engagement'),
+        MapEntry(_formatCompact(reach), 'Reach'),
+        MapEntry(_formatCompact(followers), 'Followers'),
+        MapEntry(_formatCompact(totalPosts), 'Post'),
+      ],
+      onRefresh: _runInstagramScrapeAndRefresh,
+      onManage: _openInstagramManageDialog,
+    );
+  }
+
+  Widget _buildTikTokStatsCard() {
+    if (!_tiktokConnected) {
+      return _buildInfoCard(
+        title: 'TikTok belum terhubung',
+        subtitle: 'Hubungkan username TikTok untuk menampilkan analytics.',
+        actionLabel: 'Connect TikTok',
+        onTap: _openTikTokManageDialog,
+      );
+    }
+
+    if (_tiktokErrorMessage != null) {
+      return _buildInfoCard(
+        title: 'Data TikTok belum bisa dimuat',
+        subtitle: _tiktokErrorMessage!,
+        actionLabel: 'Coba Lagi',
+        onTap: _loadTikTokData,
+      );
+    }
+
+    final stats = _latestTikTokStats;
+    if (stats == null) {
+      return _buildInfoCard(
+        title: 'TikTok siap dipakai',
+        subtitle: 'Jalankan scrape pertama untuk mengisi statistik TikTok.',
+        actionLabel: 'Run Scrape',
+        onTap: _runTikTokScrapeAndRefresh,
+      );
+    }
+
+    final engagement = _asDouble(stats['engagement_percentage']);
+    final followers = _asInt(stats['followers_count']);
+    final totalVideos = _asInt(stats['total_videos']);
+    final reach = _asInt(stats['total_views']);
+
+    return _buildStatsCard(
+      title: 'TikTok @${_tiktokUsername.isEmpty ? '-' : _tiktokUsername}',
+      metricItems: [
+        MapEntry('${engagement.toStringAsFixed(2)}%', 'Engagement'),
+        MapEntry(_formatCompact(reach), 'Reach'),
+        MapEntry(_formatCompact(followers), 'Followers'),
+        MapEntry(_formatCompact(totalVideos), 'Video'),
+      ],
+      onRefresh: _runTikTokScrapeAndRefresh,
+      onManage: _openTikTokManageDialog,
+    );
   }
 
   Widget _buildInfoCard({
@@ -373,23 +614,29 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildStatsCard() {
-    final stats = _latestStats ?? <String, dynamic>{};
-    final engagement = _asDouble(stats['engagement_percentage']);
-    final followers = _asInt(stats['followers_count']);
-    final totalPosts = _asInt(stats['total_posts']);
-    final latestLikes = _asInt(stats['total_likes']);
-    final latestComments = _asInt(stats['total_comments']);
-    final estimatedReach = _asInt(stats['estimated_reach']) > 0
-        ? _asInt(stats['estimated_reach'])
-        : (latestLikes + latestComments) * 20;
-    final metricItems = <MapEntry<String, String>>[
-      MapEntry('${engagement.toStringAsFixed(2)}%', 'Engagement'),
-      MapEntry(_formatCompact(estimatedReach), 'Reach'),
-      MapEntry(_formatCompact(followers), 'Followers'),
-      MapEntry(_formatCompact(totalPosts), 'Post'),
-    ];
+  double _analyticsCardHeight(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final textScale = MediaQuery.of(context).textScaleFactor;
+    final extraForText = textScale > 1 ? (textScale - 1) * 18 : 0.0;
 
+    final baseHeight = switch (width) {
+      >= 900 => 360.0,
+      >= 700 => 340.0,
+      >= 430 => 320.0,
+      >= 380 => 305.0,
+      _ => 292.0,
+    };
+
+    // Small safety headroom avoids sub-pixel overflow on some devices.
+    return baseHeight + extraForText + 2;
+  }
+
+  Widget _buildStatsCard({
+    required String title,
+    required List<MapEntry<String, String>> metricItems,
+    required VoidCallback onRefresh,
+    required VoidCallback onManage,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -404,7 +651,7 @@ class _DashboardPageState extends State<DashboardPage> {
             children: [
               Expanded(
                 child: Text(
-                  'Instagram @${_instagramUsername.isEmpty ? '-' : _instagramUsername}',
+                  title,
                   style: TextStyle(
                     color: primaryBlue,
                     fontWeight: FontWeight.bold,
@@ -413,13 +660,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               IconButton(
-                onPressed: _runScrapeAndRefresh,
+                onPressed: onRefresh,
                 tooltip: 'Refresh from Scrape',
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                padding: EdgeInsets.zero,
                 icon: Icon(Icons.refresh_rounded, color: primaryBlue),
               ),
               IconButton(
-                onPressed: _openInstagramManageDialog,
-                tooltip: 'Manage Instagram',
+                onPressed: onManage,
+                tooltip: 'Manage Username',
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                padding: EdgeInsets.zero,
                 icon: Icon(Icons.settings_rounded, color: primaryBlue),
               ),
             ],
@@ -458,7 +709,21 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildSmoothChartCard() {
-    if (!_instagramConnected) {
+    final platform = _analyticsPageIndex == 0
+        ? SocialPlatform.instagram
+        : SocialPlatform.tiktok;
+
+    final connected = platform == SocialPlatform.instagram
+        ? _instagramConnected
+        : _tiktokConnected;
+    final errorMessage = platform == SocialPlatform.instagram
+        ? _instagramErrorMessage
+        : _tiktokErrorMessage;
+    final history = platform == SocialPlatform.instagram
+        ? _instagramStatsHistory
+        : _tiktokStatsHistory;
+
+    if (!connected) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(18),
@@ -466,14 +731,16 @@ class _DashboardPageState extends State<DashboardPage> {
           color: const Color(0xFF2E7CD9).withOpacity(0.2),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Text(
-          'Weekly chart akan tampil setelah Instagram terhubung dan data scrape tersedia.',
-          style: TextStyle(color: Color(0xFF4D5E7C)),
+        child: Text(
+          platform == SocialPlatform.instagram
+              ? 'Weekly chart Instagram akan tampil setelah akun terhubung.'
+              : 'Weekly chart TikTok akan tampil setelah akun terhubung.',
+          style: const TextStyle(color: Color(0xFF4D5E7C)),
         ),
       );
     }
 
-    if (_statsHistory.isEmpty) {
+    if (errorMessage != null) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(18),
@@ -481,9 +748,26 @@ class _DashboardPageState extends State<DashboardPage> {
           color: const Color(0xFF2E7CD9).withOpacity(0.2),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Text(
-          'Belum ada history statistik. Tekan refresh untuk menjalankan scrape.',
-          style: TextStyle(color: Color(0xFF4D5E7C)),
+        child: Text(
+          errorMessage,
+          style: const TextStyle(color: Color(0xFF4D5E7C)),
+        ),
+      );
+    }
+
+    if (history.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2E7CD9).withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          platform == SocialPlatform.instagram
+              ? 'Belum ada history Instagram. Tekan refresh untuk scrape.'
+              : 'Belum ada history TikTok. Tekan refresh untuk scrape.',
+          style: const TextStyle(color: Color(0xFF4D5E7C)),
         ),
       );
     }
@@ -492,8 +776,8 @@ class _DashboardPageState extends State<DashboardPage> {
     final labels = <String>[];
     var maxY = 10.0;
 
-    for (var i = 0; i < _statsHistory.length; i++) {
-      final item = _statsHistory[i];
+    for (var i = 0; i < history.length; i++) {
+      final item = history[i];
       final y = _asDouble(item['engagement_percentage']);
       chartSpots.add(FlSpot(i.toDouble(), y));
       if (y > maxY) {
@@ -608,7 +892,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             borderData: FlBorderData(show: false),
             minX: 0,
-            maxX: (_statsHistory.length - 1).toDouble(),
+            maxX: (history.length - 1).toDouble(),
             minY: 0,
             maxY: chartMaxY,
             lineBarsData: [
@@ -634,6 +918,259 @@ class _DashboardPageState extends State<DashboardPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBestPerformanceHeader() {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'Best Performance',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2E7CD9).withOpacity(0.22),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: primaryBlue.withOpacity(0.16)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<SocialPlatform>(
+              value: _bestPerformancePlatform,
+              itemHeight: 48,
+              borderRadius: BorderRadius.circular(14),
+              dropdownColor: const Color(0xFF1D5093),
+              style: const TextStyle(
+                color: Color(0xFFF4F8FF),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+              icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryBlue),
+              items: const [
+                DropdownMenuItem(
+                  value: SocialPlatform.instagram,
+                  child: Text(
+                    'Instagram',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: SocialPlatform.tiktok,
+                  child: Text(
+                    'TikTok',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _bestPerformancePlatform = value);
+              },
+              selectedItemBuilder: (context) => const [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Instagram',
+                    style: TextStyle(
+                      color: Color(0xFF123B74),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'TikTok',
+                    style: TextStyle(
+                      color: Color(0xFF123B74),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBestPerformanceSection() {
+    if (_bestPerformancePlatform == SocialPlatform.instagram) {
+      return _buildBestInstagramPosts();
+    }
+    return _buildBestTikTokVideos();
+  }
+
+  Widget _buildBestInstagramPosts() {
+    if (!_instagramConnected) {
+      return const Text(
+        'Hubungkan Instagram dulu untuk melihat best post.',
+        style: TextStyle(color: Color(0xFF4D5E7C)),
+      );
+    }
+
+    if (_bestInstagramPosts.isEmpty) {
+      return const Text(
+        'Belum ada data post Instagram. Jalankan scrape untuk mengambil data terbaru.',
+        style: TextStyle(color: Color(0xFF4D5E7C)),
+      );
+    }
+
+    return SizedBox(
+      height: 190,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _bestInstagramPosts.length,
+        itemBuilder: (context, index) {
+          final post = _bestInstagramPosts[index];
+          final likes = _asInt(post['likes']);
+          final comments = _asInt(post['comments_count']);
+          final imageUrl = _firstNotEmpty([
+            post['image_url'],
+            post['thumbnail_url'],
+            post['display_url'],
+            post['media_url'],
+            post['video_url'],
+          ]);
+
+          return _buildMediaCard(
+            imageUrl: imageUrl,
+            leftMetric: 'Like ${_formatCompact(likes)}',
+            rightMetric: 'Com ${_formatCompact(comments)}',
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBestTikTokVideos() {
+    if (!_tiktokConnected) {
+      return const Text(
+        'Hubungkan TikTok dulu untuk melihat best video.',
+        style: TextStyle(color: Color(0xFF4D5E7C)),
+      );
+    }
+
+    if (_bestTikTokVideos.isEmpty) {
+      return const Text(
+        'Belum ada data video TikTok. Jalankan scrape untuk mengambil data terbaru.',
+        style: TextStyle(color: Color(0xFF4D5E7C)),
+      );
+    }
+
+    return SizedBox(
+      height: 190,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _bestTikTokVideos.length,
+        itemBuilder: (context, index) {
+          final video = _bestTikTokVideos[index];
+          final likes = _asInt(video['likes']);
+          final views = _asInt(video['views']);
+          final imageUrl = _firstNotEmpty([
+            video['thumbnail_url'],
+            video['image_url'],
+          ]);
+
+          return _buildMediaCard(
+            imageUrl: imageUrl,
+            leftMetric: 'Like ${_formatCompact(likes)}',
+            rightMetric: 'View ${_formatCompact(views)}',
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMediaCard({
+    required String imageUrl,
+    required String leftMetric,
+    required String rightMetric,
+  }) {
+    return Container(
+      width: 155,
+      margin: const EdgeInsets.only(right: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(14),
+              ),
+              child: imageUrl.isEmpty
+                  ? Container(
+                      color: const Color(0xFFD9E7F9),
+                      child: const Icon(
+                        Icons.image_rounded,
+                        color: Color(0xFF1D5093),
+                      ),
+                    )
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return Container(
+                          color: const Color(0xFFD9E7F9),
+                          child: const Icon(Icons.image_not_supported_outlined),
+                        );
+                      },
+                    ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  leftMetric,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  rightMetric,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -702,111 +1239,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildBestPostsSection() {
-    if (!_instagramConnected) {
-      return const Text(
-        'Best post akan tampil setelah akun terhubung.',
-        style: TextStyle(color: Color(0xFF4D5E7C)),
-      );
-    }
-
-    if (_bestPosts.isEmpty) {
-      return const Text(
-        'Belum ada data post. Jalankan scrape untuk mengambil data terbaru.',
-        style: TextStyle(color: Color(0xFF4D5E7C)),
-      );
-    }
-
-    return SizedBox(
-      height: 190,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _bestPosts.length,
-        itemBuilder: (context, index) {
-          final post = _bestPosts[index];
-          final likes = _asInt(post['likes']);
-          final comments = _asInt(post['comments_count']);
-          final imageUrl = _bestPostCoverUrl(post);
-
-          return Container(
-            width: 155,
-            margin: const EdgeInsets.only(right: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(14),
-                    ),
-                    child: imageUrl.isEmpty
-                        ? Container(
-                            color: const Color(0xFFD9E7F9),
-                            child: const Icon(
-                              Icons.image_rounded,
-                              color: Color(0xFF1D5093),
-                            ),
-                          )
-                        : Image.network(
-                            imageUrl,
-                            headers: const {
-                              'User-Agent':
-                                  'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36',
-                              'Referer': 'https://www.instagram.com/',
-                            },
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) {
-                              return Container(
-                                color: const Color(0xFFD9E7F9),
-                                child: const Icon(
-                                  Icons.image_not_supported_outlined,
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Like ${_formatCompact(likes)}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'Com ${_formatCompact(comments)}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   int _asInt(dynamic value) {
     if (value is int) return value;
     return int.tryParse(value?.toString() ?? '0') ?? 0;
@@ -833,16 +1265,8 @@ class _DashboardPageState extends State<DashboardPage> {
     return '$value';
   }
 
-  String _bestPostCoverUrl(Map<String, dynamic> post) {
-    final candidates = [
-      post['image_url'],
-      post['thumbnail_url'],
-      post['display_url'],
-      post['media_url'],
-      post['video_url'],
-    ];
-
-    for (final value in candidates) {
+  String _firstNotEmpty(List<dynamic> values) {
+    for (final value in values) {
       final parsed = (value ?? '').toString().trim();
       if (parsed.isNotEmpty) {
         return parsed;

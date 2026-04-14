@@ -155,28 +155,46 @@ class TikTokViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
         """Get latest TikTok stats for connected profile"""
+        user = request.user
+
+        if not user.tiktok_username or not user.tiktok_connected:
+            return Response(
+                {
+                    'tiktok_connected': False,
+                    'message': 'Please connect your TikTok username',
+                },
+                status=status.HTTP_200_OK,
+            )
+
         try:
-            profile = TikTokProfile.objects.get(user=request.user)
             latest_stats = TikTokStats.objects.filter(
-                user=request.user,
-                profile=profile
+                user=user,
             ).order_by('-recorded_at').first()
 
             if not latest_stats:
                 return Response(
-                    {'message': 'No stats available. Please run a scrape first.'},
-                    status=status.HTTP_404_NOT_FOUND
+                    {
+                        'tiktok_connected': True,
+                        'tiktok_username': user.tiktok_username,
+                        'message': 'No data yet. Run your first scrape to see stats.',
+                        'latest_stats': None,
+                    },
+                    status=status.HTTP_200_OK,
                 )
 
             serializer = TikTokStatsSerializer(latest_stats)
-            return Response(serializer.data)
-
-        except TikTokProfile.DoesNotExist:
             return Response(
-                {'error': 'TikTok profile not found. Please connect your TikTok account first.'},
-                status=status.HTTP_404_NOT_FOUND
+                {
+                    'tiktok_connected': True,
+                    'tiktok_username': user.tiktok_username,
+                    'last_scraped': user.last_scraped,
+                    'latest_stats': serializer.data,
+                },
+                status=status.HTTP_200_OK,
             )
 
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     @action(detail=False, methods=['get'])
     def stats_history(self, request):
         """Get historical stats for the current user"""
@@ -210,30 +228,34 @@ class TikTokViewSet(viewsets.ViewSet):
             limit = 6
 
         try:
-            # Get user's TikTok profile
-            profile = TikTokProfile.objects.get(user=request.user)
-            
-            # Get videos sorted by engagement (likes + comments + views)
+            profile = TikTokProfile.objects.filter(user=request.user).first()
+            if profile is None:
+                return Response(
+                    {
+                        'profile_username': request.user.tiktok_username or '',
+                        'profile_pic': '',
+                        'videos': [],
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
             videos = TikTokVideo.objects.filter(
                 profile=profile
             ).annotate(
                 engagement=models.F('likes') + models.F('comments_count') + models.F('views')
             ).order_by('-engagement')[:limit]
-            
-            # Serialize videos
+
             serializer = TikTokVideoSerializer(videos, many=True)
-            
-            return Response({
-                'profile_username': profile.username,
-                'profile_pic': profile.profile_pic,
-                'videos': serializer.data
-            })
-            
-        except TikTokProfile.DoesNotExist:
+
             return Response(
-                {'error': 'TikTok profile not found. Please connect your TikTok account first.'},
-                status=status.HTTP_404_NOT_FOUND
+                {
+                    'profile_username': profile.username,
+                    'profile_pic': profile.profile_pic,
+                    'videos': serializer.data,
+                },
+                status=status.HTTP_200_OK,
             )
+
         except Exception as e:
             return Response(
                 {'error': str(e)},

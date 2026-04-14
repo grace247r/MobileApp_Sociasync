@@ -51,6 +51,16 @@ class ProfileSerializer(serializers.ModelSerializer):
             'date_of_birth',
             'region',
             'profile_image',
+            'instagram_username',
+            'instagram_connected',
+            'tiktok_username',
+            'tiktok_connected',
+        ]
+        read_only_fields = [
+            'instagram_username',
+            'instagram_connected',
+            'tiktok_username',
+            'tiktok_connected',
         ]
 
     def update(self, instance, validated_data):

@@ -7,8 +7,8 @@ import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/splash_screen.dart';
 import 'package:sociasync_app/config/api_config.dart';
-import 'package:sociasync_app/services/instagram_service.dart';
 import 'package:sociasync_app/widgets/instagram_manage_account_dialog.dart';
+import 'package:sociasync_app/widgets/tiktok_manage_account_dialog.dart';
 
 // Import sub-halaman
 import 'package:sociasync_app/screens/profile/account_page.dart';
@@ -31,6 +31,8 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isUploadingImage = false;
   bool _instagramConnected = false;
   String _instagramUsername = '';
+  bool _tiktokConnected = false;
+  String _tiktokUsername = '';
 
   @override
   void initState() {
@@ -48,25 +50,18 @@ class _ProfilePageState extends State<ProfilePage> {
       final profileInstagramUsername = (profile['instagram_username'] ?? '')
           .toString()
           .trim();
-
-      var dashboardConnected = profileConnected;
-      var dashboardUsername = profileInstagramUsername;
-
-      try {
-        final dashboard = await InstagramService.getDashboard();
-        dashboardConnected = dashboard['instagram_connected'] == true;
-        dashboardUsername = (dashboard['instagram_username'] ?? '')
-            .toString()
-            .trim();
-      } catch (_) {
-        // Keep profile fallback value when dashboard endpoint cannot be reached.
-      }
+      final profileTikTokConnected = profile['tiktok_connected'] == true;
+      final profileTikTokUsername = (profile['tiktok_username'] ?? '')
+          .toString()
+          .trim();
 
       setState(() {
         if (loadedName.isNotEmpty) _userName = loadedName;
         _profileImageUrl = _resolveProfileImageUrl(loadedImage);
-        _instagramConnected = dashboardConnected;
-        _instagramUsername = dashboardUsername;
+        _instagramConnected = profileConnected;
+        _instagramUsername = profileInstagramUsername;
+        _tiktokConnected = profileTikTokConnected;
+        _tiktokUsername = profileTikTokUsername;
       });
     } catch (_) {
       // Keep fallback values when profile cannot be loaded.
@@ -87,6 +82,23 @@ class _ProfilePageState extends State<ProfilePage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Username Instagram berhasil diperbarui.')),
+    );
+  }
+
+  Future<void> _openTikTokManageDialog() async {
+    final updated = await showTikTokManageAccountDialog(
+      context: context,
+      initialUsername: _tiktokUsername,
+      primaryColor: primaryBlue,
+    );
+
+    if (!updated || !mounted) return;
+
+    await _loadProfile();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Username TikTok berhasil diperbarui.')),
     );
   }
 
@@ -254,7 +266,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 25),
                         _buildSectionLabel('Connect'),
                         _buildSettingsGroup([
-                          _buildConnectTile('TikTok'),
+                          _buildTikTokConnectTile(),
                           _buildDivider(),
                           _buildInstagramConnectTile(),
                         ]),
@@ -471,28 +483,27 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildConnectTile(String platform) {
+  Widget _buildTikTokConnectTile() {
+    final displayUsername = _tiktokUsername.trim();
+
     return ListTile(
       leading: const Icon(Icons.link, color: Color(0xFF1D5093), size: 22),
-      title: Text(
-        platform,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      title: const Text(
+        'TikTok',
+        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       ),
-      trailing: ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryBlue,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: const Text(
-          'Connect',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+      subtitle: Text(
+        _tiktokConnected && displayUsername.isNotEmpty
+            ? '@$displayUsername'
+            : 'Belum terhubung',
+        style: TextStyle(
+          fontSize: 12,
+          color: _tiktokConnected ? const Color(0xFF1D5093) : Colors.grey,
+          fontWeight: FontWeight.w700,
         ),
       ),
+      trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+      onTap: _openTikTokManageDialog,
     );
   }
 

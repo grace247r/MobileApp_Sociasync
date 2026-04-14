@@ -7,8 +7,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('users', '0004_merge_20260414_0012'),
-    # Keep both merge migrations to avoid graph conflicts after pull.
-        ('users', '0004_merge_20260413_2305'),
     ]
 
     operations = [
