@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sociasync_app/screens/content_generator/caption_result_page.dart';
+import 'package:sociasync_app/services/content_generator_service.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
@@ -10,7 +11,16 @@ import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 
 class ScriptResultPage extends StatefulWidget {
-  const ScriptResultPage({super.key});
+  const ScriptResultPage({
+    super.key,
+    required this.requestData,
+    required this.selectedIdea,
+    required this.scriptData,
+  });
+
+  final Map<String, String> requestData;
+  final Map<String, dynamic> selectedIdea;
+  final Map<String, dynamic> scriptData;
 
   @override
   State<ScriptResultPage> createState() => _ScriptResultPageState();
@@ -19,79 +29,110 @@ class ScriptResultPage extends StatefulWidget {
 class _ScriptResultPageState extends State<ScriptResultPage> {
   static const Color primaryColor = Color(0xFF1A237E);
 
-  List<Map<String, String>> scripts = [
-    {
-      "time": "00:00 - 00:03",
-      "label": "HOOK",
-      "visual": "Close-up makanan digigit (lumer).",
-      "script": "Gila sih, teksturnya lumer banget!",
-    },
-    {
-      "time": "00:03 - 00:08",
-      "label": "BODY",
-      "visual": "Shoot suasana kedai yang ramai/antre.",
-      "script": "Ini bener-bener hidden gem yang wajib kalian coba minggu ini.",
-    },
-    {
-      "time": "00:08 - 00:12",
-      "label": "CTA",
-      "visual": "Tunjukkan lokasi/peta di akhir video.",
-      "script": "Jujur, worth it parah! Buruan ke sini sebelum makin rame.",
-    },
-  ];
+  late Map<String, dynamic> _script;
+  bool _isRegenerating = false;
+  bool _isGeneratingCaption = false;
 
-  // 🔁 Generate Script Baru
-  void generateNewScript() {
-    setState(() {
-      scripts = [
-        {
-          "time": "00:00 - 00:03",
-          "label": "HOOK",
-          "visual": "Minuman dituang slow motion.",
-          "script": "Demi apa ini seger banget!",
-        },
-        {
-          "time": "00:03 - 00:08",
-          "label": "BODY",
-          "visual": "Ambience cafe aesthetic.",
-          "script": "Tempatnya cozy banget buat nongkrong santai.",
-        },
-        {
-          "time": "00:08 - 00:12",
-          "label": "CTA",
-          "visual": "Shot depan cafe + signage.",
-          "script": "Save dulu, terus langsung cobain ya!",
-        },
-      ];
-    });
+  @override
+  void initState() {
+    super.initState();
+    _script = Map<String, dynamic>.from(widget.scriptData);
   }
 
-  // 📋 Copy full script
+  String get _hook => (_script['hook'] ?? '').toString();
+  String get _body => (_script['body'] ?? '').toString();
+  String get _cta => (_script['cta'] ?? '').toString();
+
   void copyFullScript(BuildContext context) {
-    final fullScript = scripts.map((e) => e["script"]).join("\n\n");
-
+    final fullScript = [
+      _hook,
+      _body,
+      _cta,
+    ].where((v) => v.isNotEmpty).join('\n\n');
     Clipboard.setData(ClipboardData(text: fullScript));
-
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Full script copied!")));
+    ).showSnackBar(const SnackBar(content: Text('Full script copied!')));
   }
 
-  // 📋 Copy per item
   void copySingle(String text) {
     Clipboard.setData(ClipboardData(text: text));
-
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Copied!")));
+    ).showSnackBar(const SnackBar(content: Text('Copied!')));
   }
 
-  // 👉 Navigate ke caption page
-  void goToCaptionPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CaptionResultPage()),
-    );
+  Future<void> _generateNewScript() async {
+    if (_isRegenerating) return;
+
+    setState(() => _isRegenerating = true);
+    try {
+      final script = await ContentGeneratorService.generateScript(
+        title: (widget.selectedIdea['title'] ?? '').toString(),
+        description: (widget.selectedIdea['description'] ?? '').toString(),
+        previousHook: _hook,
+        previousBody: _body,
+        previousCta: _cta,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _script = {
+          'hook': (script['hook'] ?? '').toString(),
+          'body': (script['body'] ?? '').toString(),
+          'cta': (script['cta'] ?? '').toString(),
+        };
+      });
+    } on ContentGeneratorServiceException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isRegenerating = false);
+      }
+    }
+  }
+
+  Future<void> _goToCaptionPage() async {
+    if (_isGeneratingCaption) return;
+
+    setState(() => _isGeneratingCaption = true);
+    try {
+      final caption = await ContentGeneratorService.generateCaption(
+        platform: widget.requestData['platform'] ?? 'TikTok',
+        tone: widget.requestData['tone'] ?? 'Friendly',
+      );
+      final hashtags = await ContentGeneratorService.generateHashtags(
+        platform: widget.requestData['platform'] ?? 'TikTok',
+        topic: widget.requestData['topic'] ?? '',
+        tone: widget.requestData['tone'] ?? 'Friendly',
+      );
+
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CaptionResultPage(
+            requestData: widget.requestData,
+            selectedIdea: widget.selectedIdea,
+            scriptData: _script,
+            initialCaption: caption,
+            initialHashtags: hashtags,
+          ),
+        ),
+      );
+    } on ContentGeneratorServiceException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isGeneratingCaption = false);
+      }
+    }
   }
 
   @override
@@ -102,12 +143,10 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
         body: SafeArea(
           child: Column(
             children: [
-              // HEADER
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 25, vertical: 20),
                 child: DashboardHeader(userName: 'Rina'),
               ),
-
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
@@ -117,7 +156,6 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // TITLE
                       Row(
                         children: [
                           IconButton(
@@ -127,7 +165,7 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
                           ),
                           const SizedBox(width: 8),
                           const Text(
-                            "Video Content Script",
+                            'Video Content Script',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -136,59 +174,66 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 6),
-
-                      const Text(
-                        "Ready to shoot? Follow the timeline below.",
-                        style: TextStyle(fontSize: 13, color: Colors.black54),
+                      Text(
+                        (widget.selectedIdea['title'] ?? '').toString(),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                        ),
                       ),
-
-                      const SizedBox(height: 30),
-
-                      // TIMELINE
-                      ...scripts.map((item) {
-                        return _buildScriptTimelineItem(
-                          primaryColor,
-                          time: item["time"]!,
-                          label: item["label"]!,
-                          visual: item["visual"]!,
-                          script: item["script"]!,
-                        );
-                      }),
-
-                      const SizedBox(height: 30),
-
-                      // BUTTONS
+                      const SizedBox(height: 24),
+                      _buildScriptTimelineItem(
+                        primaryColor,
+                        time: '00:00 - 00:03',
+                        label: 'HOOK',
+                        script: _hook,
+                        onCopy: () => copySingle(_hook),
+                      ),
+                      _buildScriptTimelineItem(
+                        primaryColor,
+                        time: '00:03 - 00:08',
+                        label: 'BODY',
+                        script: _body,
+                        onCopy: () => copySingle(_body),
+                      ),
+                      _buildScriptTimelineItem(
+                        primaryColor,
+                        time: '00:08 - 00:12',
+                        label: 'CTA',
+                        script: _cta,
+                        onCopy: () => copySingle(_cta),
+                      ),
+                      const SizedBox(height: 24),
                       _buildPrimaryButton(
-                        label: "Copy Full Script",
+                        label: 'Copy Full Script',
                         icon: Icons.copy_all_rounded,
                         color: primaryColor,
                         isPrimary: true,
                         onPressed: () => copyFullScript(context),
                       ),
-
                       const SizedBox(height: 12),
-
                       _buildPrimaryButton(
-                        label: "Generate Other Script",
+                        label: _isRegenerating
+                            ? 'Generating...'
+                            : 'Generate Other Script',
                         icon: Icons.refresh_rounded,
                         color: primaryColor,
                         isPrimary: false,
-                        onPressed: generateNewScript,
+                        onPressed: _isRegenerating ? null : _generateNewScript,
                       ),
-
                       const SizedBox(height: 12),
-
-                      // 🔥 NEW BUTTON
                       _buildPrimaryButton(
-                        label: "Generate Caption + Hashtag",
+                        label: _isGeneratingCaption
+                            ? 'Generating...'
+                            : 'Generate Caption + Hashtag',
                         icon: Icons.auto_awesome,
                         color: primaryColor,
                         isPrimary: false,
-                        onPressed: goToCaptionPage,
+                        onPressed: _isGeneratingCaption
+                            ? null
+                            : _goToCaptionPage,
                       ),
-
                       const SizedBox(height: 100),
                     ],
                   ),
@@ -227,15 +272,12 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
     );
   }
 
-  // ===============================
-  // TIMELINE ITEM
-  // ===============================
   Widget _buildScriptTimelineItem(
     Color color, {
     required String time,
     required String label,
-    required String visual,
     required String script,
+    required VoidCallback onCopy,
   }) {
     return IntrinsicHeight(
       child: Row(
@@ -257,9 +299,7 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
               ),
             ],
           ),
-
           const SizedBox(width: 20),
-
           Expanded(
             child: Container(
               margin: const EdgeInsets.only(bottom: 20),
@@ -292,10 +332,8 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
                         ),
                       ),
                       const Spacer(),
-
-                      // 👉 COPY PER ITEM
                       GestureDetector(
-                        onTap: () => copySingle(script),
+                        onTap: onCopy,
                         child: const Icon(
                           Icons.copy_outlined,
                           size: 16,
@@ -304,22 +342,9 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    "Visual: $visual",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.blueGrey.shade400,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-
                   const Divider(height: 25),
-
                   Text(
-                    script,
+                    script.isEmpty ? '-' : script,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -335,15 +360,12 @@ class _ScriptResultPageState extends State<ScriptResultPage> {
     );
   }
 
-  // ===============================
-  // BUTTON
-  // ===============================
   Widget _buildPrimaryButton({
     required String label,
     required IconData icon,
     required Color color,
     required bool isPrimary,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
   }) {
     return SizedBox(
       width: double.infinity,

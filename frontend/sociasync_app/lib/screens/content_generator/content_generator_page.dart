@@ -9,6 +9,7 @@ import 'package:sociasync_app/screens/content_generator/saved_content_page.dart'
 import 'package:sociasync_app/screens/content_generator/content_ideas_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
+import 'package:sociasync_app/services/content_generator_service.dart';
 
 class ContentGeneratorPage extends StatefulWidget {
   const ContentGeneratorPage({super.key});
@@ -21,8 +22,49 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   bool isTikTokSelected = true;
   final Map<String, bool> _toggleStates = {};
+  final TextEditingController _topicController = TextEditingController();
+  final TextEditingController _otherGoalController = TextEditingController();
+  final TextEditingController _otherAudienceController =
+      TextEditingController();
+  final TextEditingController _otherToneController = TextEditingController();
+  bool _isSubmitting = false;
+
+  static const List<String> _goalOptions = <String>[
+    'Increase Engagement',
+    'Promote Product',
+    'Brand Awareness',
+    'Drive Sales',
+    'Other..',
+  ];
+
+  static const List<String> _audienceOptions = <String>[
+    'Female',
+    'Male',
+    'Teens',
+    'Young Adults',
+    'Food Enthusiasts',
+    'Other..',
+  ];
+
+  static const List<String> _toneOptions = <String>[
+    'Friendly',
+    'Professional',
+    'Fun',
+    'Luxury',
+    'Informative',
+    'Other..',
+  ];
 
   final int _currentIndex = -1;
+
+  @override
+  void dispose() {
+    _topicController.dispose();
+    _otherGoalController.dispose();
+    _otherAudienceController.dispose();
+    _otherToneController.dispose();
+    super.dispose();
+  }
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -52,6 +94,97 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
+    }
+  }
+
+  String? _extractSelectedOption(
+    String section,
+    List<String> options,
+    TextEditingController otherController,
+  ) {
+    for (final option in options) {
+      final key = '$section::$option';
+      if (_toggleStates[key] == true) {
+        if (option.startsWith('Other')) {
+          final custom = otherController.text.trim();
+          if (custom.isNotEmpty) {
+            return custom;
+          }
+          return null;
+        }
+        return option;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _generateIdeas() async {
+    if (_isSubmitting) return;
+
+    final topic = _topicController.text.trim();
+    final goal = _extractSelectedOption(
+      'Goal',
+      _goalOptions,
+      _otherGoalController,
+    );
+    final audience = _extractSelectedOption(
+      'Target Audience',
+      _audienceOptions,
+      _otherAudienceController,
+    );
+    final tone = _extractSelectedOption(
+      'Tone of Voice',
+      _toneOptions,
+      _otherToneController,
+    );
+
+    if (topic.isEmpty || goal == null || audience == null || tone == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Lengkapi topic, goal, target audience, dan tone dulu.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final platform = isTikTokSelected ? 'TikTok' : 'Instagram';
+
+    setState(() => _isSubmitting = true);
+    try {
+      final ideas = await ContentGeneratorService.generateIdeas(
+        platform: platform,
+        topic: topic,
+        goal: goal,
+        audience: audience,
+        tone: tone,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ContentIdeasPage(
+            requestData: {
+              'platform': platform,
+              'topic': topic,
+              'goal': goal,
+              'audience': audience,
+              'tone': tone,
+            },
+            ideas: ideas,
+          ),
+        ),
+      );
+    } on ContentGeneratorServiceException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -132,6 +265,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                   const SizedBox(height: 20),
 
                   TextField(
+                    controller: _topicController,
                     decoration: InputDecoration(
                       hintText: 'Enter Topic of Choice..',
                       hintStyle: TextStyle(color: Color(0XFF1D2F73)),
@@ -145,44 +279,26 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  _buildFormSection('Goal', [
-                    'Increase Engagement',
-                    'Promote Product',
-                    'Brand Awareness',
-                    'Drive Sales',
-                    'Other..',
-                  ]),
+                  _buildFormSection('Goal', _goalOptions, _otherGoalController),
                   const SizedBox(height: 20),
-                  _buildFormSection('Target Audience', [
-                    'Female',
-                    'Male',
-                    'Teens',
-                    'Young Adults',
-                    'Food Enthusiasts',
-                    'Other..',
-                  ]),
+                  _buildFormSection(
+                    'Target Audience',
+                    _audienceOptions,
+                    _otherAudienceController,
+                  ),
                   const SizedBox(height: 20),
-                  _buildFormSection('Tone of Voice', [
-                    'Friendly',
-                    'Professional',
-                    'Fun',
-                    'Luxury',
-                    'Informative',
-                    'Other..',
-                  ]),
+                  _buildFormSection(
+                    'Tone of Voice',
+                    _toneOptions,
+                    _otherToneController,
+                  ),
                   const SizedBox(height: 30),
 
                   Center(
                     child: SizedBox(
                       width: 170,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ContentIdeasPage(),
-                            ),
-                          );
-                        },
+                        onPressed: _isSubmitting ? null : _generateIdeas,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFB4BCE2),
                           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -191,9 +307,9 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                           ),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'NEXT',
-                          style: TextStyle(
+                        child: Text(
+                          _isSubmitting ? 'Loading...' : 'NEXT',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
@@ -244,7 +360,11 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
   }
 
   // Widget Seksi Form (Goal, Target Audience, Tone)
-  Widget _buildFormSection(String title, List<String> options) {
+  Widget _buildFormSection(
+    String title,
+    List<String> options,
+    TextEditingController otherController,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -265,7 +385,8 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
           const SizedBox(height: 8),
           ...options.map((option) {
             bool isOther = option.startsWith('Other');
-            final bool isOn = _toggleStates[option] ?? false;
+            final key = '$title::$option';
+            final bool isOn = _toggleStates[key] ?? false;
 
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -289,10 +410,11 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                               height: 24,
                               margin: const EdgeInsets.only(left: 4, right: 50),
                               decoration: BoxDecoration(
-                                color: const Color(0xffba0b1fc),
+                                color: const Color(0xFFECF1FF),
                                 borderRadius: BorderRadius.circular(5),
                               ),
-                              child: const TextField(
+                              child: TextField(
+                                controller: otherController,
                                 textAlignVertical: TextAlignVertical.center,
                                 style: TextStyle(
                                   fontSize: 12,
@@ -322,7 +444,7 @@ class _ContentGeneratorPageState extends State<ContentGeneratorPage> {
                   GestureDetector(
                     onTap: () {
                       setState(() {
-                        _toggleStates[option] = !isOn;
+                        _toggleStates[key] = !isOn;
                       });
                     },
                     child: _buildCustomToggle(isOn),

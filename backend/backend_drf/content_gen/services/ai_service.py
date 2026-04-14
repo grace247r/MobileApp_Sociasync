@@ -8,23 +8,27 @@ from dotenv import load_dotenv
 load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
-
-if not api_key:
-    raise ValueError("GEMINI_API_KEY not found in environment variables. Check your .env file.")
-
-genai.configure(api_key=api_key)
-
-# Use the first available model that supports generateContent
-available_models = [m.name for m in genai.list_models() if "generateContent" in m.supported_generation_methods]
-if available_models:
-    model_name = available_models[0].replace("models/", "")
-    model = genai.GenerativeModel(model_name)
-else:
-    raise ValueError("No available models that support generateContent")
+model = None
+if api_key:
+    try:
+        genai.configure(api_key=api_key)
+        available_models = [
+            m.name
+            for m in genai.list_models()
+            if "generateContent" in m.supported_generation_methods
+        ]
+        if available_models:
+            model_name = available_models[0].replace("models/", "")
+            model = genai.GenerativeModel(model_name)
+    except Exception as e:
+        print("GEMINI INIT ERROR:", str(e))
 
 
 def call_ai(prompt):
     try:
+        if model is None:
+            return fallback_response(prompt)
+
         response = model.generate_content(
             prompt,
             generation_config={
@@ -42,26 +46,67 @@ def call_ai(prompt):
     except Exception as e:
         print("GEMINI ERROR:", str(e))
 
-        # ✅ fallback biar gak crash
-        return """
-        [
-          {
-            "title": "Fallback Idea 1",
-            "type": "Test",
-            "description": "AI failed, this is fallback"
-          },
-          {
-            "title": "Fallback Idea 2",
-            "type": "Test",
-            "description": "AI failed, this is fallback"
-          },
-          {
-            "title": "Fallback Idea 3",
-            "type": "Test",
-            "description": "AI failed, this is fallback"
-          }
-        ]
-        """
+        return fallback_response(prompt)
+
+
+def fallback_response(prompt):
+    prompt_lower = prompt.lower()
+
+    if 'generate exactly 3' in prompt_lower or 'content ideas' in prompt_lower:
+        return json.dumps([
+            {
+                'title': 'Hook Cepat',
+                'type': 'Content Idea',
+                'description': 'Mulai dengan hook singkat yang langsung memancing rasa penasaran.'
+            },
+            {
+                'title': 'Before After',
+                'type': 'Content Idea',
+                'description': 'Tampilkan perbandingan sebelum dan sesudah untuk mendorong interaksi.'
+            },
+            {
+                'title': 'Behind the Scene',
+                'type': 'Content Idea',
+                'description': 'Perlihatkan proses singkat agar konten terasa autentik dan relatable.'
+            }
+        ])
+
+    if 'create a high-retention script' in prompt_lower or 'hook must grab attention' in prompt_lower:
+        if 'previous script' in prompt_lower or 'do not repeat' in prompt_lower:
+            return json.dumps({
+                'hook': 'Kamu bakal kaget sama hasil akhirnya!',
+                'body': 'Mulai dari potongan paling menarik, lalu lanjut ke detail singkat yang bikin penasaran.',
+                'cta': 'Kalau mau versi lain, simpan dulu dan kasih komentar idemu.'
+            })
+
+        return json.dumps({
+            'hook': 'Coba lihat ini dulu, hasilnya beda banget!',
+            'body': 'Tunjukkan proses inti dengan potongan cepat dan visual yang jelas.',
+            'cta': 'Kalau menurut kamu menarik, simpan dan share ke temanmu.'
+        })
+
+    if 'create an engaging caption' in prompt_lower or 'caption must be engaging' in prompt_lower:
+        return json.dumps({
+            'caption': 'Kalau kamu suka konten seperti ini, wajib coba versi lengkapnya. Tulis pendapatmu di komentar ya!'
+        })
+
+    if 'generate relevant hashtags' in prompt_lower or 'generate 8–12 relevant hashtags' in prompt_lower:
+        return json.dumps({
+            'hashtags': [
+                '#contentcreator',
+                '#viralcontent',
+                '#sociasync',
+                '#fyp',
+                '#reels',
+                '#tiktokindonesia',
+                '#instagood',
+                '#digitalmarketing'
+            ]
+        })
+
+    return json.dumps({
+        'error': 'Fallback AI response not matched to prompt',
+    })
 
 
 def clean_response(text):

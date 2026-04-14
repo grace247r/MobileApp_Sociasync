@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/services/content_generator_service.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
@@ -9,14 +10,18 @@ import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 
-// Model Data Sederhana
 class SavedStrategy {
   final String topic;
+  final String ideaTitle;
   final DateTime date;
-  final String category; // Tips, Review, Storytelling
-  final int reachEstimation;
+  final String platform;
 
-  SavedStrategy(this.topic, this.date, this.category, this.reachEstimation);
+  SavedStrategy({
+    required this.topic,
+    required this.ideaTitle,
+    required this.date,
+    required this.platform,
+  });
 }
 
 class SavedContentPage extends StatefulWidget {
@@ -30,77 +35,95 @@ class _SavedContentPageState extends State<SavedContentPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   final int _currentIndex = 1;
 
-  // 1. DATA DUMMY
-  List<SavedStrategy> allData = [
-    SavedStrategy("Street Food Jakarta", DateTime(2026, 3, 15), "Review", 1500),
-    SavedStrategy("Tips Reels Viral", DateTime(2026, 1, 10), "Tips", 3000),
-    SavedStrategy("Daily Vlog Rina", DateTime(2026, 2, 20), "Story", 1200),
-    SavedStrategy(
-      "Review Cafe Aesthetic",
-      DateTime(2026, 4, 05),
-      "Review",
-      2500,
-    ),
-    SavedStrategy("Tutorial Edit CapCut", DateTime(2026, 3, 01), "Tips", 4000),
-    SavedStrategy("A Day In My Life", DateTime(2026, 3, 28), "Story", 900),
-  ];
+  List<SavedStrategy> allData = const <SavedStrategy>[];
+  List<SavedStrategy> filteredData = const <SavedStrategy>[];
+  String searchQuery = '';
+  String sortBy = 'date';
+  bool _isLoading = true;
 
-  List<SavedStrategy> filteredData = [];
-  String searchQuery = "";
-  String sortBy = "date"; // default sort by date
+  DateTime? _filterStart;
+  DateTime? _filterEnd;
 
   @override
   void initState() {
     super.initState();
-    filteredData = List.from(allData);
-    _applyFilters();
+    _loadSavedContent();
   }
 
-  // 2. LOGIKA FILTER & SORT
+  Future<void> _loadSavedContent() async {
+    setState(() => _isLoading = true);
+    try {
+      final result = await ContentGeneratorService.getSavedContents();
+      final parsed = result.map((item) {
+        final created = DateTime.tryParse(
+          (item['created_at'] ?? '').toString(),
+        );
+        final idea = item['idea'] is Map
+            ? Map<String, dynamic>.from(item['idea'] as Map)
+            : <String, dynamic>{};
+
+        return SavedStrategy(
+          topic: (item['topic'] ?? '-').toString(),
+          ideaTitle: (idea['title'] ?? '-').toString(),
+          date: created ?? DateTime.now(),
+          platform: (item['platform'] ?? '-').toString(),
+        );
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        allData = parsed;
+        _isLoading = false;
+      });
+      _applyFilters();
+    } on ContentGeneratorServiceException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        allData = const <SavedStrategy>[];
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
   void _applyFilters() {
     setState(() {
-      // Search logic
-      filteredData = allData
-          .where(
-            (item) =>
-                item.topic.toLowerCase().contains(searchQuery.toLowerCase()),
-          )
-          .toList();
+      filteredData = allData.where((item) {
+        final matchSearch =
+            item.topic.toLowerCase().contains(searchQuery.toLowerCase()) ||
+            item.ideaTitle.toLowerCase().contains(searchQuery.toLowerCase());
 
-      // Sort logic
-      if (sortBy == "date") {
-        filteredData.sort(
-          (a, b) => b.date.compareTo(a.date),
-        ); // Terbaru ke lama
-      } else if (sortBy == "size") {
-        filteredData.sort(
-          (a, b) => b.reachEstimation.compareTo(a.reachEstimation),
-        ); // Reach tertinggi
+        if (!matchSearch) return false;
+        if (_filterStart == null || _filterEnd == null) return true;
+
+        return item.date.isAfter(
+              _filterStart!.subtract(const Duration(days: 1)),
+            ) &&
+            item.date.isBefore(_filterEnd!.add(const Duration(days: 1)));
+      }).toList();
+
+      if (sortBy == 'date') {
+        filteredData.sort((a, b) => b.date.compareTo(a.date));
+      } else {
+        filteredData.sort((a, b) => a.platform.compareTo(b.platform));
       }
     });
   }
 
-  // 3. DATE PICKER LOGIC - Using CustomDateRangeDialog Widget
   void _selectDateRange() {
     showDialog(
       context: context,
       builder: (context) {
         return date_picker.CustomDateRangeDialog(
           primaryColor: primaryBlue,
+          initialStartDate: _filterStart,
+          initialEndDate: _filterEnd,
           onApply: (startDate, endDate) {
-            setState(() {
-              filteredData = allData
-                  .where(
-                    (item) =>
-                        item.date.isAfter(
-                          startDate.subtract(const Duration(days: 1)),
-                        ) &&
-                        item.date.isBefore(
-                          endDate.add(const Duration(days: 1)),
-                        ),
-                  )
-                  .toList();
-            });
+            _filterStart = startDate;
+            _filterEnd = endDate;
+            _applyFilters();
           },
         );
       },
@@ -117,7 +140,6 @@ class _SavedContentPageState extends State<SavedContentPage> {
             SafeArea(
               child: Column(
                 children: [
-                  // HEADER
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: DashboardHeader(
@@ -131,7 +153,6 @@ class _SavedContentPageState extends State<SavedContentPage> {
                       ),
                     ),
                   ),
-
                   Expanded(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
@@ -139,7 +160,6 @@ class _SavedContentPageState extends State<SavedContentPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // TITLE & DATE FILTER
                           Row(
                             children: [
                               IconButton(
@@ -189,8 +209,6 @@ class _SavedContentPageState extends State<SavedContentPage> {
                             ],
                           ),
                           const SizedBox(height: 20),
-
-                          // SEARCH BAR
                           TextField(
                             onChanged: (value) {
                               searchQuery = value;
@@ -211,18 +229,14 @@ class _SavedContentPageState extends State<SavedContentPage> {
                             ),
                           ),
                           const SizedBox(height: 15),
-
-                          // SORT BUTTONS
                           Row(
                             children: [
-                              _buildSortChip('Reach (Size)', "size"),
+                              _buildSortChip('Platform', 'platform'),
                               const SizedBox(width: 10),
-                              _buildSortChip('Latest (Date)', "date"),
+                              _buildSortChip('Latest (Date)', 'date'),
                             ],
                           ),
                           const SizedBox(height: 20),
-
-                          // GRID CONTAINER
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
@@ -232,11 +246,20 @@ class _SavedContentPageState extends State<SavedContentPage> {
                                 color: Colors.white.withOpacity(0.2),
                               ),
                             ),
-                            child: filteredData.isEmpty
+                            child: _isLoading
+                                ? const Padding(
+                                    padding: EdgeInsets.all(24),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.2,
+                                      ),
+                                    ),
+                                  )
+                                : filteredData.isEmpty
                                 ? const Center(
                                     child: Padding(
                                       padding: EdgeInsets.all(40),
-                                      child: Text("No strategy found."),
+                                      child: Text('No strategy found.'),
                                     ),
                                   )
                                 : GridView.builder(
@@ -292,9 +315,8 @@ class _SavedContentPageState extends State<SavedContentPage> {
     );
   }
 
-  // WIDGET HELPER
   Widget _buildSortChip(String label, String value) {
-    bool isSelected = sortBy == value;
+    final isSelected = sortBy == value;
     return GestureDetector(
       onTap: () {
         sortBy = value;
@@ -341,7 +363,7 @@ class _SavedContentPageState extends State<SavedContentPage> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  data.category,
+                  data.platform,
                   style: TextStyle(
                     color: primaryBlue,
                     fontSize: 8,
@@ -349,7 +371,7 @@ class _SavedContentPageState extends State<SavedContentPage> {
                   ),
                 ),
               ),
-              const Icon(Icons.more_vert, size: 14, color: Colors.grey),
+              const Icon(Icons.bookmark_rounded, size: 14, color: Colors.grey),
             ],
           ),
           const Spacer(),
@@ -361,22 +383,15 @@ class _SavedContentPageState extends State<SavedContentPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            "${data.date.day}/${data.date.month}/${data.date.year}",
+            data.ideaTitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 10, color: Colors.grey),
           ),
           const Divider(),
-          Row(
-            children: [
-              const Icon(Icons.trending_up, size: 12, color: Colors.green),
-              const SizedBox(width: 4),
-              Text(
-                "${data.reachEstimation} Est. Reach",
-                style: const TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+          Text(
+            '${data.date.day}/${data.date.month}/${data.date.year}',
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ],
       ),

@@ -37,15 +37,25 @@ You are a short-form video script expert (TikTok/Reels).
 
 Create a high-retention script.
 
+This is a new variation request. Make it meaningfully different from the previous version.
+
 Content Idea:
 Title: {data['title']}
 Description: {data['description']}
+
+Previous Script (for reference only, do not repeat the wording):
+Hook: {data.get('previous_hook', '')}
+Body: {data.get('previous_body', '')}
+CTA: {data.get('previous_cta', '')}
 
 Rules:
 - Hook must grab attention in the first 3 seconds
 - Body must be fast-paced and engaging
 - CTA must encourage interaction (like, comment, follow)
 - Keep language natural and suitable for social media
+- Do not reuse the same opening, phrasing, or structure from the previous script
+- If the previous version used a direct statement, try a question or contrast in the new version
+- Make sure the new script still matches the same content idea, but from a fresh angle
 
 IMPORTANT:
 - Return ONLY valid JSON
