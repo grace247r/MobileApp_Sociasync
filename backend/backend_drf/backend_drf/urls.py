@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/instagram/', include('insta_scraper.urls')),
     path('api/tiktok/', include('tiktok_scraper.urls')),
     path('api/content-gen/', include('content_gen.urls')),
+    path('api/chat/', include('chatbot_AI.urls')),
 ]
 
 if settings.DEBUG:

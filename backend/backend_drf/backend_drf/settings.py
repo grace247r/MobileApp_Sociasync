@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'insta_scraper',
     'tiktok_scraper',
     'content_gen',
+    'chatbot_AI',
 ]
 
 MIDDLEWARE = [
