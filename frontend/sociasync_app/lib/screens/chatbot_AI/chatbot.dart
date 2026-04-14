@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
-import 'package:sociasync_app/services/auth_service.dart';
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
@@ -17,26 +17,55 @@ class ChatbotPage extends StatefulWidget {
 class _ChatbotPageState extends State<ChatbotPage> {
   final Color primaryBlue = const Color(0xFF1D5093);
   final int _currentIndex = 2;
-  String _userName = 'User';
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserName();
-  }
+  // 0 = Reminder, 1 = Chatbot AI
+  int _activeTab = 0;
 
-  Future<void> _loadUserName() async {
-    try {
-      final profile = await AuthService.getMe();
-      if (!mounted) return;
-      final name = (profile['name'] ?? '').toString().trim();
-      if (name.isNotEmpty) {
-        setState(() => _userName = name);
-      }
-    } catch (_) {
-      // Keep fallback value when profile cannot be loaded.
-    }
-  }
+  // List reminders as state
+  List<Map<String, dynamic>> _reminders = [
+    {
+      'to': 'Victor',
+      'message': 'Don\'t forget to pay the club fee',
+      'day': 'Monday',
+      'time': '09:00',
+    },
+    {
+      'to': 'Anna',
+      'message': 'Project meeting at 3 PM',
+      'day': 'Tuesday',
+      'time': '15:00',
+    },
+    {
+      'to': 'Budi',
+      'message': 'Submit weekly report',
+      'day': 'Wednesday',
+      'time': '10:00',
+    },
+  ];
+
+  final List<String> _days = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+  final List<String> _times = [
+    '08:00',
+    '09:00',
+    '10:00',
+    '11:00',
+    '12:00',
+    '13:00',
+    '14:00',
+    '15:00',
+    '16:00',
+    '17:00',
+    '18:00',
+    '19:00',
+  ];
 
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
@@ -62,62 +91,48 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final navBarHeight = (screenWidth * 0.16).clamp(60.0, 74.0).toDouble();
-
     return AppBackgroundWrapper(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        extendBody: true,
-        body: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. WIDGET ATAS: Header yang sudah ada
+                DashboardHeader(
+                  userName: 'Rina',
+                  primaryColor: primaryBlue,
+                  onNotificationTap: () {},
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 15),
+
+                // 2. Title & Back Button (judul diganti jadi 'Chat')
+                Row(
                   children: [
-                    DashboardHeader(
-                      userName: _userName,
-                      primaryColor: primaryBlue,
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: primaryBlue,
+                        size: 28,
+                      ),
                     ),
-                    const SizedBox(height: 15),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Icon(
-                            Icons.arrow_back,
-                            color: primaryBlue,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'Sociasync AI',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2E2E2E),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Messages',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2E2E2E),
+                      ),
                     ),
-                    const SizedBox(height: 15),
                   ],
                 ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: 20,
-                    right: 20,
-                    bottom: navBarHeight + 12,
-                  ),
+                const SizedBox(height: 15),
+
+                // 3. MAIN CHAT CONTAINER (Wadah ber-border biru)
+                Expanded(
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -127,6 +142,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     ),
                     child: Column(
                       children: [
+                        // Blue Header inside Chat Container
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 15,
@@ -171,32 +187,291 @@ class _ChatbotPageState extends State<ChatbotPage> {
                             ],
                           ),
                         ),
-                        Expanded(
-                          child: ListView(
-                            padding: const EdgeInsets.all(15),
-                            children: [_buildBotMessage(_userName)],
+
+                        // INNER NAVBAR (Reminder | Chatbot AI)
+                        Container(
+                          color: Colors.white,
+                          child: Row(
+                            children: [
+                              _buildInnerTab(label: 'Reminders', index: 0),
+                              _buildInnerTab(label: 'Chatbot AI', index: 1),
+                            ],
                           ),
                         ),
-                        _buildChatInput(),
+                        const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Color(0xFFE8E8E8),
+                        ),
+
+                        // Konten Tab pakai IndexedStack supaya state tidak reset
+                        Expanded(
+                          child: IndexedStack(
+                            index: _activeTab,
+                            children: [
+                              // Tab 0: Reminder
+                              _buildReminderTab(),
+                              // Tab 1: Chatbot AI
+                              ListView(
+                                padding: const EdgeInsets.all(15),
+                                children: [_buildBotMessage()],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Input Area hanya tampil di tab Chatbot AI
+                        if (_activeTab == 1) _buildChatInput(),
                       ],
                     ),
                   ),
                 ),
+                const SizedBox(height: 100), // Jarak untuk Navbar
+              ],
+            ),
+          ),
+
+          // 4. WIDGET BAWAH: Navbar Melayang
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: AppNavbar(
+              selectedIndex: _currentIndex,
+              backgroundColor: primaryBlue,
+              onTap: _onNavbarTap,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget tab button untuk inner navbar
+  Widget _buildInnerTab({required String label, required int index}) {
+    final bool isActive = _activeTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _activeTab = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(
+                color: isActive ? primaryBlue : Colors.transparent,
+                width: 2,
               ),
-            ],
+            ),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              color: isActive ? primaryBlue : Colors.grey,
+            ),
           ),
         ),
-        bottomNavigationBar: AppNavbar(
-          selectedIndex: _currentIndex,
-          backgroundColor: primaryBlue,
-          onTap: _onNavbarTap,
+      ),
+    );
+  }
+
+  // Tab 0: Konten Reminder
+  Widget _buildReminderTab() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: _reminders.length,
+      itemBuilder: (context, i) {
+        final r = _reminders[i];
+        return Card(
+          elevation: 3,
+          margin: const EdgeInsets.only(bottom: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'To: ${r['to']!}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: primaryBlue,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Divider(height: 1, thickness: 1),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.message, size: 18, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Message: ${r['message']!}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 18,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${r['day']!} at ${r['time']!}',
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _markAsDone(i),
+                      icon: const Icon(Icons.check, size: 16),
+                      label: const Text('Complete'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _showEditDialog(i),
+                      icon: const Icon(Icons.edit, size: 16),
+                      label: const Text('Edit'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _markAsDone(int index) {
+    setState(() {
+      _reminders.removeAt(index);
+    });
+  }
+
+  void _showEditDialog(int index) {
+    final TextEditingController messageController = TextEditingController(
+      text: _reminders[index]['message'],
+    );
+    String selectedDay = _reminders[index]['day'];
+    String selectedTime = _reminders[index]['time'];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setLocalState) => AlertDialog(
+          title: const Text('Edit Reminder'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: messageController,
+                  decoration: const InputDecoration(
+                    labelText: 'Message',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedDay,
+                  decoration: const InputDecoration(
+                    labelText: 'Day',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _days.map((day) {
+                    return DropdownMenuItem(value: day, child: Text(day));
+                  }).toList(),
+                  onChanged: (value) {
+                    setLocalState(() => selectedDay = value!);
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedTime,
+                  decoration: const InputDecoration(
+                    labelText: 'Time',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _times.map((time) {
+                    return DropdownMenuItem(value: time, child: Text(time));
+                  }).toList(),
+                  onChanged: (value) {
+                    setLocalState(() => selectedTime = value!);
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _reminders[index] = {
+                    'to': _reminders[index]['to'],
+                    'message': messageController.text,
+                    'day': selectedDay,
+                    'time': selectedTime,
+                  };
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
       ),
     );
   }
 
   // Widget Bubble Chat Bot
-  Widget _buildBotMessage(String userName) {
+  Widget _buildBotMessage() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -241,16 +516,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Hi $userName! 👋',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+              const Text(
+                'Hi Rina! 👋',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               const SizedBox(height: 10),
               const Text(
-                'Your engagement increased by 12% on short-from videos\nBut dropped on carousel posts (-8%)\n\nFocus on short videos with a strong hook in the first 3 seconds\nUse simple storytelling + subtitles to keep attention',
+                'Your engagement increased by 12% on short-form videos\nBut dropped on carousel posts (-8%)\n\nFocus on short videos with a strong hook in the first 3 seconds\nUse simple storytelling + subtitles to keep attention',
                 style: TextStyle(fontSize: 13, height: 1.4),
               ),
             ],
@@ -294,7 +566,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
               ),
               child: const TextField(
                 decoration: InputDecoration(
-                  hintText: 'Hi, how can I help you?',
+                  hintText: 'Hi, Artnity can i help you?.....',
                   hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
                   border: InputBorder.none,
                 ),
@@ -311,7 +583,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
-            child: const Text('Send', style: TextStyle(color: Colors.white)),
+            child: const Text('Kirim', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
