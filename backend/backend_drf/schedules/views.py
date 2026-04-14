@@ -23,7 +23,7 @@ def schedule_list_create(request):
         return Response(serializer.errors, status=400)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def schedule_detail(request, pk):
     try:
@@ -35,8 +35,12 @@ def schedule_detail(request, pk):
         serializer = ScheduleSerializer(schedule)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
-        serializer = ScheduleSerializer(schedule, data=request.data)
+    elif request.method in ['PUT', 'PATCH']:
+        serializer = ScheduleSerializer(
+            schedule,
+            data=request.data,
+            partial=request.method == 'PATCH',
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

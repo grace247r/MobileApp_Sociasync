@@ -9,16 +9,31 @@ import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/screens/dashboard/notification_page.dart';
+import 'package:sociasync_app/screens/content_generator/saved_content_detail_page.dart';
 
 class SavedStrategy {
+  final int id;
   final String topic;
   final String ideaTitle;
+  final String ideaDescription;
+  final String scriptHook;
+  final String scriptBody;
+  final String scriptCta;
+  final String caption;
+  final List<String> hashtags;
   final DateTime date;
   final String platform;
 
   SavedStrategy({
+    required this.id,
     required this.topic,
     required this.ideaTitle,
+    required this.ideaDescription,
+    required this.scriptHook,
+    required this.scriptBody,
+    required this.scriptCta,
+    required this.caption,
+    required this.hashtags,
     required this.date,
     required this.platform,
   });
@@ -61,10 +76,27 @@ class _SavedContentPageState extends State<SavedContentPage> {
         final idea = item['idea'] is Map
             ? Map<String, dynamic>.from(item['idea'] as Map)
             : <String, dynamic>{};
+        final script = item['script'] is Map
+            ? Map<String, dynamic>.from(item['script'] as Map)
+            : <String, dynamic>{};
+        final hashtagsRaw = item['hashtags'];
+        final hashtags = hashtagsRaw is List
+            ? hashtagsRaw
+                  .map((value) => value.toString().trim())
+                  .where((value) => value.isNotEmpty)
+                  .toList()
+            : <String>[];
 
         return SavedStrategy(
+          id: int.tryParse((item['id'] ?? '0').toString()) ?? 0,
           topic: (item['topic'] ?? '-').toString(),
           ideaTitle: (idea['title'] ?? '-').toString(),
+          ideaDescription: (idea['description'] ?? '-').toString(),
+          scriptHook: (script['hook'] ?? '-').toString(),
+          scriptBody: (script['body'] ?? '-').toString(),
+          scriptCta: (script['cta'] ?? '-').toString(),
+          caption: (item['caption'] ?? '-').toString(),
+          hashtags: hashtags,
           date: created ?? DateTime.now(),
           platform: (item['platform'] ?? '-').toString(),
         );
@@ -127,6 +159,13 @@ class _SavedContentPageState extends State<SavedContentPage> {
           },
         );
       },
+    );
+  }
+
+  Future<void> _openDetail(SavedStrategy item) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => SavedContentDetailPage(content: item)),
     );
   }
 
@@ -341,59 +380,66 @@ class _SavedContentPageState extends State<SavedContentPage> {
   }
 
   Widget _buildStrategyItem(SavedStrategy data) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: primaryBlue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  data.platform,
-                  style: TextStyle(
-                    color: primaryBlue,
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: () => _openDetail(data),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: primaryBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    data.platform,
+                    style: TextStyle(
+                      color: primaryBlue,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              const Icon(Icons.bookmark_rounded, size: 14, color: Colors.grey),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            data.topic,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            data.ideaTitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
-          ),
-          const Divider(),
-          Text(
-            '${data.date.day}/${data.date.month}/${data.date.year}',
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
-          ),
-        ],
+                const Icon(
+                  Icons.bookmark_rounded,
+                  size: 14,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              data.topic,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              data.ideaTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+            const Divider(),
+            Text(
+              '${data.date.day}/${data.date.month}/${data.date.year}',
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
     );
   }

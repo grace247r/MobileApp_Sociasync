@@ -42,7 +42,7 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
         final parsedStart = DateTime.tryParse(rawStart);
         if (parsedStart == null) continue;
 
-        final key = _eventKey(parsedStart.toLocal());
+        final key = _eventKey(parsedStart);
         grouped.putIfAbsent(key, () => <Map<String, dynamic>>[]).add(item);
       }
 
@@ -53,7 +53,10 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
           ..addAll(grouped);
       });
     } catch (_) {
-      // Keep UI usable even when API fails.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal memuat jadwal terbaru.')),
+      );
     }
   }
 
@@ -109,6 +112,158 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
     return _events[_eventKey(day)] ?? const <Map<String, dynamic>>[];
   }
 
+  String _prettyDateTime(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return '-';
+
+    final hour12 = parsed.hour % 12 == 0 ? 12 : parsed.hour % 12;
+    final minute = parsed.minute.toString().padLeft(2, '0');
+    final period = parsed.hour < 12 ? 'AM' : 'PM';
+    return '${_fullDate(parsed)} • $hour12.$minute $period';
+  }
+
+  String _valueOrDash(dynamic value) {
+    final text = (value ?? '').toString().trim();
+    return text.isEmpty || text.toLowerCase() == 'null' ? '-' : text;
+  }
+
+  String _repeatFromApi(String value) {
+    final raw = value.trim().toLowerCase();
+    if (raw == 'daily') return 'Daily';
+    if (raw == 'weekly') return 'Weekly';
+    if (raw == 'monthly') return 'Monthly';
+    return 'Never';
+  }
+
+  Future<void> _openEditEvent(Map<String, dynamic> event) async {
+    final id = int.tryParse((event['id'] ?? '').toString()) ?? 0;
+    if (id <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event tidak valid untuk diedit.')),
+      );
+      return;
+    }
+
+    final startRaw = (event['start_time'] ?? '').toString();
+    final endRaw = (event['end_time'] ?? '').toString();
+    final startParsed = DateTime.tryParse(startRaw) ?? DateTime.now();
+    final endParsed =
+        DateTime.tryParse(endRaw) ?? startParsed.add(const Duration(hours: 1));
+
+    final saved = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddCalendarPage(
+          initialData: {
+            'scheduleId': id,
+            'title': _valueOrDash(event['title']),
+            'notes': _valueOrDash(event['notes']) == '-'
+                ? _valueOrDash(event['caption'])
+                : _valueOrDash(event['notes']),
+            'platform': _valueOrDash(event['platform']),
+            'isDaily': event['is_daily'] == true,
+            'repeat': _repeatFromApi(_valueOrDash(event['repeat'])),
+            'reminder': _valueOrDash(event['reminder_type']),
+            'startDate': DateTime(
+              startParsed.year,
+              startParsed.month,
+              startParsed.day,
+            ),
+            'endDate': DateTime(endParsed.year, endParsed.month, endParsed.day),
+            'startTime': TimeOfDay.fromDateTime(startParsed),
+            'endTime': TimeOfDay.fromDateTime(endParsed),
+          },
+        ),
+      ),
+    );
+
+    if (saved != null) {
+      await _loadSchedules();
+      final info = (saved['local_reminder_debug'] ?? '').toString();
+      if (info.isNotEmpty && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(info)));
+      }
+    }
+  }
+
+  void _showEventDetails(Map<String, dynamic> event) {
+    final title = _valueOrDash(event['title']);
+    final caption = _valueOrDash(event['caption']);
+    final platform = _valueOrDash(event['platform']);
+    final startTime = _prettyDateTime(_valueOrDash(event['start_time']));
+    final endTime = _prettyDateTime(_valueOrDash(event['end_time']));
+    final repeat = _valueOrDash(event['repeat']);
+    final reminder = _valueOrDash(event['reminder_type']);
+    final notes = _valueOrDash(event['notes']);
+    final status = (event['is_posted'] == true) ? 'Posted' : 'Scheduled';
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _detailLine('Platform', platform),
+              _detailLine('Status', status),
+              _detailLine('Start', startTime),
+              _detailLine('End', endTime),
+              _detailLine('Repeat', repeat),
+              _detailLine('Reminder', reminder),
+              _detailLine('Caption', caption),
+              _detailLine('Notes', notes),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                _openEditEvent(event);
+              });
+            },
+            child: const Text('Edit'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailLine(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 13, color: Colors.black87),
+          ),
+        ],
+      ),
+    );
+  }
+
   // --- Navigasi Dropdown ---
   void _showViewDropdown(BuildContext anchorContext) {
     final RenderBox button = anchorContext.findRenderObject() as RenderBox;
@@ -140,13 +295,19 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
     ).then((value) {
       if (!mounted) return;
       if (value == 'Month') {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const CalendarMonthPage()),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const CalendarMonthPage()),
+          );
+        });
       } else if (value == 'Year') {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const CalendarYearPage()),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const CalendarYearPage()),
+          );
+        });
       }
     });
   }
@@ -253,14 +414,21 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
               Center(
                 child: ElevatedButton(
                   onPressed: () async {
-                    final created = await Navigator.push<bool>(
+                    final saved = await Navigator.push<Map<String, dynamic>>(
                       context,
                       MaterialPageRoute(
                         builder: (_) => const AddCalendarPage(),
                       ),
                     );
-                    if (created == true) {
+                    if (saved != null) {
                       await _loadSchedules();
+                      final info = (saved['local_reminder_debug'] ?? '')
+                          .toString();
+                      if (info.isNotEmpty && mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(info)));
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -393,69 +561,53 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
           ] else ...[
             ...events.take(4).map((e) {
               final title = (e['title'] ?? 'Untitled event').toString();
-              return _buildDeadlineRow(title);
+              return _buildDeadlineRow(
+                title,
+                onTap: () => _showEventDetails(e),
+              );
             }),
           ],
-
-          const Spacer(),
-          const Text(
-            'Event :',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 8),
-
-          // Ringkasan event harian
-          Expanded(
-            flex: 2,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1D5093).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              padding: const EdgeInsets.all(10),
-              child: events.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No event',
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: events.length,
-                      itemBuilder: (_, i) {
-                        final title = (events[i]['title'] ?? 'Untitled event')
-                            .toString();
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text(
-                            '• $title',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildDeadlineRow(String title) {
+  Widget _buildDeadlineRow(String title, {VoidCallback? onTap}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          const Icon(Icons.circle, color: Color(0xFF4A90E2), size: 12),
-          const SizedBox(width: 8),
-          Expanded(child: Text(title, style: const TextStyle(fontSize: 12))),
-        ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: onTap == null
+                ? Colors.white.withOpacity(0.35)
+                : const Color(0xFF4A90E2).withOpacity(0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.circle, color: Color(0xFF4A90E2), size: 12),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (onTap != null)
+                const Icon(
+                  Icons.chevron_right,
+                  size: 16,
+                  color: Colors.black45,
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

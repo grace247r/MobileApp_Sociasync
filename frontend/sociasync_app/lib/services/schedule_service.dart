@@ -78,8 +78,63 @@ class ScheduleService {
       return <String, dynamic>{};
     }
 
+    _throwApiError(response.body);
+    throw AuthException(
+      'Gagal menambahkan event (HTTP ${response.statusCode}).',
+    );
+  }
+
+  static Future<Map<String, dynamic>> updateSchedule({
+    required int scheduleId,
+    required String title,
+    required String caption,
+    required String platform,
+    required DateTime startTime,
+    DateTime? endTime,
+    required bool isDaily,
+    required String repeat,
+    required String reminderType,
+    String? notes,
+  }) async {
+    final token = await AuthService.getAccessToken();
+    if (token == null || token.isEmpty) {
+      throw AuthException('Sesi login tidak ditemukan.');
+    }
+
+    final payload = {
+      'title': title,
+      'caption': caption,
+      'platform': platform,
+      'start_time': startTime.toIso8601String(),
+      'end_time': endTime?.toIso8601String(),
+      'is_daily': isDaily,
+      'repeat': repeat,
+      'reminder_type': reminderType,
+      'notes': (notes ?? '').trim().isEmpty ? null : notes!.trim(),
+    };
+
+    final response = await http.patch(
+      _uri('$scheduleId/'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return <String, dynamic>{};
+    }
+
+    _throwApiError(response.body);
+    throw AuthException('Gagal mengubah event (HTTP ${response.statusCode}).');
+  }
+
+  static Never _throwApiError(String responseBody) {
     try {
-      final body = jsonDecode(response.body);
+      final body = jsonDecode(responseBody);
       if (body is Map<String, dynamic>) {
         for (final value in body.values) {
           if (value is List && value.isNotEmpty) {
@@ -90,12 +145,12 @@ class ScheduleService {
           }
         }
       }
+    } on AuthException catch (e) {
+      throw AuthException(e.message);
     } catch (_) {
-      // fall through to generic message below
+      // Fall through to generic below.
     }
 
-    throw AuthException(
-      'Gagal menambahkan event (HTTP ${response.statusCode}).',
-    );
+    throw AuthException('Terjadi kesalahan pada server schedules.');
   }
 }

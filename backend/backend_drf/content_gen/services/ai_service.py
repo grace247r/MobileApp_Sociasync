@@ -3,11 +3,12 @@ import os
 import json
 import re
 from dotenv import load_dotenv
+from django.conf import settings
 
 # Load .env file
 load_dotenv()
 
-api_key = os.getenv("GEMINI_API_KEY")
+api_key = getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GEMINI_API_KEY")
 model = None
 if api_key:
     try:
@@ -25,8 +26,21 @@ if api_key:
 
 
 def call_ai(prompt):
+    prompt_lower = prompt.lower()
+    is_caption_or_hashtags = (
+        'create an engaging caption' in prompt_lower
+        or 'caption must be engaging' in prompt_lower
+        or 'generate relevant hashtags' in prompt_lower
+        or 'generate 8–12 relevant hashtags' in prompt_lower
+    )
+
     try:
         if model is None:
+            if is_caption_or_hashtags:
+                return json.dumps({
+                    'error': 'Gemini API key belum terbaca di backend.',
+                    'error_code': 'GEMINI_NOT_CONFIGURED',
+                })
             return fallback_response(prompt)
 
         response = model.generate_content(
@@ -44,7 +58,21 @@ def call_ai(prompt):
         return clean_response(text)
 
     except Exception as e:
-        print("GEMINI ERROR:", str(e))
+        error_text = str(e)
+        print("GEMINI ERROR:", error_text)
+
+        if is_caption_or_hashtags:
+            lowered = error_text.lower()
+            if '429' in error_text or 'quota' in lowered:
+                return json.dumps({
+                    'error': 'Kuota Gemini habis. Coba lagi sebentar atau ganti API key/project.',
+                    'error_code': 'GEMINI_QUOTA_EXCEEDED',
+                })
+
+            return json.dumps({
+                'error': 'Gagal menghubungi Gemini untuk generate caption/hashtag.',
+                'error_code': 'GEMINI_REQUEST_FAILED',
+            })
 
         return fallback_response(prompt)
 

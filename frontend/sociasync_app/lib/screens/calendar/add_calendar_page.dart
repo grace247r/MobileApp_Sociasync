@@ -6,6 +6,7 @@ import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
+import 'package:sociasync_app/services/local_notification_service.dart';
 import 'package:sociasync_app/services/schedule_service.dart';
 
 class AddCalendarPage extends StatefulWidget {
@@ -30,9 +31,11 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
   late TimeOfDay endTime;
   late String repeat;
   late String reminder;
+  late String _platform;
+  late int? _scheduleId;
   bool _isSubmitting = false;
 
-  bool get _isEditMode => widget.initialData != null;
+  bool get _isEditMode => _scheduleId != null && _scheduleId! > 0;
 
   final repeatOptions = ['Never', 'Daily', 'Weekly', 'Monthly'];
   final reminderOptions = [
@@ -41,6 +44,7 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
     '10 mins before',
     '1 hour before',
   ];
+  final platformOptions = ['instagram', 'tiktok'];
 
   @override
   void initState() {
@@ -55,6 +59,8 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
     endTime = d?['endTime'] ?? const TimeOfDay(hour: 12, minute: 0);
     repeat = d?['repeat'] ?? 'Never';
     reminder = d?['reminder'] ?? 'Never';
+    _platform = _normalizePlatform((d?['platform'] ?? 'instagram').toString());
+    _scheduleId = int.tryParse((d?['scheduleId'] ?? '').toString());
   }
 
   @override
@@ -173,6 +179,12 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
     }
   }
 
+  String _normalizePlatform(String value) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized.contains('tik')) return 'tiktok';
+    return 'instagram';
+  }
+
   Future<void> _submitEvent() async {
     if (_isSubmitting) return;
     if (_titleCtrl.text.trim().isEmpty) {
@@ -209,22 +221,65 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      await ScheduleService.createSchedule(
+      String effectiveReminder = reminder;
+      String fallbackInfo = '';
+      final canExact = await LocalNotificationService.canUseExactScheduling();
+      if (!canExact && reminder == '5 mins before' && !isDaily) {
+        effectiveReminder = '10 mins before';
+        fallbackInfo =
+            'Device kamu inexact. Reminder otomatis diubah ke 10 mins before.';
+      }
+
+      final saved = _isEditMode
+          ? await ScheduleService.updateSchedule(
+              scheduleId: _scheduleId!,
+              title: _titleCtrl.text.trim(),
+              caption: _notesCtrl.text.trim().isEmpty
+                  ? _titleCtrl.text.trim()
+                  : _notesCtrl.text.trim(),
+              platform: _platform,
+              startTime: startDateTime,
+              endTime: endDateTime,
+              isDaily: isDaily,
+              repeat: _repeatToApi(repeat),
+              reminderType: effectiveReminder,
+              notes: _notesCtrl.text.trim(),
+            )
+          : await ScheduleService.createSchedule(
+              title: _titleCtrl.text.trim(),
+              caption: _notesCtrl.text.trim().isEmpty
+                  ? _titleCtrl.text.trim()
+                  : _notesCtrl.text.trim(),
+              platform: _platform,
+              startTime: startDateTime,
+              endTime: endDateTime,
+              isDaily: isDaily,
+              repeat: _repeatToApi(repeat),
+              reminderType: effectiveReminder,
+              notes: _notesCtrl.text.trim(),
+            );
+
+      final scheduleId =
+          int.tryParse((saved['id'] ?? '').toString()) ?? (_scheduleId ?? 0);
+
+      final reminderDebug = await LocalNotificationService.scheduleFromEvent(
+        scheduleId: scheduleId,
         title: _titleCtrl.text.trim(),
         caption: _notesCtrl.text.trim().isEmpty
             ? _titleCtrl.text.trim()
             : _notesCtrl.text.trim(),
-        platform: 'instagram',
+        platform: _platform,
         startTime: startDateTime,
-        endTime: endDateTime,
+        reminderType: effectiveReminder,
         isDaily: isDaily,
-        repeat: _repeatToApi(repeat),
-        reminderType: reminder,
-        notes: _notesCtrl.text.trim(),
       );
 
+      saved['local_reminder_debug'] = fallbackInfo.isEmpty
+          ? reminderDebug
+          : '$fallbackInfo\n$reminderDebug';
+
       if (!mounted) return;
-      Navigator.pop(context, true);
+      Navigator.pop(context, saved);
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -296,6 +351,21 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
                           const SizedBox(height: 16),
                           _buildScheduleGroup(),
                           const SizedBox(height: 16),
+                          _buildOptionTile(
+                            'Platform',
+                            _platform,
+                            onTap: () {
+                              _showPickerDialog(
+                                'Platform',
+                                platformOptions,
+                                _platform,
+                                (v) => setState(
+                                  () => _platform = _normalizePlatform(v),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
                           _buildOptionTile(
                             'Repeat',
                             repeat,

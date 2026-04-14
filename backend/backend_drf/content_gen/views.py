@@ -10,6 +10,14 @@ from .services.ai_service import call_ai, parse_json
 from .prompts import idea_prompt, script_prompt, caption_prompt, hashtags_prompt
 
 
+def _ai_response(data):
+    if isinstance(data, dict) and data.get('error'):
+        if data.get('error_code') == 'GEMINI_QUOTA_EXCEEDED':
+            return Response(data, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        return Response(data, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    return Response(data, status=status.HTTP_200_OK)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def generate_ideas(request):
@@ -18,7 +26,7 @@ def generate_ideas(request):
     data = parse_json(ai_response)
     if isinstance(data, list):
         return Response({'ideas': data}, status=status.HTTP_200_OK)
-    return Response(data, status=status.HTTP_200_OK)
+    return _ai_response(data)
 
 
 @api_view(['POST'])
@@ -27,7 +35,7 @@ def generate_script(request):
     prompt = script_prompt(request.data)
     ai_response = call_ai(prompt)
     data = parse_json(ai_response)
-    return Response(data)
+    return _ai_response(data)
 
 
 @api_view(['POST'])
@@ -36,7 +44,7 @@ def generate_caption(request):
     prompt = caption_prompt(request.data)
     ai_response = call_ai(prompt)
     data = parse_json(ai_response)
-    return Response(data)
+    return _ai_response(data)
 
 
 @api_view(['POST'])
@@ -45,7 +53,7 @@ def generate_hashtags(request):
     prompt = hashtags_prompt(request.data)
     ai_response = call_ai(prompt)
     data = parse_json(ai_response)
-    return Response(data)
+    return _ai_response(data)
 
 
 @api_view(['POST'])
