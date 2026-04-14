@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/tiktok/', include('tiktok_scraper.urls')),
     path('api/content-gen/', include('content_gen.urls')),
     path('api/chat/', include('chatbot_AI.urls')),
+    path('api/reminders/', include('reminder_msg.urls')),
 ]
 
 if settings.DEBUG:

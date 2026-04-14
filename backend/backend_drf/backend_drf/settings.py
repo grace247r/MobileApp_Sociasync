@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'tiktok_scraper',
     'content_gen',
     'chatbot_AI',
+    'reminder_msg',
 ]
 
 MIDDLEWARE = [
