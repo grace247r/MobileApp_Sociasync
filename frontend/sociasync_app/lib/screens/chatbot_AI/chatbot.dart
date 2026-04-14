@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
 import 'package:sociasync_app/widgets/dashboard_header.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/screens/dashboard/dashboard_page.dart';
 import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
+import 'package:sociasync_app/services/chatbot_service.dart';
+
+class _ChatMessage {
+  const _ChatMessage({required this.role, required this.content});
+
+  final String role;
+  final String content;
+}
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
@@ -20,6 +27,17 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   // 0 = Reminder, 1 = Chatbot AI
   int _activeTab = 0;
+
+  final TextEditingController _chatController = TextEditingController();
+  final ScrollController _chatScrollController = ScrollController();
+  bool _isSendingChat = false;
+  List<_ChatMessage> _chatMessages = const <_ChatMessage>[
+    _ChatMessage(
+      role: 'assistant',
+      content:
+          'Hi! Aku Sociasync AI. Ceritain goal kontenmu, nanti aku bantu kasih ide dan strategi.',
+    ),
+  ];
 
   // List reminders as state
   List<Map<String, dynamic>> _reminders = [
@@ -67,6 +85,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
     '19:00',
   ];
 
+  @override
+  void dispose() {
+    _chatController.dispose();
+    _chatScrollController.dispose();
+    super.dispose();
+  }
+
   void _onNavbarTap(int index) {
     if (index == _currentIndex) return;
 
@@ -86,6 +111,70 @@ class _ChatbotPageState extends State<ChatbotPage> {
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const ProfilePage()));
+    }
+  }
+
+  List<Map<String, String>> _chatHistoryPayload() {
+    return _chatMessages
+        .map(
+          (item) => <String, String>{
+            'role': item.role,
+            'content': item.content,
+          },
+        )
+        .toList();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_chatScrollController.hasClients) return;
+      _chatScrollController.animateTo(
+        _chatScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  Future<void> _sendChat() async {
+    if (_isSendingChat) return;
+
+    final text = _chatController.text.trim();
+    if (text.isEmpty) return;
+
+    _chatController.clear();
+    setState(() {
+      _chatMessages = [
+        ..._chatMessages,
+        _ChatMessage(role: 'user', content: text),
+      ];
+      _isSendingChat = true;
+    });
+    _scrollToBottom();
+
+    try {
+      final reply = await ChatbotService.chat(
+        message: text,
+        history: _chatHistoryPayload(),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _chatMessages = [
+          ..._chatMessages,
+          _ChatMessage(role: 'assistant', content: reply),
+        ];
+      });
+    } on ChatbotServiceException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingChat = false);
+        _scrollToBottom();
+      }
     }
   }
 
@@ -212,10 +301,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                               // Tab 0: Reminder
                               _buildReminderTab(),
                               // Tab 1: Chatbot AI
-                              ListView(
-                                padding: const EdgeInsets.all(15),
-                                children: [_buildBotMessage()],
-                              ),
+                              _buildChatTab(),
                             ],
                           ),
                         ),
@@ -471,81 +557,86 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   // Widget Bubble Chat Bot
-  Widget _buildBotMessage() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
+  Widget _buildChatTab() {
+    return ListView.builder(
+      controller: _chatScrollController,
+      padding: const EdgeInsets.all(15),
+      itemCount: _chatMessages.length + (_isSendingChat ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (_isSendingChat && index == _chatMessages.length) {
+          return _buildAssistantBubble('Sociasync AI sedang mengetik...');
+        }
+
+        final msg = _chatMessages[index];
+        if (msg.role == 'user') {
+          return _buildUserBubble(msg.content);
+        }
+        return _buildAssistantBubble(msg.content);
+      },
+    );
+  }
+
+  Widget _buildAssistantBubble(String content) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 1.5),
+            ),
+            child: CircleAvatar(
+              radius: 12,
+              backgroundColor: Colors.white,
+              child: Image.asset(
+                'assets/chatbotAI.png',
+                width: 18,
+                height: 18,
+                fit: BoxFit.cover,
+                alignment: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: primaryBlue.withOpacity(0.3)),
               ),
-              child: CircleAvatar(
-                radius: 12,
-                backgroundColor: Colors.white,
-                child: Image.asset(
-                  'assets/chatbotAI.png',
-                  width: 18,
-                  height: 18,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.bottomCenter,
-                ),
-              ),
+              child: Text(content, style: const TextStyle(fontSize: 13)),
             ),
-            const SizedBox(width: 8),
-            Text(
-              'Sociasync AI',
-              style: TextStyle(
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserBubble(String content) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          const Spacer(),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
                 color: primaryBlue,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                content,
+                style: const TextStyle(fontSize: 13, color: Colors.white),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: primaryBlue.withOpacity(0.3)),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Hi Rina! 👋',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Your engagement increased by 12% on short-form videos\nBut dropped on carousel posts (-8%)\n\nFocus on short videos with a strong hook in the first 3 seconds\nUse simple storytelling + subtitles to keep attention',
-                style: TextStyle(fontSize: 13, height: 1.4),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryBlue,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text(
-            'Generate More Ideas',
-            style: TextStyle(color: Colors.white, fontSize: 11),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -564,9 +655,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: primaryBlue.withOpacity(0.5)),
               ),
-              child: const TextField(
-                decoration: InputDecoration(
-                  hintText: 'Hi, Artnity can i help you?.....',
+              child: TextField(
+                controller: _chatController,
+                onSubmitted: (_) => _sendChat(),
+                decoration: const InputDecoration(
+                  hintText: 'Tulis pesan untuk Sociasync AI...',
                   hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
                   border: InputBorder.none,
                 ),
@@ -575,7 +668,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
           ),
           const SizedBox(width: 10),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: _isSendingChat ? null : _sendChat,
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryBlue,
               shape: RoundedRectangleBorder(
@@ -583,7 +676,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
-            child: const Text('Kirim', style: TextStyle(color: Colors.white)),
+            child: Text(
+              _isSendingChat ? '...' : 'Kirim',
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
