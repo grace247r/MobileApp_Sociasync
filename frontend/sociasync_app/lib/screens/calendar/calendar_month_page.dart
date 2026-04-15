@@ -154,20 +154,35 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
                           ),
                         ),
                         padding: const EdgeInsets.all(12),
-                        child: GridView.builder(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.zero,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 10,
-                                mainAxisSpacing: 10,
-                                childAspectRatio: 0.8,
-                              ),
-                          itemCount: 12,
-                          itemBuilder: (_, i) =>
-                              _buildMiniMonth(i + 1, currentYear),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isSmallPhone = constraints.maxWidth < 340;
+                            final crossAxisCount = isSmallPhone ? 2 : 3;
+                            final spacing = isSmallPhone ? 8.0 : 10.0;
+                            final itemWidth =
+                                (constraints.maxWidth -
+                                    ((crossAxisCount - 1) * spacing)) /
+                                crossAxisCount;
+                            final childAspectRatio = itemWidth < 115
+                                ? 0.95
+                                : 0.82;
+
+                            return GridView.builder(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    crossAxisSpacing: spacing,
+                                    mainAxisSpacing: spacing,
+                                    childAspectRatio: childAspectRatio,
+                                  ),
+                              itemCount: 12,
+                              itemBuilder: (_, i) =>
+                                  _buildMiniMonth(i + 1, currentYear),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -248,61 +263,96 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(6),
-        child: Column(
-          children: [
-            Text(
-              monthNames[month],
-              style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-                color: headerColor,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final shortest = constraints.biggest.shortestSide;
+            final horizontalPadding = (shortest * 0.06)
+                .clamp(4.0, 8.0)
+                .toDouble();
+            final verticalPadding = (shortest * 0.05)
+                .clamp(4.0, 7.0)
+                .toDouble();
+            final monthFontSize = (shortest * 0.09).clamp(8.0, 11.0).toDouble();
+            final weekDayFontSize = (shortest * 0.07)
+                .clamp(6.0, 9.0)
+                .toDouble();
+            final dayFontSize = (shortest * 0.075).clamp(6.0, 9.5).toDouble();
+
+            return Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
               ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-                  .map(
-                    (d) => SizedBox(
-                      width: 12,
-                      child: Text(
-                        d,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 6,
-                          fontWeight: FontWeight.bold,
-                          color: dayNumColor,
-                        ),
+              child: Column(
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      monthNames[month],
+                      style: TextStyle(
+                        fontSize: monthFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: headerColor,
                       ),
                     ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 2),
-            Expanded(
-              child: GridView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  childAspectRatio: 1,
-                ),
-                itemCount: startOffset + daysInMonth,
-                itemBuilder: (_, idx) {
-                  if (idx < startOffset) return const SizedBox();
-                  final day = idx - startOffset + 1;
-                  return Center(
-                    child: Text(
-                      '$day',
-                      style: TextStyle(fontSize: 6, color: textColor),
+                  ),
+                  SizedBox(
+                    height: (shortest * 0.03).clamp(2.0, 5.0).toDouble(),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+                        .map(
+                          (d) => Expanded(
+                            child: Text(
+                              d,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: weekDayFontSize,
+                                fontWeight: FontWeight.bold,
+                                color: dayNumColor,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  SizedBox(
+                    height: (shortest * 0.02).clamp(1.0, 3.0).toDouble(),
+                  ),
+                  Expanded(
+                    child: GridView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 7,
+                            childAspectRatio: 1,
+                          ),
+                      itemCount: startOffset + daysInMonth,
+                      itemBuilder: (_, idx) {
+                        if (idx < startOffset) return const SizedBox();
+                        final day = idx - startOffset + 1;
+                        return Center(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '$day',
+                              style: TextStyle(
+                                fontSize: dayFontSize,
+                                color: textColor,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

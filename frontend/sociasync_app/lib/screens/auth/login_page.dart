@@ -158,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Email label
                         const Text(
-                          'Email/username',
+                          'Email',
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
@@ -168,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 6),
                         _buildTextField(
                           controller: _emailController,
-                          hint: 'Email/Username...',
+                          hint: 'Email...',
                           obscure: false,
                           hasError: _emailError != null,
                           onChanged: (_) => setState(() => _emailError = null),

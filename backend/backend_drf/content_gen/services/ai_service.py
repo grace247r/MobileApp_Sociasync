@@ -63,12 +63,21 @@ def _set_cache(prompt, value):
 
 def call_ai(prompt):
     prompt_lower = prompt.lower()
+    is_content_ideas = (
+        'generate exactly 3 highly engaging content ideas' in prompt_lower
+        or 'content ideas' in prompt_lower
+    )
+    is_script = (
+        'create a high-retention script' in prompt_lower
+        or 'hook must grab attention' in prompt_lower
+    )
     is_caption_or_hashtags = (
         'create an engaging caption' in prompt_lower
         or 'caption must be engaging' in prompt_lower
         or 'generate relevant hashtags' in prompt_lower
         or 'generate 8–12 relevant hashtags' in prompt_lower
     )
+    is_generation_prompt = is_content_ideas or is_script or is_caption_or_hashtags
 
     cached = _get_cache(prompt)
     if cached is not None:
@@ -76,7 +85,7 @@ def call_ai(prompt):
 
     try:
         if model is None:
-            if is_caption_or_hashtags:
+            if is_generation_prompt:
                 cached_response = json.dumps({
                     'error': 'Gemini API key belum terbaca di backend.',
                     'error_code': 'GEMINI_NOT_CONFIGURED',
@@ -108,7 +117,7 @@ def call_ai(prompt):
         error_text = str(e)
         print("GEMINI ERROR:", error_text)
 
-        if is_caption_or_hashtags:
+        if is_generation_prompt:
             lowered = error_text.lower()
             if '429' in error_text or 'quota' in lowered:
                 cached_response = json.dumps({
@@ -119,7 +128,7 @@ def call_ai(prompt):
                 return cached_response
 
             cached_response = json.dumps({
-                'error': 'Gagal menghubungi Gemini untuk generate caption/hashtag.',
+                'error': 'Gagal menghubungi Gemini untuk generate konten. Coba lagi sebentar.',
                 'error_code': 'GEMINI_REQUEST_FAILED',
             })
             _set_cache(prompt, cached_response)
