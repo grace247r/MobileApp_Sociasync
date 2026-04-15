@@ -2,6 +2,8 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.db import transaction, models
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -17,6 +19,8 @@ from .serializers import (
 )
 from .utils import ApifyInstagramScraper, EngagementCalculator
 from notifications.services import ActivityNotificationService
+
+User = get_user_model()
 
 
 class InstagramViewSet(viewsets.ViewSet):
@@ -83,6 +87,12 @@ class InstagramViewSet(viewsets.ViewSet):
         username = serializer.validated_data['instagram_username']
         user = request.user
 
+        if User.objects.filter(instagram_username__iexact=username).exclude(pk=user.pk).exists():
+            return Response(
+                {'error': 'Instagram username already used by another account.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             # Update user with Instagram username
             user.instagram_username = username
@@ -95,6 +105,11 @@ class InstagramViewSet(viewsets.ViewSet):
                     'instagram_username': username,
                 },
                 status=status.HTTP_200_OK
+            )
+        except IntegrityError:
+            return Response(
+                {'error': 'Instagram username already used by another account.'},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         except Exception as e:
             return Response(

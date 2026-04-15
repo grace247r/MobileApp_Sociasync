@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
@@ -56,6 +57,7 @@ class _DashboardPageState extends State<DashboardPage>
   List<Map<String, dynamic>> _tiktokStatsHistory =
       const <Map<String, dynamic>>[];
   List<Map<String, dynamic>> _bestTikTokVideos = const <Map<String, dynamic>>[];
+  bool _isSyncingAccount = false;
 
   @override
   void initState() {
@@ -251,6 +253,141 @@ class _DashboardPageState extends State<DashboardPage>
     }
   }
 
+  Future<void> _showSyncDialog(String title, String message) async {
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _closeSyncDialog() {
+    if (!mounted) return;
+    final navigator = Navigator.of(context, rootNavigator: true);
+    if (navigator.canPop()) {
+      navigator.pop();
+    }
+  }
+
+  Future<void> _syncInstagramAfterConnect() async {
+    if (_isSyncingAccount) return;
+    _isSyncingAccount = true;
+
+    try {
+      unawaited(
+        _showSyncDialog(
+          'Instagram disimpan',
+          'Sedang mengambil data Instagram. Tunggu sebentar ya...',
+        ),
+      );
+
+      try {
+        await InstagramService.triggerScrape(resultsLimit: 60);
+      } catch (_) {
+        // Scrape backend bisa masih jalan meski request client timeout.
+      }
+
+      var refreshed = false;
+      for (var attempt = 0; attempt < 10; attempt++) {
+        await _loadInstagramData();
+        if (_latestInstagramStats != null ||
+            _instagramStatsHistory.isNotEmpty) {
+          refreshed = true;
+          break;
+        }
+        await Future.delayed(const Duration(seconds: 3));
+      }
+
+      _closeSyncDialog();
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            refreshed
+                ? 'Instagram berhasil disinkronkan.'
+                : 'Instagram tersimpan. Data masih diproses, tunggu sebentar ya.',
+          ),
+          backgroundColor: primaryBlue,
+        ),
+      );
+    } finally {
+      _isSyncingAccount = false;
+    }
+  }
+
+  Future<void> _syncTikTokAfterConnect() async {
+    if (_isSyncingAccount) return;
+    _isSyncingAccount = true;
+
+    try {
+      unawaited(
+        _showSyncDialog(
+          'TikTok disimpan',
+          'Sedang mengambil data TikTok. Tunggu sebentar ya...',
+        ),
+      );
+
+      try {
+        await TikTokService.triggerScrape(resultsLimit: 200);
+      } catch (_) {
+        // Scrape backend bisa masih jalan meski request client timeout.
+      }
+
+      var refreshed = false;
+      for (var attempt = 0; attempt < 10; attempt++) {
+        await _loadTikTokData();
+        if (_latestTikTokStats != null || _tiktokStatsHistory.isNotEmpty) {
+          refreshed = true;
+          break;
+        }
+        await Future.delayed(const Duration(seconds: 3));
+      }
+
+      _closeSyncDialog();
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            refreshed
+                ? 'TikTok berhasil disinkronkan.'
+                : 'TikTok tersimpan. Data masih diproses, tunggu sebentar ya.',
+          ),
+          backgroundColor: primaryBlue,
+        ),
+      );
+    } finally {
+      _isSyncingAccount = false;
+    }
+  }
+
   Future<void> _runInstagramScrapeAndRefresh() async {
     try {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -316,15 +453,7 @@ class _DashboardPageState extends State<DashboardPage>
     if (!updated || !mounted) return;
 
     await _loadUserAndConnections();
-    await _loadInstagramData();
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Username Instagram berhasil disimpan.'),
-        backgroundColor: primaryBlue,
-      ),
-    );
+    await _syncInstagramAfterConnect();
   }
 
   Future<void> _openTikTokManageDialog() async {
@@ -336,15 +465,7 @@ class _DashboardPageState extends State<DashboardPage>
     if (!updated || !mounted) return;
 
     await _loadUserAndConnections();
-    await _loadTikTokData();
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Username TikTok berhasil disimpan.'),
-        backgroundColor: primaryBlue,
-      ),
-    );
+    await _syncTikTokAfterConnect();
   }
 
   void _onNavbarTap(int index) {

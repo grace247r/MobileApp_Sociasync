@@ -3,11 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.db import transaction, models
 from django.utils import timezone
 import logging
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 from .models import TikTokProfile, TikTokVideo, TikTokScrapeJob, TikTokStats
 from .serializers import (
@@ -40,10 +43,16 @@ class TikTokViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         username = serializer.validated_data['tiktok_username']
+        user = request.user
+
+        if User.objects.filter(tiktok_username__iexact=username).exclude(pk=user.pk).exists():
+            return Response(
+                {'error': 'TikTok username already used by another account.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         
         try:
             # Update user's TikTok username
-            user = request.user
             user.tiktok_username = username
             user.tiktok_connected = True
             user.save()
@@ -56,6 +65,11 @@ class TikTokViewSet(viewsets.ViewSet):
                 status=status.HTTP_200_OK
             )
         
+        except IntegrityError:
+            return Response(
+                {'error': 'TikTok username already used by another account.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except Exception as e:
             return Response(
                 {'error': str(e)},
@@ -82,6 +96,7 @@ class TikTokViewSet(viewsets.ViewSet):
             )
 
         results_limit = request.data.get('results_limit', 200)
+        scrape_job = None
         
         try:
             # Extract username
@@ -89,13 +104,19 @@ class TikTokViewSet(viewsets.ViewSet):
 
             # Get or create profile
             url = f"https://www.tiktok.com/@{username}"
-            profile, _ = TikTokProfile.objects.get_or_create(
-                url=url,
-                defaults={
-                    'username': username,
-                    'user': user
-                }
-            )
+            try:
+                profile, _ = TikTokProfile.objects.update_or_create(
+                    user=user,
+                    defaults={
+                        'username': username,
+                        'url': url,
+                    },
+                )
+            except IntegrityError:
+                return Response(
+                    {'error': 'TikTok profile already exists for this account or URL is already used.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # Create scrape job
             scrape_job = TikTokScrapeJob.objects.create(
@@ -144,10 +165,11 @@ class TikTokViewSet(viewsets.ViewSet):
             )
 
         except Exception as e:
-            scrape_job.status = 'failed'
-            scrape_job.error_message = str(e)
-            scrape_job.completed_at = timezone.now()
-            scrape_job.save()
+            if scrape_job is not None:
+                scrape_job.status = 'failed'
+                scrape_job.error_message = str(e)
+                scrape_job.completed_at = timezone.now()
+                scrape_job.save()
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
