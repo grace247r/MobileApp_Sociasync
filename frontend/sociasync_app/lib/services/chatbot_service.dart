@@ -15,7 +15,7 @@ class ChatbotServiceException implements Exception {
 }
 
 class ChatbotService {
-  static const _timeout = Duration(seconds: 20);
+  static const _timeout = Duration(seconds: 60);
 
   static Uri _uri() => Uri.parse('${ApiConfig.baseUrl}/api/chat/');
 
@@ -44,7 +44,9 @@ class ChatbotService {
           )
           .timeout(_timeout);
     } on TimeoutException {
-      throw ChatbotServiceException('Chatbot timeout. Coba lagi.');
+      throw ChatbotServiceException(
+        'Chatbot sedang memproses terlalu lama. Coba lagi sebentar atau kirim pesan yang lebih singkat.',
+      );
     } catch (_) {
       throw ChatbotServiceException('Tidak bisa terhubung ke server chatbot.');
     }

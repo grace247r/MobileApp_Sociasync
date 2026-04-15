@@ -10,6 +10,7 @@ import 'package:sociasync_app/screens/dashboard/notification_page.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
 import 'package:sociasync_app/services/instagram_service.dart';
+import 'package:sociasync_app/services/local_notification_service.dart';
 import 'package:sociasync_app/services/tiktok_service.dart';
 import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/widgets/app_navbar.dart';
@@ -26,7 +27,8 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage>
+    with WidgetsBindingObserver {
   final Color primaryBlue = const Color(0xFF1D5093);
   final int _currentIndex = 0;
   final PageController _analyticsPageController = PageController();
@@ -58,13 +60,22 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _bootstrap();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _analyticsPageController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _showBackendNotificationsAsPopups();
+    }
   }
 
   Future<void> _bootstrap() async {
@@ -76,6 +87,8 @@ class _DashboardPageState extends State<DashboardPage> {
       _loadInstagramData(),
       _loadTikTokData(),
     ]);
+
+    await _showBackendNotificationsAsPopups();
 
     if (mounted) {
       setState(() => _isLoading = false);
@@ -111,6 +124,35 @@ class _DashboardPageState extends State<DashboardPage> {
       setState(() => _unreadCount = count);
     } catch (_) {
       // Keep default value.
+    }
+  }
+
+  Future<void> _showBackendNotificationsAsPopups() async {
+    try {
+      final notifications = await AuthService.getNotifications();
+      final unreadNotifications = notifications.where((item) {
+        return item['is_read'] != true;
+      }).toList();
+
+      if (unreadNotifications.isEmpty) {
+        return;
+      }
+
+      for (final item in unreadNotifications) {
+        final title = (item['title'] ?? 'Notification').toString().trim();
+        final message = (item['message'] ?? '').toString().trim();
+        await LocalNotificationService.showBackendNotification(
+          title: title.isEmpty ? 'Notification' : title,
+          body: message.isEmpty ? '-' : message,
+          payload: 'notification:${item['id'] ?? ''}',
+        );
+      }
+
+      await AuthService.markAllNotificationsRead();
+      if (!mounted) return;
+      setState(() => _unreadCount = 0);
+    } catch (_) {
+      // Keep dashboard usable even if popup sync fails.
     }
   }
 

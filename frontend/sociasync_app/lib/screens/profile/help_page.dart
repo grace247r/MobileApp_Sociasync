@@ -25,6 +25,25 @@ class HelpPage extends StatelessWidget {
 
 Consistency is key. Accounts that post regularly see up to 3x more engagement than those that post sporadically.''',
 
+    'Analytics formula (Engagement & Reach)':
+        '''SociaSync calculates analytics using the data available from your connected account.
+
+Instagram:
+• Engagement % = ((likes + comments) / followers_count) x 100
+• Estimated Reach = (likes + comments) x 20
+• If the scraper already returns estimated_reach, SociaSync will use that value first.
+
+TikTok:
+• Engagement % follows the same engagement percentage field from the scraper.
+• Reach is shown from total_views.
+
+Notes:
+• If followers are 0, engagement is shown as 0%.
+• If likes/comments are not available, reach and engagement can also show 0.
+• The dashboard uses the same source values so the numbers stay consistent across pages.
+
+This is the reason metrics may look different between platforms: each platform exposes different data, so SociaSync applies the formula that best matches the available stats.''',
+
     'Your account status':
         '''Your account status indicates the health and standing of your SociaSync account.
 

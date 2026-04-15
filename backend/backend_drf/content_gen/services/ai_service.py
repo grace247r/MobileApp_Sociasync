@@ -2,6 +2,8 @@ import google.generativeai as genai
 import os
 import json
 import re
+import time
+import hashlib
 from dotenv import load_dotenv
 from django.conf import settings
 
@@ -10,6 +12,9 @@ load_dotenv()
 
 api_key = getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GEMINI_API_KEY")
 model = None
+_cache = {}
+_cache_ttl_seconds = 300
+_cache_max_items = 256
 if api_key:
     try:
         genai.configure(api_key=api_key)
@@ -25,6 +30,37 @@ if api_key:
         print("GEMINI INIT ERROR:", str(e))
 
 
+def _cache_key(prompt):
+    return hashlib.sha256(prompt.encode("utf-8", errors="ignore")).hexdigest()
+
+
+def _get_cache(prompt):
+    key = _cache_key(prompt)
+    now = time.time()
+    item = _cache.get(key)
+    if not item:
+        return None
+
+    expires_at, value = item
+    if expires_at <= now:
+        _cache.pop(key, None)
+        return None
+
+    return value
+
+
+def _set_cache(prompt, value):
+    key = _cache_key(prompt)
+    expires_at = time.time() + _cache_ttl_seconds
+
+    if len(_cache) >= _cache_max_items:
+        oldest_key = next(iter(_cache), None)
+        if oldest_key:
+            _cache.pop(oldest_key, None)
+
+    _cache[key] = (expires_at, value)
+
+
 def call_ai(prompt):
     prompt_lower = prompt.lower()
     is_caption_or_hashtags = (
@@ -34,14 +70,23 @@ def call_ai(prompt):
         or 'generate 8–12 relevant hashtags' in prompt_lower
     )
 
+    cached = _get_cache(prompt)
+    if cached is not None:
+        return cached
+
     try:
         if model is None:
             if is_caption_or_hashtags:
-                return json.dumps({
+                cached_response = json.dumps({
                     'error': 'Gemini API key belum terbaca di backend.',
                     'error_code': 'GEMINI_NOT_CONFIGURED',
                 })
-            return fallback_response(prompt)
+                _set_cache(prompt, cached_response)
+                return cached_response
+
+            fallback = fallback_response(prompt)
+            _set_cache(prompt, fallback)
+            return fallback
 
         response = model.generate_content(
             prompt,
@@ -55,7 +100,9 @@ def call_ai(prompt):
         if not text:
             raise ValueError("Empty response from Gemini")
 
-        return clean_response(text)
+        cleaned = clean_response(text)
+        _set_cache(prompt, cleaned)
+        return cleaned
 
     except Exception as e:
         error_text = str(e)
@@ -64,17 +111,23 @@ def call_ai(prompt):
         if is_caption_or_hashtags:
             lowered = error_text.lower()
             if '429' in error_text or 'quota' in lowered:
-                return json.dumps({
+                cached_response = json.dumps({
                     'error': 'Kuota Gemini habis. Coba lagi sebentar atau ganti API key/project.',
                     'error_code': 'GEMINI_QUOTA_EXCEEDED',
                 })
+                _set_cache(prompt, cached_response)
+                return cached_response
 
-            return json.dumps({
+            cached_response = json.dumps({
                 'error': 'Gagal menghubungi Gemini untuk generate caption/hashtag.',
                 'error_code': 'GEMINI_REQUEST_FAILED',
             })
+            _set_cache(prompt, cached_response)
+            return cached_response
 
-        return fallback_response(prompt)
+        fallback = fallback_response(prompt)
+        _set_cache(prompt, fallback)
+        return fallback
 
 
 def fallback_response(prompt):

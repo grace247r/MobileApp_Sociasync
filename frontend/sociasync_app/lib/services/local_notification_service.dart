@@ -158,6 +158,22 @@ class LocalNotificationService {
     );
   }
 
+  static Future<void> showBackendNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    if (!_initialized) await initialize();
+
+    await _plugin.show(
+      DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      title,
+      body,
+      const NotificationDetails(android: _androidDetails),
+      payload: payload,
+    );
+  }
+
   static Future<void> scheduleReminderNotification({
     required String title,
     required String body,

@@ -1,7 +1,49 @@
-from notifications.models import Notification
+from notifications.models import Notification, NotificationSettings
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
+
+def _get_settings(user):
+    try:
+        return user.notification_settings
+    except NotificationSettings.DoesNotExist:
+        return None
+
+
+def _can_receive_notification(user, notif_type):
+    settings_obj = _get_settings(user)
+    if settings_obj is None:
+        return True
+
+    if not settings_obj.in_app_all_enabled:
+        return False
+
+    if notif_type == 'followers':
+        return settings_obj.new_followers_enabled
+
+    if notif_type == 'like':
+        return settings_obj.likes_enabled
+
+    if notif_type == 'engagement':
+        return settings_obj.comments_enabled or settings_obj.post_interacted_enabled
+
+    if notif_type == 'activity':
+        return settings_obj.post_interacted_enabled
+
+    if notif_type == 'admin':
+        return settings_obj.in_app_all_enabled
+
+    return True
+
+
+def _create_notification_if_allowed(user, recipient=None, **kwargs):
+    target_user = recipient or user
+    notif_type = kwargs.get('notif_type', 'admin')
+    if target_user is None or not _can_receive_notification(target_user, notif_type):
+        return None
+
+    return Notification.objects.create(recipient=target_user, **kwargs)
 
 
 class ActivityNotificationService:
@@ -30,7 +72,8 @@ class ActivityNotificationService:
 
         # Create notifications for positive changes
         if changes['new_followers'] > 0:
-            Notification.objects.create(
+            _create_notification_if_allowed(
+                user,
                 recipient=user,
                 notif_type='followers',
                 title=f'New Followers on {platform}! 🎉',
@@ -38,7 +81,8 @@ class ActivityNotificationService:
             )
 
         if changes['new_likes'] > 0:
-            Notification.objects.create(
+            _create_notification_if_allowed(
+                user,
                 recipient=user,
                 notif_type='like',
                 title=f'New Likes on {platform}! ❤️',
@@ -46,7 +90,8 @@ class ActivityNotificationService:
             )
 
         if changes['new_comments'] > 0:
-            Notification.objects.create(
+            _create_notification_if_allowed(
+                user,
                 recipient=user,
                 notif_type='engagement',
                 title=f'Your posts have activity! 📈',
@@ -56,7 +101,8 @@ class ActivityNotificationService:
         # Combined activity notification
         if changes['new_followers'] > 0 or changes['new_likes'] > 0 or changes['new_comments'] > 0:
             total_engagement = changes['new_likes'] + changes['new_comments']
-            Notification.objects.create(
+            _create_notification_if_allowed(
+                user,
                 recipient=user,
                 notif_type='activity',
                 title=f'{platform} Activity Update ✨',
@@ -87,7 +133,8 @@ class ActivityNotificationService:
 
         # Create notifications for positive changes
         if changes['new_followers'] > 0:
-            Notification.objects.create(
+            _create_notification_if_allowed(
+                user,
                 recipient=user,
                 notif_type='followers',
                 title=f'New Followers on {platform}! 🎉',
@@ -95,7 +142,8 @@ class ActivityNotificationService:
             )
 
         if changes['new_likes'] > 0:
-            Notification.objects.create(
+            _create_notification_if_allowed(
+                user,
                 recipient=user,
                 notif_type='like',
                 title=f'New Likes on {platform}! ❤️',
@@ -103,7 +151,8 @@ class ActivityNotificationService:
             )
 
         if changes['new_comments'] > 0 or changes['new_views'] > 0:
-            Notification.objects.create(
+            _create_notification_if_allowed(
+                user,
                 recipient=user,
                 notif_type='engagement',
                 title=f'Your videos are going viral! 📈',
@@ -113,7 +162,8 @@ class ActivityNotificationService:
         # Combined activity notification
         if changes['new_followers'] > 0 or changes['new_likes'] > 0 or changes['new_comments'] > 0:
             total_engagement = changes['new_likes'] + changes['new_comments']
-            Notification.objects.create(
+            _create_notification_if_allowed(
+                user,
                 recipient=user,
                 notif_type='activity',
                 title=f'{platform} Activity Update ✨',

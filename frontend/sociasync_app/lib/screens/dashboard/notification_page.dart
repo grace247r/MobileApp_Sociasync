@@ -8,6 +8,7 @@ import 'package:sociasync_app/widgets/app_background_wrapper.dart';
 import 'package:sociasync_app/screens/chatbot_AI/chatbot.dart';
 import 'package:sociasync_app/screens/profile/profile_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
+import 'package:sociasync_app/services/local_notification_service.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -32,9 +33,24 @@ class _NotificationPageState extends State<NotificationPage> {
   Future<void> _loadData() async {
     try {
       final profile = await AuthService.getMe();
-      await AuthService.markAllNotificationsRead();
       final notifications = await AuthService.getNotifications();
       if (!mounted) return;
+
+      final unreadNotifications = notifications.where((item) {
+        return item['is_read'] != true;
+      }).toList();
+
+      for (final item in unreadNotifications) {
+        final title = (item['title'] ?? 'Notification').toString().trim();
+        final message = (item['message'] ?? '').toString().trim();
+        await LocalNotificationService.showBackendNotification(
+          title: title.isEmpty ? 'Notification' : title,
+          body: message.isEmpty ? '-' : message,
+          payload: 'notification:${item['id'] ?? ''}',
+        );
+      }
+
+      await AuthService.markAllNotificationsRead();
 
       final name = (profile['name'] ?? '').toString().trim();
       final mapped = notifications.map(_mapNotification).toList();
