@@ -12,7 +12,6 @@ import 'package:sociasync_app/widgets/tiktok_manage_account_dialog.dart';
 
 // Import sub-halaman
 import 'package:sociasync_app/screens/profile/account_page.dart';
-import 'package:sociasync_app/screens/profile/privacy_page.dart';
 import 'package:sociasync_app/screens/profile/notification_page_settings.dart';
 import 'package:sociasync_app/screens/profile/help_page.dart';
 import 'package:sociasync_app/services/auth_service.dart';
@@ -221,17 +220,6 @@ class _ProfilePageState extends State<ProfilePage> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const AccountPage(),
-                              ),
-                            ),
-                          ),
-                          _buildDivider(),
-                          _buildSettingsTile(
-                            'Privacy',
-                            Icons.lock_outline,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const PrivacyPage(),
                               ),
                             ),
                           ),
