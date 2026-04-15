@@ -73,9 +73,19 @@ class ScheduleService {
     );
 
     if (response.statusCode == 201) {
-      final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, dynamic>) return decoded;
-      return <String, dynamic>{};
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          if (!decoded.containsKey('id')) {
+            throw AuthException('Response tidak mengandung ID event.');
+          }
+          return decoded;
+        }
+        throw AuthException('Format response tidak valid.');
+      } catch (e) {
+        if (e is AuthException) rethrow;
+        throw AuthException('Gagal parse response: ${e.toString()}');
+      }
     }
 
     _throwApiError(response.body);
@@ -123,9 +133,19 @@ class ScheduleService {
     );
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, dynamic>) return decoded;
-      return <String, dynamic>{};
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          if (!decoded.containsKey('id')) {
+            throw AuthException('Response tidak mengandung ID event.');
+          }
+          return decoded;
+        }
+        throw AuthException('Format response tidak valid.');
+      } catch (e) {
+        if (e is AuthException) rethrow;
+        throw AuthException('Gagal parse response: ${e.toString()}');
+      }
     }
 
     _throwApiError(response.body);

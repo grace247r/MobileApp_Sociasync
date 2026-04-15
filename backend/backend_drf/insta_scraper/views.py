@@ -164,8 +164,12 @@ class InstagramViewSet(viewsets.ViewSet):
             scrape_job.apify_run_id = run['id']
             scrape_job.save()
 
+            dataset_id = run.get('defaultDatasetId') or run.get('datasetId')
+            if not dataset_id:
+                raise ValueError('Apify run completed but dataset id was not returned.')
+
             # Get and process dataset
-            stats_data = self._process_dataset(run['defaultDatasetId'], scrape_job, profile, user)
+            stats_data = self._process_dataset(dataset_id, scrape_job, profile, user)
 
             # Update job status
             scrape_job.status = 'completed'
@@ -200,6 +204,19 @@ class InstagramViewSet(viewsets.ViewSet):
                 scrape_job.error_message = str(e)
                 scrape_job.completed_at = timezone.now()
                 scrape_job.save()
+
+            error_text = str(e)
+            if 'dataset id was not returned' in error_text.lower():
+                return Response(
+                    {'error': error_text},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+            if 'apify scraping error' in error_text.lower() or 'error fetching dataset' in error_text.lower():
+                return Response(
+                    {'error': error_text},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
 
             return Response(
                 {'error': str(e)},

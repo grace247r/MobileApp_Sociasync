@@ -8,6 +8,7 @@ import 'package:sociasync_app/screens/calendar/calendar_week_page.dart';
 import 'package:sociasync_app/services/chatbot_service.dart';
 import 'package:sociasync_app/services/auth_service.dart';
 import 'package:sociasync_app/services/reminder_service.dart';
+import 'package:sociasync_app/services/local_notification_service.dart';
 
 class _ChatMessage {
   const _ChatMessage({required this.role, required this.content});
@@ -70,6 +71,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
   bool _isSendingChat = false;
   bool _isLoadingReminders = false;
   bool _isReminderActionLoading = false;
+
+  // For reminder date/time picker
+  DateTime _reminderDate = DateTime.now();
+  TimeOfDay _reminderTime = const TimeOfDay(hour: 10, minute: 0);
+
   List<_ChatMessage> _chatMessages = const <_ChatMessage>[
     _ChatMessage(
       role: 'assistant',
@@ -151,15 +157,40 @@ class _ChatbotPageState extends State<ChatbotPage> {
         time: form['time']!,
       );
       if (!mounted) return;
+
+      // Schedule local notification for reminder
+      try {
+        final reminderDateTime = DateTime(
+          _reminderDate.year,
+          _reminderDate.month,
+          _reminderDate.day,
+          _reminderTime.hour,
+          _reminderTime.minute,
+        );
+
+        await LocalNotificationService.scheduleReminderNotification(
+          title: 'Sociasync Reminder',
+          body: form['message']!,
+          scheduledDate: reminderDateTime,
+        );
+      } catch (e) {
+        debugPrint('Notification scheduling error: $e');
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reminder berhasil ditambahkan.')),
+        const SnackBar(content: Text('✅ Reminder berhasil ditambahkan.')),
       );
       await _loadReminders();
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
+      ).showSnackBar(SnackBar(content: Text('❌ ${e.message}')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ ${e.toString()}')));
     } finally {
       if (mounted) {
         setState(() => _isReminderActionLoading = false);
@@ -175,14 +206,19 @@ class _ChatbotPageState extends State<ChatbotPage> {
       await ReminderService.completeReminder(reminderId: item.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reminder ditandai selesai.')),
+        const SnackBar(content: Text('✅ Reminder ditandai selesai.')),
       );
       await _loadReminders();
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
+      ).showSnackBar(SnackBar(content: Text('❌ ${e.message}')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ ${e.toString()}')));
     } finally {
       if (mounted) {
         setState(() => _isReminderActionLoading = false);
@@ -204,15 +240,40 @@ class _ChatbotPageState extends State<ChatbotPage> {
         time: form['time']!,
       );
       if (!mounted) return;
+
+      // Schedule local notification for edited reminder
+      try {
+        final reminderDateTime = DateTime(
+          _reminderDate.year,
+          _reminderDate.month,
+          _reminderDate.day,
+          _reminderTime.hour,
+          _reminderTime.minute,
+        );
+
+        await LocalNotificationService.scheduleReminderNotification(
+          title: 'Sociasync Reminder',
+          body: form['message']!,
+          scheduledDate: reminderDateTime,
+        );
+      } catch (e) {
+        debugPrint('Notification scheduling error: $e');
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reminder berhasil diubah.')),
+        const SnackBar(content: Text('✅ Reminder berhasil diubah.')),
       );
       await _loadReminders();
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
+      ).showSnackBar(SnackBar(content: Text('❌ ${e.message}')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ ${e.toString()}')));
     } finally {
       if (mounted) {
         setState(() => _isReminderActionLoading = false);
@@ -226,81 +287,131 @@ class _ChatbotPageState extends State<ChatbotPage> {
     final dayController = TextEditingController(text: item?.day ?? 'Monday');
     final timeController = TextEditingController(text: item?.time ?? '09:00');
 
+    DateTime selectedDate = _reminderDate;
+    TimeOfDay selectedTime = _reminderTime;
+
     return showDialog<Map<String, String>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(item == null ? 'Tambah Reminder' : 'Edit Reminder'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: toController,
-                decoration: const InputDecoration(
-                  labelText: 'To',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: messageController,
-                decoration: const InputDecoration(
-                  labelText: 'Message',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: dayController,
-                decoration: const InputDecoration(
-                  labelText: 'Day',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: timeController,
-                decoration: const InputDecoration(
-                  labelText: 'Time (HH:mm)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(
+            item == null
+                ? 'Tambah Sociasync Reminder'
+                : 'Edit Sociasync Reminder',
           ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: toController,
+                  decoration: const InputDecoration(
+                    labelText: 'To',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: messageController,
+                  decoration: const InputDecoration(
+                    labelText: 'Message',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: dayController,
+                  decoration: const InputDecoration(
+                    labelText: 'Day (Contoh: Monday)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => selectedDate = picked);
+                    }
+                  },
+                  child: AbsorbPointer(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText:
+                            'Tanggal: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.calendar_today),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: selectedTime,
+                    );
+                    if (picked != null) {
+                      setDialogState(() => selectedTime = picked);
+                      timeController.text =
+                          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                    }
+                  },
+                  child: AbsorbPointer(
+                    child: TextField(
+                      controller: timeController,
+                      decoration: InputDecoration(
+                        labelText:
+                            'Waktu: ${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.access_time),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final to = toController.text.trim();
+                final message = messageController.text.trim();
+                final day = dayController.text.trim();
+                final time = timeController.text.trim();
+
+                if (to.isEmpty ||
+                    message.isEmpty ||
+                    day.isEmpty ||
+                    time.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('❌ Semua field wajib diisi.')),
+                  );
+                  return;
+                }
+
+                Navigator.pop(context, {
+                  'to': to,
+                  'message': message,
+                  'day': day,
+                  'time': time,
+                });
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final to = toController.text.trim();
-              final message = messageController.text.trim();
-              final day = dayController.text.trim();
-              final time = timeController.text.trim();
-
-              if (to.isEmpty ||
-                  message.isEmpty ||
-                  day.isEmpty ||
-                  time.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Semua field wajib diisi.')),
-                );
-                return;
-              }
-
-              Navigator.pop(context, {
-                'to': to,
-                'message': message,
-                'day': day,
-                'time': time,
-              });
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
@@ -468,13 +579,16 @@ class _ChatbotPageState extends State<ChatbotPage> {
                           ),
                         ),
 
-                        // INNER NAVBAR (Reminder | Chatbot AI)
+                        // INNER NAVBAR (Reminder | Sociasync AI)
                         Container(
                           color: Colors.white,
                           child: Row(
                             children: [
-                              _buildInnerTab(label: 'Reminders', index: 0),
-                              _buildInnerTab(label: 'Chatbot AI', index: 1),
+                              _buildInnerTab(
+                                label: 'Sociasync Reminders',
+                                index: 0,
+                              ),
+                              _buildInnerTab(label: 'Sociasync AI', index: 1),
                             ],
                           ),
                         ),
@@ -623,24 +737,51 @@ class _ChatbotPageState extends State<ChatbotPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'To: ${r.to}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: primaryBlue,
-                    ),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.notifications_active,
+                        size: 20,
+                        color: Color(0xFF1D5093),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Sociasync Reminder',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: primaryBlue,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   const Divider(height: 1, thickness: 1),
                   const SizedBox(height: 12),
                   Row(
                     children: [
+                      Icon(Icons.person, size: 18, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'To: ${r.to}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
                       Icon(Icons.message, size: 18, color: Colors.grey[600]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Message: ${r.message}',
+                          r.message,
                           style: const TextStyle(
                             fontSize: 13,
                             color: Colors.black,

@@ -67,8 +67,24 @@ class ApifyInstagramScraper:
             list: List of scraped items
         """
         try:
-            items = list(self.client.dataset(dataset_id).iterate_items())
-            return items
+            last_error = None
+            for attempt in range(1, 6):
+                try:
+                    items = list(self.client.dataset(dataset_id).iterate_items())
+                    if items:
+                        return items
+
+                    # Some runs finish before the dataset is fully visible.
+                    if attempt < 5:
+                        time.sleep(2)
+                        continue
+                    return items
+                except Exception as e:
+                    last_error = e
+                    if attempt < 5:
+                        time.sleep(2)
+                        continue
+                    raise e
         except Exception as e:
             raise Exception(f"Error fetching dataset: {str(e)}")
 

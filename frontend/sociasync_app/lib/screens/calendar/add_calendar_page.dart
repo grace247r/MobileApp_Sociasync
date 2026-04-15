@@ -262,6 +262,10 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
       final scheduleId =
           int.tryParse((saved['id'] ?? '').toString()) ?? (_scheduleId ?? 0);
 
+      if (scheduleId <= 0) {
+        throw AuthException('Event berhasil disimpan tapi ID tidak valid.');
+      }
+
       final reminderDebug = await LocalNotificationService.scheduleFromEvent(
         scheduleId: scheduleId,
         title: _titleCtrl.text.trim(),
@@ -282,14 +286,20 @@ class _AddCalendarPageState extends State<AddCalendarPage> {
       Navigator.pop(context, saved);
     } on AuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('❌ ${e.message}')));
+      }
+      return;
+    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal menyimpan event. Coba lagi.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Gagal menyimpan event. ${e.toString()}')),
+        );
+      }
+      return;
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);

@@ -157,4 +157,48 @@ class LocalNotificationService {
       const NotificationDetails(android: _androidDetails),
     );
   }
+
+  static Future<void> scheduleReminderNotification({
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+  }) async {
+    if (!_initialized) await initialize();
+
+    final now = tz.TZDateTime.now(tz.local);
+    final scheduledDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
+
+    if (scheduledDateTime.isBefore(now)) {
+      // Jika waktu sudah lewat, kirim notif instan
+      await _plugin.show(
+        DateTime.now().millisecondsSinceEpoch.remainder(100000),
+        title,
+        body,
+        const NotificationDetails(android: _androidDetails),
+      );
+      return;
+    }
+
+    final id = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+    final canExact = await canUseExactScheduling();
+    final scheduleMode = canExact
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDateTime,
+        const NotificationDetails(android: _androidDetails),
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: scheduleMode,
+        payload: 'reminder:$id',
+      );
+    } catch (e) {
+      debugPrint('Error scheduling reminder notification: $e');
+    }
+  }
 }

@@ -111,18 +111,16 @@ class EngagementCalculator:
         Calculate engagement rate as percentage
         Formula: (likes + comments) / followers * 100
         
-        Note: Can exceed 100% if highly engaged (more engagements than followers)
-        
         Args:
             total_likes: Total likes on content
             total_comments: Total comments on content
             followers_count: Current follower count
         
         Returns:
-            Engagement percentage (can be >100% for viral/highly engaged content)
+            Engagement percentage (0-100)
         """
         if followers_count <= 0:
             return 0.0
         
         engagement = ((total_likes + total_comments) / followers_count) * 100
-        return round(engagement, 2)
+        return min(round(engagement, 2), 100.0)
