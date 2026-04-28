@@ -6,11 +6,12 @@ void main() {
     final counter = Counter();
     expect(counter.value, 0);
   });
-  
+
   test('Counter increments test', () {
     final counter = Counter();
     counter.increment();
-    expect(counter.value, 1);
+    counter.increment();
+    expect(counter.value, 2);
   });
 
   test('Counter decrements test', () {

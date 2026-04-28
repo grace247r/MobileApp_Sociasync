@@ -150,19 +150,19 @@ class TikTokViewSet(viewsets.ViewSet):
             user.last_scraped = timezone.now()
             user.save()
 
-            return Response(
-                {
-                    'message': 'Scraping completed successfully',
-                    'job_id': scrape_job.id,
-                    'profile_id': profile.id,
-                    'videos_scraped': stats_data['videos_count'],
-                    'total_likes': stats_data['total_likes'],
-                    'total_views': stats_data['total_views'],
-                    'followers_count': profile.followers,
-                    'engagement_percentage': scrape_job.engagement_percentage,
-                },
-                status=status.HTTP_201_CREATED
-            )
+            # Build response with warning if no videos
+            response_data = {
+                'message': 'Scraping completed' if stats_data['videos_count'] > 0 else 'Scraping completed but no videos found - profile may be restricted',
+                'job_id': scrape_job.id,
+                'profile_id': profile.id,
+                'videos_scraped': stats_data['videos_count'],
+                'total_likes': stats_data['total_likes'],
+                'total_views': stats_data['total_views'],
+                'followers_count': stats_data['followers_count'],
+                'engagement_percentage': stats_data['engagement_percentage'],
+            }
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             if scrape_job is not None:
@@ -309,6 +309,11 @@ class TikTokViewSet(viewsets.ViewSet):
             scraper = ApifyTikTokScraper()
             items = scraper.get_dataset_items(dataset_id)
 
+            logger.info(f"TikTok scrape dataset returned {len(items)} items")
+            if len(items) > 0:
+                logger.info(f"First item keys: {list(items[0].keys())}")
+                logger.info(f"First item sample: {str(items[0])[:500]}")
+
             # Process dataset items
             videos_count = 0
             total_likes = 0
@@ -332,7 +337,7 @@ class TikTokViewSet(viewsets.ViewSet):
                     profile_data_found = True
 
                 # Handle video data - every item is a video
-                if 'id' in item and 'diggCount' in item:
+                if 'id' in item:
                     # Get thumbnail from videoMeta coverUrl
                     thumbnail_url = ''
                     if 'videoMeta' in item and item['videoMeta']:
@@ -340,15 +345,21 @@ class TikTokViewSet(viewsets.ViewSet):
                         if isinstance(video_meta, dict) and 'coverUrl' in video_meta:
                             thumbnail_url = video_meta['coverUrl']
                     
+                    # Extract engagement counts with fallbacks for field names
+                    likes = item.get('diggCount', item.get('likes', 0))
+                    comments = item.get('commentCount', item.get('comments', 0))
+                    shares = item.get('shareCount', item.get('shares', 0))
+                    views = item.get('playCount', item.get('views', 0))
+                    
                     video_data = {
                         'video_id': str(item.get('id', '')),
                         'video_url': item.get('webVideoUrl', ''),
                         'caption': item.get('text', ''),
                         'thumbnail_url': thumbnail_url,
-                        'likes': item.get('diggCount', 0),
-                        'comments_count': item.get('commentCount', 0),
-                        'shares': item.get('shareCount', 0),
-                        'views': item.get('playCount', 0),
+                        'likes': likes,
+                        'comments_count': comments,
+                        'shares': shares,
+                        'views': views,
                         'video_timestamp': timezone.now(),
                     }
 
@@ -357,6 +368,8 @@ class TikTokViewSet(viewsets.ViewSet):
                     total_views += video_data['views']
                     total_shares += video_data['shares']
                     videos_count += 1
+                    
+                    logger.debug(f"Processing video {video_data['video_id']}: likes={likes}, comments={comments}, views={views}")
 
                     # Create or update video
                     TikTokVideo.objects.update_or_create(
@@ -364,6 +377,8 @@ class TikTokViewSet(viewsets.ViewSet):
                         profile=profile,
                         defaults=video_data
                     )
+                else:
+                    logger.warning(f"Item missing 'id' field: {str(item)[:200]}")
 
             # Calculate engagement percentage
             engagement_calculator = EngagementCalculator()
@@ -371,6 +386,12 @@ class TikTokViewSet(viewsets.ViewSet):
                 total_likes=total_likes,
                 total_comments=total_comments,
                 followers_count=profile.followers
+            )
+
+            logger.info(
+                f"TikTok stats summary: videos={videos_count}, likes={total_likes}, "
+                f"comments={total_comments}, views={total_views}, "
+                f"followers={profile.followers}, engagement={engagement_percentage}%"
             )
 
             # Update scrape job with engagement
@@ -413,6 +434,8 @@ class TikTokViewSet(viewsets.ViewSet):
                 'total_likes': total_likes,
                 'total_comments': total_comments,
                 'total_views': total_views,
+                'engagement_percentage': engagement_percentage,
+                'followers_count': profile.followers,
             }
 
         except Exception as e:

@@ -123,4 +123,5 @@ class EngagementCalculator:
             return 0.0
         
         engagement = ((total_likes + total_comments) / followers_count) * 100
+        # Cap at 100 even if likes+comments > followers
         return min(round(engagement, 2), 100.0)
